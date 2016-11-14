@@ -308,13 +308,15 @@ namespace CK.Text
         }
 
         /// <summary>
-        /// Skips any white spaces or JS comments (//... or /* ... */).
+        /// Skips any white spaces or JS comments (//... or /* ... */) and always returns true.
         /// </summary>
         /// <param name="this">This <see cref="StringMatcher"/>.</param>
-        public static void SkipWhiteSpacesAndJSComments( this StringMatcher @this )
+        /// <returns>Always true to ease composition.</returns>
+        public static bool SkipWhiteSpacesAndJSComments( this StringMatcher @this )
         {
             @this.MatchWhiteSpaces( 0 );
             while( @this.TryMatchJSComment() ) @this.MatchWhiteSpaces( 0 );
+            return true;
         }
 
         /// <summary>
