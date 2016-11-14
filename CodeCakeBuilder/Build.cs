@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Cake.Common.Tools.NUnit;
 using Cake.Core.IO;
-using CK.Text;
 
 namespace CodeCake
 {
@@ -67,7 +66,7 @@ namespace CodeCake
                         projectsToPublish.Count(),
                         gitInfo.SemVer,
                         configuration,
-                        projectsToPublish.Select( p => p.Name ).Concatenate() );
+                        string.Join( ", ", projectsToPublish.Select( p => p.Name ) ) );
                 } );
 
             Task( "Restore-NuGet-Packages" )
