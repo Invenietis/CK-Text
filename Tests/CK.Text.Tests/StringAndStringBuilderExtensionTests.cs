@@ -48,7 +48,7 @@ namespace CK.Text.Tests
         public void appends_multiple_strings_silently_ignores_null_or_empty_string_to_repeat()
         {
             Assert.That( new StringBuilder().Append( "", 20 ).ToString(), Is.Empty );
-            Assert.That( new StringBuilder().Append( null, 20 ).ToString(), Is.Empty );
+            Assert.That( new StringBuilder().Append( (string)null, 20 ).ToString(), Is.Empty );
         }
 
         [TestCase( '0', 0 )]
