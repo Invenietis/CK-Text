@@ -26,7 +26,7 @@ using System.Reflection;
 
 [assembly: AssemblyCompany( "Invenietis" )]
 [assembly: AssemblyProduct( "CK-Framework" )]
-[assembly: AssemblyCopyright( "Copyright © Invenietis 2007-2016" )]
+[assembly: AssemblyCopyright( "Copyright © Invenietis 2007-2017" )]
 [assembly: AssemblyTrademark( "" )]
 [assembly: CLSCompliant( true )]
 

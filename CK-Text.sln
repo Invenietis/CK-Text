@@ -3,24 +3,19 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{A87208F3-D73C-4AD4-9FF5-0314968EDD74}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "CK.Text", "CK.Text\CK.Text.xproj", "{0FFBEE8D-B032-4EAC-BBCC-DF484CF7B35B}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E3559EF9-ED4A-4169-9287-6F94CFBD09FA}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CED4973A-F35D-4D85-B2A4-081D7E8E98E6}"
 	ProjectSection(SolutionItems) = preProject
-		.gitignore = .gitignore
-		appveyor.yml = appveyor.yml
-		NuGet.config = NuGet.config
+		global.json = global.json
 		RepositoryInfo.xml = RepositoryInfo.xml
-		packages\SimpleGitVersionTask.0.11.1\RepositoryInfo.xsd = packages\SimpleGitVersionTask.0.11.1\RepositoryInfo.xsd
-		SharedAssemblyInfo.cs = SharedAssemblyInfo.cs
-		SharedKey.snk = SharedKey.snk
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CK.Text", "CK.Text\CK.Text.csproj", "{0518E60C-0CB9-49DA-A634-109998526368}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{4D3EF9AD-5153-461D-8538-F321B6EF7121}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CK.Text.Tests", "Tests\CK.Text.Tests\CK.Text.Tests.csproj", "{E2C4C6F1-BF73-4473-8F73-A7FFC4381422}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "CK.Text.Tests", "Tests\CK.Text.Tests\CK.Text.Tests.xproj", "{A9599989-6B1C-4058-923D-F9975B53E8EA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeCakeBuilder", "CodeCakeBuilder\CodeCakeBuilder.csproj", "{C495D3DF-2E63-466B-9886-DE8A3EFBD584}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeCakeBuilder", "CodeCakeBuilder\CodeCakeBuilder.csproj", "{FD4817B6-3CD7-4E74-AA10-7CA95FDFCF2D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,23 +23,23 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{0518E60C-0CB9-49DA-A634-109998526368}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0518E60C-0CB9-49DA-A634-109998526368}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0518E60C-0CB9-49DA-A634-109998526368}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0518E60C-0CB9-49DA-A634-109998526368}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E2C4C6F1-BF73-4473-8F73-A7FFC4381422}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E2C4C6F1-BF73-4473-8F73-A7FFC4381422}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E2C4C6F1-BF73-4473-8F73-A7FFC4381422}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E2C4C6F1-BF73-4473-8F73-A7FFC4381422}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C495D3DF-2E63-466B-9886-DE8A3EFBD584}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C495D3DF-2E63-466B-9886-DE8A3EFBD584}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C495D3DF-2E63-466B-9886-DE8A3EFBD584}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C495D3DF-2E63-466B-9886-DE8A3EFBD584}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0FFBEE8D-B032-4EAC-BBCC-DF484CF7B35B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FFBEE8D-B032-4EAC-BBCC-DF484CF7B35B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0FFBEE8D-B032-4EAC-BBCC-DF484CF7B35B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0FFBEE8D-B032-4EAC-BBCC-DF484CF7B35B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9599989-6B1C-4058-923D-F9975B53E8EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9599989-6B1C-4058-923D-F9975B53E8EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9599989-6B1C-4058-923D-F9975B53E8EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9599989-6B1C-4058-923D-F9975B53E8EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD4817B6-3CD7-4E74-AA10-7CA95FDFCF2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD4817B6-3CD7-4E74-AA10-7CA95FDFCF2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD4817B6-3CD7-4E74-AA10-7CA95FDFCF2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD4817B6-3CD7-4E74-AA10-7CA95FDFCF2D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{E2C4C6F1-BF73-4473-8F73-A7FFC4381422} = {A87208F3-D73C-4AD4-9FF5-0314968EDD74}
+		{A9599989-6B1C-4058-923D-F9975B53E8EA} = {4D3EF9AD-5153-461D-8538-F321B6EF7121}
 	EndGlobalSection
 EndGlobal

@@ -19,7 +19,10 @@ using System.IO;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Cake.Common.Tools.NUnit;
+using Cake.Common.Tools.DotNetCore;
 using Cake.Core.IO;
+using Cake.Common.Tools.DotNetCore.Pack;
+using Cake.Common.Build;
 
 namespace CodeCake
 {
@@ -36,30 +39,41 @@ namespace CodeCake
             const string solutionFileName = solutionName + ".sln";
 
             var releasesDir = Cake.Directory( "CodeCakeBuilder/Releases" );
-            SimpleRepositoryInfo gitInfo = null;
-            // Configuration is either "Debug" or "Release".
-            string configuration = null;
 
             // We do not publish .Tests projects for this solution.
             var projectsToPublish = Cake.ParseSolution( solutionFileName )
                                         .Projects
-                                        .Where( p => p.Name != "CodeCakeBuilder"
+                                        .Where( p => !(p is SolutionFolder) 
+                                                     && p.Name != "CodeCakeBuilder"
                                                      && !p.Path.Segments.Contains( "Tests" ) );
+
+            var jsonS = Cake.GetDNXSolution();
+            SimpleRepositoryInfo gitInfo = jsonS.RepositoryInfo;
+            // Configuration is either "Debug" or "Release".
+            string configuration = null;
+
+            Teardown( cake =>
+            {
+                if( gitInfo.IsValid )
+                {
+                    jsonS.RestoreProjectFiles();
+                }
+            });
 
             Task( "Check-Repository" )
                 .Does( () =>
                 {
-                    gitInfo = Cake.GetSimpleRepositoryInfo();
-
-                    if( !gitInfo.IsValid )
+                    if (!gitInfo.IsValid)
                     {
-                        if( Cake.IsInteractiveMode()
-                            && Cake.ReadInteractiveOption( "Repository is not ready to be published. Proceed anyway?", 'Y', 'N' ) == 'Y' )
+                        if (Cake.IsInteractiveMode()
+                            && Cake.ReadInteractiveOption("Repository is not ready to be published. Proceed anyway?", 'Y', 'N') == 'Y')
                         {
-                            Cake.Warning( "GitInfo is not valid, but you choose to continue..." );
+                            Cake.Warning("GitInfo is not valid, but you choose to continue...");
                         }
-                        else throw new Exception( "Repository is not ready to be published." );
+                        else throw new Exception("Repository is not ready to be published.");
                     }
+                    else jsonS.UpdateProjectFiles(useNuGetV2Version: true);
+
                     configuration = gitInfo.IsValidRelease && gitInfo.PreReleaseName.Length == 0 ? "Release" : "Debug";
 
                     Cake.Information( "Publishing {0} projects with version={1} and configuration={2}: {3}",
@@ -72,7 +86,7 @@ namespace CodeCake
             Task( "Restore-NuGet-Packages" )
                 .Does( () =>
                 {
-                    Cake.NuGetRestore( solutionFileName );
+                    Cake.DotNetCoreRestore();
                 } );
 
             Task( "Clean" )
@@ -97,14 +111,7 @@ namespace CodeCake
                         Cake.MSBuild( tempSln.FullPath, settings =>
                         {
                             settings.Configuration = configuration;
-                            settings.Verbosity = Verbosity.Minimal;
-                            // Always generates Xml documentation. Relies on this definition in the csproj files:
-                            //
-                            // <PropertyGroup Condition=" $(GenerateDocumentation) != '' ">
-                            //   <DocumentationFile>bin\$(Configuration)\$(AssemblyName).xml</DocumentationFile>
-                            // </PropertyGroup>
-                            //
-                            settings.Properties.Add( "GenerateDocumentation", new[] { "true" } );
+                            settings.Verbosity = Verbosity.Normal;
                         } );
                     }
                 } );
@@ -117,14 +124,16 @@ namespace CodeCake
                     var testDlls = Cake.ParseSolution( solutionFileName )
                      .Projects
                          .Where( p => p.Name.EndsWith( ".Tests" ) )
-                         .Select( p => p.Path.GetDirectory().CombineWithFilePath( "bin/" + configuration + "/" + p.Name + ".dll" ) );
-                    Cake.Information( "Testing: {0}", string.Join( ", ", testDlls.Select( p => p.GetFilename().ToString() ) ) );
+                         .Select( p => p.Path.GetDirectory().CombineWithFilePath( "bin/" + configuration + "/netcoreapp1.0/" + p.Name + ".dll" ) );
 
-                    Cake.NUnit( testDlls, new NUnitSettings()
+                    foreach (var test in testDlls)
                     {
-                        Framework = "v4.5",
-                        OutputFile = releasesDir.Path + "/TestResult.txt"
-                    } );
+                        using (Cake.Environment.SetWorkingDirectory(test.GetDirectory()))
+                        {
+                            Cake.Information("Testing: {0}", test);
+                            Cake.DotNetCoreExecute(test);
+                        }
+                    }
                 } );
 
             Task( "Create-NuGet-Packages" )
@@ -133,19 +142,16 @@ namespace CodeCake
                 .Does( () =>
                 {
                     Cake.CreateDirectory( releasesDir );
-                    var settings = new NuGetPackSettings()
+                    foreach( SolutionProject p in projectsToPublish )
                     {
-                        Version = gitInfo.NuGetVersion,
-                        BasePath = Cake.Environment.WorkingDirectory,
-                        OutputDirectory = releasesDir
-                    };
-                    Cake.CopyFiles( "CodeCakeBuilder/NuSpec/*.nuspec", releasesDir );
-                    foreach( var nuspec in Cake.GetFiles( releasesDir.Path + "/*.nuspec" ) )
-                    {
-                        TransformText( nuspec, configuration, gitInfo );
-                        Cake.NuGetPack( nuspec, settings );
+                        Cake.Warning(p.Path.GetDirectory().FullPath);
+                        Cake.DotNetCorePack(p.Path.GetDirectory().FullPath, new DotNetCorePackSettings()
+                        {
+                            NoBuild = true,
+                            OutputDirectory = releasesDir,
+                            Verbose = true                        
+                        });
                     }
-                    Cake.DeleteFiles( releasesDir.Path + "/*.nuspec" );
                 } );
 
 
@@ -154,6 +160,11 @@ namespace CodeCake
                 .WithCriteria( () => gitInfo.IsValid )
                 .Does( () =>
                 {
+                    if (Cake.AppVeyor().IsRunningOnAppVeyor)
+                    {
+                        foreach (var file in Cake.GetFiles(releasesDir.Path + "**/*"))
+                            Cake.AppVeyor().UploadArtifact(file.FullPath);
+                    }
                     IEnumerable<FilePath> nugetPackages = Cake.GetFiles( releasesDir.Path + "/*.nupkg" );
                     if( Cake.IsInteractiveMode() )
                     {
@@ -192,15 +203,6 @@ namespace CodeCake
             Task( "Default" )
                 .IsDependentOn( "Push-NuGet-Packages" );
 
-        }
-
-        private void TransformText( FilePath textFilePath, string configuration, SimpleRepositoryInfo gitInfo )
-        {
-            Cake.TransformTextFile( textFilePath, "{{", "}}" )
-                    .WithToken( "configuration", configuration )
-                    .WithToken( "NuGetVersion", gitInfo.NuGetVersion )
-                    .WithToken( "CSemVer", gitInfo.SemVer )
-                    .Save( textFilePath );
         }
 
         private void PushNuGetPackages( string apiKeyName, string pushUrl, IEnumerable<FilePath> nugetPackages )

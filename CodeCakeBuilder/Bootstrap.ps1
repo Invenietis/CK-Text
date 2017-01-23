@@ -50,4 +50,3 @@ if (!(Test-Path $nugetExe)) {
 
 &$nugetExe restore $builderPackageConfig -SolutionDirectory $solutionDir
 &$msbuildExe $builderProj /p:Configuration=Release
-
