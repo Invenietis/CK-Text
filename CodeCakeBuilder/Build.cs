@@ -218,11 +218,13 @@ namespace CodeCake
                 var settings = new NuGetPushSettings
                 {
                     Source = pushUrl,
-                    ApiKey = apiKey
+                    ApiKey = apiKey,
+                    Verbosity = NuGetVerbosity.Detailed
                 };
 
                 foreach( var nupkg in nugetPackages )
                 {
+                    Cake.Information($"Pushing '{nupkg}' to '{pushUrl}'.");
                     Cake.NuGetPush( nupkg, settings );
                 }
             }
