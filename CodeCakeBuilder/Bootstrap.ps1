@@ -52,4 +52,3 @@ $nugetConfigFile = Join-Path $solutionDir "NuGet.config"
 &$nugetExe restore $builderPackageConfig -SolutionDirectory $solutionDir -configfile $nugetConfigFile
 
 &$msbuildExe $builderProj /p:Configuration=Release
-pause
