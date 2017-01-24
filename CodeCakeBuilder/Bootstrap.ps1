@@ -47,8 +47,9 @@ if (!(Test-Path $nugetExe)) {
         Throw "Could not find NuGet.exe"
     }
 }
-$nugetConfigFile = Join-Path $solutionDir "NuGet.config"
 
+$nugetConfigFile = Join-Path $solutionDir "NuGet.config"
 &$nugetExe restore $builderPackageConfig -SolutionDirectory $solutionDir -configfile $nugetConfigFile
+
 &$msbuildExe $builderProj /p:Configuration=Release
 pause
