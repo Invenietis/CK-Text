@@ -162,7 +162,7 @@ namespace CodeCake
                 {
                     if (Cake.AppVeyor().IsRunningOnAppVeyor)
                     {
-                        foreach (var file in Cake.GetFiles(releasesDir.Path + "**/*"))
+                        foreach (var file in Cake.GetFiles(releasesDir.Path + "/**/*"))
                             Cake.AppVeyor().UploadArtifact(file.FullPath);
                     }
                     IEnumerable<FilePath> nugetPackages = Cake.GetFiles( releasesDir.Path + "/*.nupkg" );
