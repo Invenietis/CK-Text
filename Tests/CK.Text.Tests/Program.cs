@@ -1,10 +1,8 @@
-﻿using NUnit.Common;
+﻿#if !NET451
+using NUnit.Common;
 using NUnitLite;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 
 namespace CK.Text.Tests
 {
@@ -18,3 +16,16 @@ namespace CK.Text.Tests
 
     }
 }
+#else
+namespace CK.Text.Tests
+{
+    public class Program
+    {
+        public static int Main(string[] args)
+        {
+            return 0;
+        }
+
+    }
+}
+#endif
