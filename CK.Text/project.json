@@ -9,6 +9,19 @@
     "keyFile": "../SharedKey.snk"
   },
 
+  "packOptions": {
+    "summary": "Utility interfaces and classes.",
+    "releaseNotes": "https://github.com/Invenietis/CK-Text/releases",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/Invenietis/CK-Text"
+    },
+    "licenseUrl": "https://opensource.org/licenses/MIT"
+  },
+  "authors": [ "Invenietis" ],
+  "copyright": "Copyright 2010-1017 Invenietis",
+
+
   "frameworks": {
     "netstandard1.3": {
     },
