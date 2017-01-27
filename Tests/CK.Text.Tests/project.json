@@ -19,7 +19,7 @@
     },
     "net451": {
       "dependencies": {
-        "NUnit": "2.6.4",
+        "NUnit": "[2.6.4]",
         "CK.Text": { "target": "project" }
       }
     }
