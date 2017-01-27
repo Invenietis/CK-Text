@@ -11,6 +11,7 @@
 
   "packOptions": {
     "summary": "Utility interfaces and classes.",
+    "description": "Offers simple text helpers like StringMatcher, JSONVisitor and StringBuilder extension methods.",
     "releaseNotes": "https://github.com/Invenietis/CK-Text/releases",
     "repository": {
       "type": "git",
