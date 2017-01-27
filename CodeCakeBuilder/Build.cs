@@ -48,7 +48,7 @@ namespace CodeCake
                                                      && p.Name != "CodeCakeBuilder"
                                                      && !p.Path.Segments.Contains( "Tests" ) );
 
-            var jsonS = Cake.GetDNXSolution();
+            var jsonS = Cake.GetSimpleJsonSolution();
             SimpleRepositoryInfo gitInfo = jsonS.RepositoryInfo;
             // Configuration is either "Debug" or "Release".
             string configuration = null;
@@ -75,7 +75,10 @@ namespace CodeCake
                     }
                     else jsonS.UpdateProjectFiles(useNuGetV2Version: true);
 
-                    configuration = gitInfo.IsValidRelease && gitInfo.PreReleaseName.Length == 0 ? "Release" : "Debug";
+                    configuration = gitInfo.IsValidRelease 
+                                    && (gitInfo.PreReleaseName.Length == 0 || gitInfo.PreReleaseName == "rc") 
+                                    ? "Release" 
+                                    : "Debug";
 
                     Cake.Information( "Publishing {0} projects with version={1} and configuration={2}: {3}",
                         projectsToPublish.Count(),
