@@ -222,7 +222,7 @@ namespace CodeCake
 
         }
 
-        private void PushNuGetPackages( string apiKeyName, string pushUrl, IEnumerable<FilePath> nugetPackages )
+        void PushNuGetPackages( string apiKeyName, string pushUrl, IEnumerable<FilePath> nugetPackages )
         {
             // Resolves the API key.
             var apiKey = Cake.InteractiveEnvironmentVariable( apiKeyName );
@@ -239,7 +239,7 @@ namespace CodeCake
                     Verbosity = NuGetVerbosity.Detailed
                 };
 
-                foreach( var nupkg in nugetPackages )
+                foreach( var nupkg in nugetPackages.Where( p => !p.FullPath.EndsWith(".symbols.nupkg") ) )
                 {
                     Cake.Information($"Pushing '{nupkg}' to '{pushUrl}'.");
                     Cake.NuGetPush( nupkg, settings );
