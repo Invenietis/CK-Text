@@ -57,7 +57,9 @@ namespace CK.Text.Tests
                 p = Path.GetDirectoryName(p);
             }
             _solutionFolder = p;
-            Console.WriteLine($"SolutionFolder is: {_solutionFolder}");
+
+            Console.WriteLine($"SolutionFolder is: {_solutionFolder}.");
+            Console.WriteLine($"Core path: {typeof(string).GetTypeInfo().Assembly.CodeBase}.");
         }
     }
 }

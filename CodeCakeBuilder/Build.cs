@@ -23,6 +23,7 @@ using Cake.Common.Tools.DotNetCore;
 using Cake.Core.IO;
 using Cake.Common.Tools.DotNetCore.Pack;
 using Cake.Common.Build;
+using Cake.Common.Tools.DotNetCore.Test;
 
 namespace CodeCake
 {
@@ -124,14 +125,30 @@ namespace CodeCake
                     var testDlls = Cake.ParseSolution( solutionFileName )
                      .Projects
                          .Where( p => p.Name.EndsWith( ".Tests" ) )
-                         .Select( p => p.Path.GetDirectory().CombineWithFilePath( "bin/" + configuration + "/netcoreapp1.0/" + p.Name + ".dll" ) );
-
+                         .Select( p => 
+                            new
+                            {
+                                TestFolderPath = p.Path.GetDirectory(),
+                                ProjectJSonPath = p.Path,
+                                NetCoreAppDll = p.Path.GetDirectory().CombineWithFilePath("bin/" + configuration + "/netcoreapp1.0/" + p.Name + ".dll"),
+                                Net451Exe = p.Path.GetDirectory().CombineWithFilePath("bin/" + configuration + "/net451/win7-x64/" + p.Name + ".exe"),
+                            });
+                   
                     foreach (var test in testDlls)
                     {
-                        using (Cake.Environment.SetWorkingDirectory(test.GetDirectory()))
+                        using (Cake.Environment.SetWorkingDirectory(test.TestFolderPath))
                         {
-                            Cake.Information("Testing: {0}", test);
-                            Cake.DotNetCoreExecute(test);
+                            Cake.Information("Testing: {0}", test.Net451Exe);
+                            Cake.NUnit(test.Net451Exe.FullPath, new NUnitSettings()
+                            {
+                                Framework = "v4.5",
+                                OutputFile = test.TestFolderPath.CombineWithFilePath("TestResult.Net451.xml")
+                            });
+                        }
+                        using (Cake.Environment.SetWorkingDirectory(test.ProjectJSonPath.GetDirectory()))
+                        {
+                            Cake.Information("Testing: {0}", test.NetCoreAppDll);
+                            Cake.DotNetCoreExecute(test.NetCoreAppDll);
                         }
                     }
                 } );
