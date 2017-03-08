@@ -24,6 +24,7 @@ using Cake.Core.IO;
 using Cake.Common.Tools.DotNetCore.Pack;
 using Cake.Common.Build;
 using Cake.Common.Tools.DotNetCore.Test;
+using Cake.Common.Tools.DotNetCore.Build;
 
 namespace CodeCake
 {
@@ -112,10 +113,10 @@ namespace CodeCake
                     using( var tempSln = Cake.CreateTemporarySolutionFile( solutionFileName ) )
                     {
                         tempSln.ExcludeProjectsFromBuild( "CodeCakeBuilder" );
-                        Cake.MSBuild( tempSln.FullPath, settings =>
+                        Cake.DotNetCoreBuild( tempSln.FullPath.FullPath, new DotNetCoreBuildSettings()
                         {
-                            settings.Configuration = configuration;
-                            settings.Verbosity = Verbosity.Normal;
+                            Configuration = configuration,
+                            //Verbosity = Verbosity.Normal
                         } );
                     }
                 } );
@@ -134,7 +135,7 @@ namespace CodeCake
                                 TestFolderPath = p.Path.GetDirectory(),
                                 ProjectJSonPath = p.Path,
                                 NetCoreAppDll = p.Path.GetDirectory().CombineWithFilePath("bin/" + configuration + "/netcoreapp1.0/" + p.Name + ".dll"),
-                                Net451Exe = p.Path.GetDirectory().CombineWithFilePath("bin/" + configuration + "/net451/win7-x64/" + p.Name + ".exe"),
+                                Net451Exe = p.Path.GetDirectory().CombineWithFilePath("bin/" + configuration + "/net451/" + p.Name + ".exe"),
                             });
                    
                     foreach (var test in testDlls)
@@ -167,9 +168,10 @@ namespace CodeCake
                         Cake.Warning(p.Path.GetDirectory().FullPath);
                         Cake.DotNetCorePack(p.Path.GetDirectory().FullPath, new DotNetCorePackSettings()
                         {
-                            NoBuild = true,
-                            OutputDirectory = releasesDir,
-                            Verbose = true                        
+                           Verbose = true,
+                           NoBuild = true,
+                           Configuration = configuration,
+                           OutputDirectory = releasesDir
                         });
                     }
                 } );
