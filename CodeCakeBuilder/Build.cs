@@ -177,15 +177,13 @@ namespace CodeCake
                     foreach( SolutionProject p in projectsToPublish )
                     {
                         Cake.Warning(p.Path.GetDirectory().FullPath);
-                        Cake.DotNetCorePack(
-                            p.Path.GetDirectory().FullPath,
-                            new DotNetCorePackSettings().WithVersion(gitInfo, s => 
-                            {
-                                s.NoBuild = true;
-                                s.Configuration = configuration;
-                                s.OutputDirectory = releasesDir;
-                                s.ArgumentCustomization = args => args.Append("--include-symbols");
-                            }) );
+                        var s = new DotNetCorePackSettings();
+                        s.ArgumentCustomization = args => args.Append("--include-symbols");
+                        s.NoBuild = true;
+                        s.Configuration = configuration;
+                        s.OutputDirectory = releasesDir;
+                        s.WithVersion(gitInfo);
+                        Cake.DotNetCorePack( p.Path.GetDirectory().FullPath, s );
                     }
                 } );
 
