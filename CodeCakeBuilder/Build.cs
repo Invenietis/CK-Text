@@ -184,6 +184,7 @@ namespace CodeCake
                                 s.NoBuild = true;
                                 s.Configuration = configuration;
                                 s.OutputDirectory = releasesDir;
+                                s.ArgumentCustomization = args => args.Append("--include-symbols");
                             }) );
                     }
                 } );
