@@ -177,12 +177,14 @@ namespace CodeCake
                     foreach( SolutionProject p in projectsToPublish )
                     {
                         Cake.Warning(p.Path.GetDirectory().FullPath);
-                        Cake.DotNetCorePack(p.Path.GetDirectory().FullPath, new DotNetCorePackSettings()
-                        {
-                           NoBuild = true,
-                           Configuration = configuration,
-                           OutputDirectory = releasesDir
-                        });
+                        Cake.DotNetCorePack(
+                            p.Path.GetDirectory().FullPath,
+                            new DotNetCorePackSettings().WithVersion(gitInfo, s => 
+                            {
+                                s.NoBuild = true;
+                                s.Configuration = configuration;
+                                s.OutputDirectory = releasesDir;
+                            }) );
                     }
                 } );
 
