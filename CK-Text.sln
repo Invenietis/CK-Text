@@ -1,22 +1,23 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.4
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "CK.Text", "CK.Text\CK.Text.xproj", "{0FFBEE8D-B032-4EAC-BBCC-DF484CF7B35B}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CED4973A-F35D-4D85-B2A4-081D7E8E98E6}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		appveyor.yml = appveyor.yml
-		global.json = global.json
 		NuGet.config = NuGet.config
 		RepositoryInfo.xml = RepositoryInfo.xml
+		Common\Shared.props = Common\Shared.props
+		Common\SharedKey.snk = Common\SharedKey.snk
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{4D3EF9AD-5153-461D-8538-F321B6EF7121}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "CK.Text.Tests", "Tests\CK.Text.Tests\CK.Text.Tests.xproj", "{A9599989-6B1C-4058-923D-F9975B53E8EA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CK.Text", "CK.Text\CK.Text.csproj", "{0FFBEE8D-B032-4EAC-BBCC-DF484CF7B35B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CK.Text.Tests", "Tests\CK.Text.Tests\CK.Text.Tests.csproj", "{A9599989-6B1C-4058-923D-F9975B53E8EA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeCakeBuilder", "CodeCakeBuilder\CodeCakeBuilder.csproj", "{FD4817B6-3CD7-4E74-AA10-7CA95FDFCF2D}"
 EndProject
