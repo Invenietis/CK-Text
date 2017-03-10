@@ -31,18 +31,18 @@ namespace CodeCake
 {
     public static class DotNetCoreRestoreSettingsExtension
     {
-        public static T WithVersion<T>( this T @this, SimpleRepositoryInfo info, Action<T> conf = null ) where T : DotNetCoreSettings
+        public static T AddVersionArguments<T>(this T @this, SimpleRepositoryInfo info, Action<T> conf = null) where T : DotNetCoreSettings
         {
-            if( info.IsValid )
+            if (info.IsValid)
             {
                 var prev = @this.ArgumentCustomization;
                 @this.ArgumentCustomization = args => (prev?.Invoke(args) ?? args)
-                        .Append($@"/p:Version=""{info.SemVer}""")
+                        .Append($@"/p:Version=""{info.NuGetVersion}""")
                         .Append($@"/p:AssemblyVersion=""{info.MajorMinor}.0""")
                         .Append($@"/p:FileVersion=""{info.FileVersion}""")
                         .Append($@"/p:InformationalVersion=""{info.SemVer} ({info.NuGetVersion}) - SHA1: {info.CommitSha} - CommitDate: {info.CommitDateUtc.ToString("u")}""");
-                conf?.Invoke(@this);
             }
+            conf?.Invoke(@this);
             return @this;
         }
     }
@@ -106,7 +106,7 @@ namespace CodeCake
                 .Does( () =>
                 {
                     // https://docs.microsoft.com/en-us/nuget/schema/msbuild-targets
-                    Cake.DotNetCoreRestore( new DotNetCoreRestoreSettings().WithVersion( gitInfo ) );
+                    Cake.DotNetCoreRestore( new DotNetCoreRestoreSettings().AddVersionArguments( gitInfo ) );
                 } );
 
             Task( "Clean" )
@@ -129,7 +129,7 @@ namespace CodeCake
                    {
                        tempSln.ExcludeProjectsFromBuild("CodeCakeBuilder");
                        Cake.DotNetCoreBuild(tempSln.FullPath.FullPath, 
-                           new DotNetCoreBuildSettings().WithVersion( gitInfo, s =>
+                           new DotNetCoreBuildSettings().AddVersionArguments( gitInfo, s =>
                            {
                                s.Configuration = configuration;
                            } ));
@@ -182,7 +182,7 @@ namespace CodeCake
                         s.NoBuild = true;
                         s.Configuration = configuration;
                         s.OutputDirectory = releasesDir;
-                        s.WithVersion(gitInfo);
+                        s.AddVersionArguments(gitInfo);
                         Cake.DotNetCorePack( p.Path.GetDirectory().FullPath, s );
                     }
                 } );
