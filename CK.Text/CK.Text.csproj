@@ -7,7 +7,6 @@
     <AssemblyName>CK.Text</AssemblyName>
     <PackageId>CK.Text</PackageId>
     <Description>Offers simple text helpers like StringMatcher, JSONVisitor and StringBuilder extension methods.</Description>
-    <PackageReleaseNotes>https://github.com/Invenietis/CK-Text/releases</PackageReleaseNotes>
     <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.3' ">1.6.1</NetStandardImplicitPackageVersion>
   </PropertyGroup>
 

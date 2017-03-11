@@ -2,9 +2,13 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   
   <PropertyGroup>
-    <SharedDir>$(SolutionDir)Common\</SharedDir>
+    <SharedDir>$(MSBuildThisFileDirectory)</SharedDir>
   </PropertyGroup>
-  
+
+  <PropertyGroup Condition=" '$(SolutionDir)' == '' ">
+    <SolutionDir>$([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))))\</SolutionDir>
+  </PropertyGroup>
+
   <PropertyGroup>
     <Copyright>Copyright Invenietis 2007-2017</Copyright>
     <ProductName>CK-Framework</ProductName>
@@ -17,6 +21,7 @@
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/Invenietis/CK-Text</RepositoryUrl>
+    <PackageReleaseNotes>https://github.com/Invenietis/CK-Text/releases</PackageReleaseNotes>
 
   </PropertyGroup>
 </Project>
