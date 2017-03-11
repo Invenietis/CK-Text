@@ -1,0 +1,28 @@
+# Basic appveyor configuration : CodeCakeBuilder does the job.
+version: build{build}
+branches:
+  only:
+  - master
+  - develop
+environment:
+  NUGET_API_KEY:
+    secure: Cx0q/gQZQpP3eDf6H9lzIDpYYki+sGCpruxgDcFUJRoYdpH7l5aDh7afloH3uNLD
+  MYGET_PREVIEW_API_KEY:
+    secure: CfEqNYjhrGX9DyalZ4jcadzJ/x8q25GulMCbZQDRRs+XetfHn2AEP79OJXE1wSJ8
+  MYGET_CI_API_KEY:
+    secure: z3ZFnSM3FPCaJYkLhqjZmFTCw1Wf1hmRznQ0/UfxY/5haxctmymvFhh+PTz+/eHw
+install:
+#This is temporary workaround until appveyor upgrades.
+  - ps: Write-Host "Installing .NET Core 1.1.1 SDK 1.0.1..." -ForegroundColor Cyan
+  - ps: Write-Host "Downloading..."
+  - ps: $exePath = "$env:TEMP\dotnet-core-sdk-1.1.1.exe"
+  - ps: (New-Object Net.WebClient).DownloadFile('https://go.microsoft.com/fwlink/?LinkID=843448', $exePath)
+  - ps: Write-Host "Installing..."
+  - ps: cmd /c start /wait "$exePath" /install /quiet /norestart
+  - ps: del $exePath 
+  - ps: Write-Host "Installed" -ForegroundColor Green
+#/This is temporary workaround until appveyor upgrades.
+  - ps: CodeCakeBuilder\Bootstrap.ps1
+build_script:
+- CodeCakeBuilder\bin\Release\CodeCakeBuilder.exe -nointeraction
+test: off
