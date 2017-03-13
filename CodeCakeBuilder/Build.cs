@@ -204,7 +204,7 @@ namespace CodeCake
                             || gitInfo.PreReleaseName == "prerelease" 
                             || gitInfo.PreReleaseName == "rc" )
                         {
-                            PushNuGetPackages( "NUGET_API_KEY", "https://api.nuget.org/v3/index.json", nugetPackages );
+                            PushNuGetPackages( "NUGET_API_KEY", "https://www.nuget.org/api/v2/package", nugetPackages );
                         }
                         else
                         {
