@@ -5,8 +5,13 @@
     <SharedDir>$(MSBuildThisFileDirectory)</SharedDir>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(SolutionDir)' == '' ">
+  <PropertyGroup Condition=" '$(CakeBuild)' == 'true' ">
     <SolutionDir>$([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))))\</SolutionDir>
+    <BaseIntermediateOutputPath>$(SolutionDir)CodeCakeBuilder\Releases\$(MSBuildProjectName)\obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(CakeBuild)' != 'true' ">
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <PropertyGroup>

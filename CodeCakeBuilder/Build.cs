@@ -28,6 +28,7 @@ namespace CodeCake
             {
                 var prev = @this.ArgumentCustomization;
                 @this.ArgumentCustomization = args => (prev?.Invoke(args) ?? args)
+                        .Append($@"/p:CakeBuild=""true""")
                         .Append($@"/p:Version=""{info.NuGetVersion}""")
                         .Append($@"/p:AssemblyVersion=""{info.MajorMinor}.0""")
                         .Append($@"/p:FileVersion=""{info.FileVersion}""")
@@ -48,6 +49,8 @@ namespace CodeCake
     {
         public Build()
         {
+            Cake.Log.Verbosity = Verbosity.Diagnostic;
+
             const string solutionName = "CK-Text";
             const string solutionFileName = solutionName + ".sln";
 
@@ -92,38 +95,38 @@ namespace CodeCake
                         string.Join( ", ", projectsToPublish.Select( p => p.Name ) ) );
                 } );
 
-            Task( "Restore-NuGet-Packages" )
+            Task( "Clean" )
                 .IsDependentOn( "Check-Repository" )
+                .Does( () =>
+                {
+                    Cake.CleanDirectories(projects.Select(p => p.Path.GetDirectory().Combine("bin")));
+                    //Cake.CleanDirectories(projects.Select(p => p.Path.GetDirectory().Combine("obj")));
+                    Cake.CleanDirectories( releasesDir );
+                    Cake.DeleteFiles( "Tests/**/TestResult.xml" );
+                } );
+
+            Task( "Restore-NuGet-Packages" )
+                .IsDependentOn("Check-Repository")
+                .IsDependentOn("Clean")
                 .Does( () =>
                 {
                     // https://docs.microsoft.com/en-us/nuget/schema/msbuild-targets
                     Cake.DotNetCoreRestore( new DotNetCoreRestoreSettings().AddVersionArguments( gitInfo ) );
                 } );
 
-            Task( "Clean" )
-                .IsDependentOn( "Check-Repository" )
-                .Does( () =>
-                {
-                    Cake.CleanDirectories(projects.Select(p => p.Path.GetDirectory().Combine("bin")));
-                    Cake.CleanDirectories(projects.Select(p => p.Path.GetDirectory().Combine("obj")));
-                    Cake.CleanDirectories( releasesDir );
-                    Cake.DeleteFiles( "Tests/**/TestResult.xml" );
-                } );
-
             Task("Build")
+                .IsDependentOn("Check-Repository")
                 .IsDependentOn("Clean")
                 .IsDependentOn("Restore-NuGet-Packages")
-                .IsDependentOn("Check-Repository")
                 .Does(() =>
                {
-                   using (var tempSln = Cake.CreateTemporarySolutionFile(solutionFileName))
+                   foreach (var p in projects)
                    {
-                       tempSln.ExcludeProjectsFromBuild("CodeCakeBuilder");
-                       Cake.DotNetCoreBuild(tempSln.FullPath.FullPath, 
-                           new DotNetCoreBuildSettings().AddVersionArguments( gitInfo, s =>
+                       Cake.DotNetCoreBuild(p.Path.GetDirectory().FullPath,
+                           new DotNetCoreBuildSettings().AddVersionArguments(gitInfo, s =>
                            {
                                s.Configuration = configuration;
-                           } ));
+                           }));
                    }
                });
 
