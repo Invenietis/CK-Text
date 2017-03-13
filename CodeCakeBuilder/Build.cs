@@ -39,7 +39,6 @@ namespace CodeCake
         }
     }
 
-
     /// <summary>
     /// Standard build "script".
     /// </summary>
@@ -100,7 +99,6 @@ namespace CodeCake
                 .Does( () =>
                 {
                     Cake.CleanDirectories(projects.Select(p => p.Path.GetDirectory().Combine("bin")));
-                    //Cake.CleanDirectories(projects.Select(p => p.Path.GetDirectory().Combine("obj")));
                     Cake.CleanDirectories( releasesDir );
                     Cake.DeleteFiles( "Tests/**/TestResult.xml" );
                 } );
