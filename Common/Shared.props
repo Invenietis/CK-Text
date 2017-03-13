@@ -28,11 +28,11 @@
     <RepositoryType>git</RepositoryType>
     
     <!-- Invenietis standard properties. -->
-    <Copyright>Copyright Invenietis 2007-$([System.DateTime]::UtcNow.ToString("yyyy"))</Copyright>
     <Company>Invenietis</Company>
     <Authors>Invenietis</Authors>
     
     <!-- Properties that are solution depdendents. -->
+    <Copyright>Copyright Invenietis 2007-$([System.DateTime]::UtcNow.ToString("yyyy"))</Copyright>
     <ProductName>CK-Framework</ProductName>
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/Invenietis/CK-Text</RepositoryUrl>

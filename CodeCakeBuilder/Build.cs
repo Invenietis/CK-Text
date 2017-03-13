@@ -100,7 +100,7 @@ namespace CodeCake
                 {
                     Cake.CleanDirectories(projects.Select(p => p.Path.GetDirectory().Combine("bin")));
                     Cake.CleanDirectories( releasesDir );
-                    Cake.DeleteFiles( "Tests/**/TestResult.xml" );
+                    Cake.DeleteFiles( "Tests/**/TestResult*.xml" );
                 } );
 
             Task( "Restore-NuGet-Packages" )
@@ -133,16 +133,13 @@ namespace CodeCake
                 .Does( () =>
                 {
                     Cake.CreateDirectory( releasesDir );
-                    var testDlls = Cake.ParseSolution(solutionFileName)
-                            .Projects
-                            .Where(p => p.Name.EndsWith(".Tests"))
-                            .Select(p =>
-                               new
-                               {
-                                   ProjectPath = p.Path.GetDirectory(),
-                                   NetCoreAppDll = p.Path.GetDirectory().CombineWithFilePath("bin/" + configuration + "/netcoreapp1.0/" + p.Name + ".dll"),
-                                   Net451Exe = p.Path.GetDirectory().CombineWithFilePath("bin/" + configuration + "/net451/" + p.Name + ".exe"),
-                               });
+                    var testDlls = projects.Where(p => p.Name.EndsWith(".Tests")).Select(p =>
+                            new
+                            {
+                                ProjectPath = p.Path.GetDirectory(),
+                                NetCoreAppDll = p.Path.GetDirectory().CombineWithFilePath("bin/" + configuration + "/netcoreapp1.0/" + p.Name + ".dll"),
+                                Net451Exe = p.Path.GetDirectory().CombineWithFilePath("bin/" + configuration + "/net451/" + p.Name + ".exe"),
+                            });
 
                     foreach (var test in testDlls)
                     {
@@ -161,8 +158,8 @@ namespace CodeCake
                 });
 
             Task( "Create-NuGet-Packages" )
-                .IsDependentOn( "Unit-Testing" )
                 .WithCriteria( () => gitInfo.IsValid )
+                .IsDependentOn( "Unit-Testing" )
                 .Does( () =>
                 {
                     Cake.CreateDirectory( releasesDir );
