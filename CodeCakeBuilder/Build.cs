@@ -185,11 +185,6 @@ namespace CodeCake
                 .WithCriteria( () => gitInfo.IsValid )
                 .Does( () =>
                 {
-                    if (Cake.AppVeyor().IsRunningOnAppVeyor)
-                    {
-                        foreach (var file in Cake.GetFiles(releasesDir.Path + "/**/*"))
-                            Cake.AppVeyor().UploadArtifact(file.FullPath);
-                    }
                     IEnumerable<FilePath> nugetPackages = Cake.GetFiles( releasesDir.Path + "/*.nupkg" );
                     if( Cake.IsInteractiveMode() )
                     {
@@ -222,7 +217,11 @@ namespace CodeCake
                         Debug.Assert( gitInfo.IsValidCIBuild );
                         PushNuGetPackages( "MYGET_CI_API_KEY", "https://www.myget.org/F/invenietis-ci/api/v2/package", nugetPackages );
                     }
-                } );
+                    if (Cake.AppVeyor().IsRunningOnAppVeyor)
+                    {
+                        Cake.AppVeyor().UpdateBuildVersion(gitInfo.SemVer);
+                    }
+                });
 
             // The Default task for this script can be set here.
             Task( "Default" )
