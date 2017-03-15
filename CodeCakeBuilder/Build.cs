@@ -118,14 +118,20 @@ namespace CodeCake
                 .IsDependentOn("Restore-NuGet-Packages")
                 .Does(() =>
                {
-                   foreach (var p in projects)
-                   {
-                       Cake.DotNetCoreBuild(p.Path.GetDirectory().FullPath,
-                           new DotNetCoreBuildSettings().AddVersionArguments(gitInfo, s =>
-                           {
-                               s.Configuration = configuration;
-                           }));
-                   }
+                   Cake.DotNetCoreBuild(solutionFileName,
+                       new DotNetCoreBuildSettings().AddVersionArguments(gitInfo, s =>
+                       {
+                           s.Configuration = configuration;
+                       }));
+
+                   //foreach (var p in projects)
+                   //{
+                   //    Cake.DotNetCoreBuild(p.Path.GetDirectory().FullPath,
+                   //        new DotNetCoreBuildSettings().AddVersionArguments(gitInfo, s =>
+                   //        {
+                   //            s.Configuration = configuration;
+                   //        }));
+                   //}
                });
 
             Task( "Unit-Testing" )
