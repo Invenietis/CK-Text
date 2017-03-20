@@ -123,15 +123,6 @@ namespace CodeCake
                        {
                            s.Configuration = configuration;
                        }));
-
-                   //foreach (var p in projects)
-                   //{
-                   //    Cake.DotNetCoreBuild(p.Path.GetDirectory().FullPath,
-                   //        new DotNetCoreBuildSettings().AddVersionArguments(gitInfo, s =>
-                   //        {
-                   //            s.Configuration = configuration;
-                   //        }));
-                   //}
                });
 
             Task( "Unit-Testing" )
