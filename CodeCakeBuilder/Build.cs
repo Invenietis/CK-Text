@@ -134,7 +134,7 @@ namespace CodeCake
                             new
                             {
                                 ProjectPath = p.Path.GetDirectory(),
-                                NetCoreAppDll = p.Path.GetDirectory().CombineWithFilePath("bin/" + configuration + "/netcoreapp1.0/" + p.Name + ".dll"),
+                                NetCoreAppDll = p.Path.GetDirectory().CombineWithFilePath("bin/" + configuration + "/netcoreapp1.1/" + p.Name + ".dll"),
                                 Net451Exe = p.Path.GetDirectory().CombineWithFilePath("bin/" + configuration + "/net451/" + p.Name + ".exe"),
                             });
 

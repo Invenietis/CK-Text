@@ -3,16 +3,15 @@
   <Import Project="..\..\Common\Shared.props" />
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp1.0;net451</TargetFrameworks>
+    <TargetFrameworks>netcoreapp1.1;net451</TargetFrameworks>
     <OutputType>Exe</OutputType>
-    <RuntimeFrameworkVersion Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">1.1.1</RuntimeFrameworkVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\CK.Text\CK.Text.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp1.0' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp1.1' ">
     <PackageReference Include="nunitlite" Version="3.6.1" />
     <PackageReference Include="NUnit" Version="3.6.1" />
   </ItemGroup>
