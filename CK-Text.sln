@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeCakeBuilder", "CodeCake
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CK.Text.Virtual", "CK.Text.Virtual\CK.Text.Virtual.csproj", "{183C6792-51E5-4F27-9209-2758F89BF38B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CK.Text.Virtual.Tests", "Tests\CK.Text.Virtual.Tests\CK.Text.Virtual.Tests.csproj", "{7E8689A1-6F5C-45EA-BDA5-ACFBD078E81A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,11 +47,16 @@ Global
 		{183C6792-51E5-4F27-9209-2758F89BF38B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{183C6792-51E5-4F27-9209-2758F89BF38B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{183C6792-51E5-4F27-9209-2758F89BF38B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E8689A1-6F5C-45EA-BDA5-ACFBD078E81A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E8689A1-6F5C-45EA-BDA5-ACFBD078E81A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E8689A1-6F5C-45EA-BDA5-ACFBD078E81A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E8689A1-6F5C-45EA-BDA5-ACFBD078E81A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A9599989-6B1C-4058-923D-F9975B53E8EA} = {4D3EF9AD-5153-461D-8538-F321B6EF7121}
+		{7E8689A1-6F5C-45EA-BDA5-ACFBD078E81A} = {4D3EF9AD-5153-461D-8538-F321B6EF7121}
 	EndGlobalSection
 EndGlobal
