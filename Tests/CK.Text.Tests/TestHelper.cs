@@ -12,22 +12,6 @@ using System.Runtime.CompilerServices;
 
 namespace CK.Text.Tests
 {
-
-#if NET451
-    static class Does
-    {
-        public static SubstringConstraint Contain(string expected) => Is.StringContaining(expected);
-
-        public static EndsWithConstraint EndWith(string expected) => Is.StringEnding(expected);
-
-        public static StartsWithConstraint StartWith(string expected) => Is.StringStarting(expected);
-
-        public static ConstraintExpression Not => Is.Not;
-
-        public static SubstringConstraint Contain(this ConstraintExpression @this, string expected) => @this.StringContaining(expected);
-    }
-#endif
-
     static partial class TestHelper
     {
         static string _solutionFolder;

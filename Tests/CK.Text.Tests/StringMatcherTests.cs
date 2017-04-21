@@ -1,4 +1,5 @@
 using System;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace CK.Text.Tests
@@ -11,16 +12,16 @@ namespace CK.Text.Tests
         {
             string s = "ABCD";
             var m = new StringMatcher( s );
-            Assert.That( m.MatchChar( 'a' ), Is.False );
-            Assert.That( m.MatchChar( 'A' ), Is.True );
-            Assert.That( m.StartIndex, Is.EqualTo( 1 ) );
-            Assert.That( m.MatchChar( 'A' ), Is.False );
-            Assert.That( m.MatchChar( 'B' ), Is.True );
-            Assert.That( m.MatchChar( 'C' ), Is.True );
-            Assert.That( m.IsEnd, Is.False );
-            Assert.That( m.MatchChar( 'D' ), Is.True );
-            Assert.That( m.MatchChar( 'D' ), Is.False );
-            Assert.That( m.IsEnd, Is.True );
+            m.MatchChar( 'a' ).Should().BeFalse();
+            m.MatchChar( 'A' ).Should().BeTrue();
+            m.StartIndex.Should().Be( 1 );
+            m.MatchChar( 'A' ).Should().BeFalse();
+            m.MatchChar( 'B' ).Should().BeTrue();
+            m.MatchChar( 'C' ).Should().BeTrue();
+            m.IsEnd.Should().BeFalse();
+            m.MatchChar( 'D' ).Should().BeTrue();
+            m.MatchChar( 'D' ).Should().BeFalse();
+            m.IsEnd.Should().BeTrue();
         }
 
         [Test]
@@ -28,36 +29,38 @@ namespace CK.Text.Tests
         {
             string s = " AB  \t\r C";
             var m = new StringMatcher( s );
-            Assert.That( m.MatchText( "A" ), Is.False );
-            Assert.That( m.StartIndex, Is.EqualTo( 0 ) );
-            Assert.That( m.MatchWhiteSpaces(), Is.True );
-            Assert.That( m.StartIndex, Is.EqualTo( 1 ) );
-            Assert.That( m.MatchText( "A" ), Is.True );
-            Assert.That( m.MatchText( "B" ), Is.True );
-            Assert.That( m.StartIndex, Is.EqualTo( 3 ) );
-            Assert.That( m.MatchWhiteSpaces( 6 ), Is.False );
-            Assert.That( m.MatchWhiteSpaces( 5 ), Is.True );
-            Assert.That( m.StartIndex, Is.EqualTo( 8 ) );
-            Assert.That( m.MatchWhiteSpaces(), Is.False );
-            Assert.That( m.StartIndex, Is.EqualTo( 8 ) );
-            Assert.That( m.MatchText( "c" ), Is.True );
-            Assert.That( m.StartIndex, Is.EqualTo( s.Length ) );
-            Assert.That( m.IsEnd, Is.True );
+            Action a;
+            m.MatchText( "A" ).Should().BeFalse();
+            m.StartIndex.Should().Be( 0 );
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.StartIndex.Should().Be( 1 );
+            m.MatchText( "A" ).Should().BeTrue();
+            m.MatchText( "B" ).Should().BeTrue();
+            m.StartIndex.Should().Be( 3 );
+            m.MatchWhiteSpaces( 6 ).Should().BeFalse();
+            m.MatchWhiteSpaces( 5 ).Should().BeTrue();
+            m.StartIndex.Should().Be( 8 );
+            m.MatchWhiteSpaces().Should().BeFalse();
+            m.StartIndex.Should().Be( 8 );
+            m.MatchText( "c" ).Should().BeTrue();
+            m.StartIndex.Should().Be( s.Length );
+            m.IsEnd.Should().BeTrue();
 
-            Assert.DoesNotThrow( () => m.MatchText( "c" ) );
-            Assert.DoesNotThrow( () => m.MatchWhiteSpaces() );
-            Assert.That( m.MatchText( "A" ), Is.False );
-            Assert.That( m.MatchWhiteSpaces(), Is.False );
+            a = () => m.MatchText( "c" ); a.ShouldNotThrow();
+            a = () => m.MatchWhiteSpaces(); a.ShouldNotThrow();
+            m.MatchText( "A" ).Should().BeFalse();
+            m.MatchWhiteSpaces().Should().BeFalse();
         }
 
         [Test]
         public void matching_integers()
         {
             var m = new StringMatcher( "X3712Y" );
-            Assert.That( m.MatchChar( 'X' ) );
+            m.MatchChar( 'X' ).Should().BeTrue();
             int i;
-            Assert.That( m.MatchInt32( out i ) && i == 3712 );
-            Assert.That( m.MatchChar( 'Y' ) );
+            m.MatchInt32( out i ).Should().BeTrue();
+            i.Should().Be( 3712 );
+            m.MatchChar( 'Y' ).Should().BeTrue();
         }
 
         [Test]
@@ -65,15 +68,18 @@ namespace CK.Text.Tests
         {
             var m = new StringMatcher( "3712 -435 56" );
             int i;
-            Assert.That( m.MatchInt32( out i, -500, -400 ), Is.False );
-            Assert.That( m.MatchInt32( out i, 0, 3712 ) && i == 3712 );
-            Assert.That( m.MatchWhiteSpaces() );
-            Assert.That( m.MatchInt32( out i, 0 ), Is.False );
-            Assert.That( m.MatchInt32( out i, -500, -400 ) && i == -435 );
-            Assert.That( m.MatchWhiteSpaces() );
-            Assert.That( m.MatchInt32( out i, 1000, 2000 ), Is.False );
-            Assert.That( m.MatchInt32( out i, 56, 56 ) && i == 56 );
-            Assert.That( m.IsEnd );
+            m.MatchInt32( out i, -500, -400 ).Should().BeFalse();
+            m.MatchInt32( out i, 0, 3712 ).Should().BeTrue();
+            i.Should().Be( 3712 );
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.MatchInt32( out i, 0 ).Should().BeFalse();
+            m.MatchInt32( out i, -500, -400 ).Should().BeTrue();
+            i.Should().Be( -435 );
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.MatchInt32( out i, 1000, 2000 ).Should().BeFalse();
+            m.MatchInt32( out i, 56, 56 ).Should().BeTrue();
+            i.Should().Be( 56 );
+            m.IsEnd.Should().BeTrue();
         }
 
         public void match_methods_must_set_an_error()
@@ -92,11 +98,11 @@ namespace CK.Text.Tests
         {
             int idx = m.StartIndex;
             int len = m.Length;
-            Assert.That( fail(), Is.False );
-            Assert.That( m.IsError );
-            Assert.That( m.ErrorMessage, Is.Not.Null.Or.Empty );
-            Assert.That( m.StartIndex == idx, "Head must not move on error." );
-            Assert.That( m.Length == len, "Length must not change on error." );
+            fail().Should().BeFalse();
+            m.IsError.Should().BeTrue();
+            m.ErrorMessage.Should().NotBeNullOrEmpty();
+            m.StartIndex.Should().Be( idx );
+            m.Length.Should().Be( len );
             m.SetSuccess();
         }
 
@@ -105,7 +111,8 @@ namespace CK.Text.Tests
         {
             var m = new StringMatcher( "The Text" );
             m.SetError( "Plouf..." );
-            Assert.That( m.ToString(), Does.Contain( "The Text" ).And.Contain( "Plouf..." ) );
+            m.ToString().Contains( "The Text" );
+            m.ToString().Contains( "Plouf..." );
         }
 
         [TestCase( @"null, true", null, ", true" )]
@@ -122,13 +129,13 @@ namespace CK.Text.Tests
         {
             var m = new StringMatcher( s );
             string result;
-            Assert.That( m.TryMatchJSONQuotedString( out result, true ) );
-            Assert.That( result, Is.EqualTo( parsed ) );
-            Assert.That( m.TryMatchText( textAfter ), "Should be followed by: " + textAfter );
+            m.TryMatchJSONQuotedString( out result, true ).Should().BeTrue();
+            result.Should().Be( parsed );
+            m.TryMatchText( textAfter ).Should().BeTrue();
 
             m = new StringMatcher( s );
-            Assert.That( m.TryMatchJSONQuotedString( true ) );
-            Assert.That( m.TryMatchText( textAfter ), "Should be followed by: " + textAfter );
+            m.TryMatchJSONQuotedString( true ).Should().BeTrue();
+            m.TryMatchText( textAfter ).Should().BeTrue();
         }
 
         [Test]
@@ -151,39 +158,77 @@ namespace CK.Text.Tests
     } 
 }  ";
             var m = new StringMatcher( s );
-            Assert.That( m.MatchWhiteSpaces() && m.MatchChar( '{' ) );
             string pName;
-            Assert.That( m.MatchWhiteSpaces() && m.TryMatchJSONQuotedString( out pName ) && pName == "p1" );
-            Assert.That( m.MatchWhiteSpaces( 0 ) && m.MatchChar( ':' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.TryMatchJSONQuotedString( out pName ) && pName == "n" );
-            Assert.That( m.MatchWhiteSpaces( 0 ) && m.MatchChar( ',' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.TryMatchJSONQuotedString( out pName ) && pName == "p2" );
-            Assert.That( m.MatchWhiteSpaces( 2 ) && m.MatchChar( ':' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.MatchChar( '{' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.TryMatchJSONQuotedString( out pName ) && pName == "p3" );
-            Assert.That( m.MatchWhiteSpaces( 0 ) && m.MatchChar( ':' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.MatchChar( '[' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.TryMatchJSONQuotedString( out pName ) && pName == "p4" );
-            Assert.That( m.MatchWhiteSpaces( 0 ) && m.MatchChar( ':' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.MatchChar( '{' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.TryMatchJSONQuotedString() );
-            Assert.That( m.MatchWhiteSpaces( 0 ) && m.MatchChar( ':' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.TryMatchDoubleValue() );
-            Assert.That( m.MatchWhiteSpaces( 0 ) && m.MatchChar( ',' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.TryMatchJSONQuotedString( out pName ) && pName == "p6" );
-            Assert.That( m.MatchWhiteSpaces( 0 ) && m.MatchChar( ':' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.MatchChar( '[' ) );
-            Assert.That( m.MatchWhiteSpaces( 0 ) && m.MatchChar( ']' ) );
-            Assert.That( m.MatchWhiteSpaces( 0 ) && m.MatchChar( ',' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.TryMatchJSONQuotedString() );
-            Assert.That( m.MatchWhiteSpaces( 0 ) && m.MatchChar( ':' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.MatchChar( '{' ) );
-            Assert.That( m.MatchWhiteSpaces( 0 ) && m.MatchChar( '}' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.MatchChar( '}' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.MatchChar( ']' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.MatchChar( '}' ) );
-            Assert.That( m.MatchWhiteSpaces() && m.MatchChar( '}' ) );
-            Assert.That( m.MatchWhiteSpaces( 2 ) && m.IsEnd );
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.MatchChar( '{' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.TryMatchJSONQuotedString( out pName ).Should().BeTrue();
+            pName.Should().Be( "p1" );
+            m.MatchWhiteSpaces( 0 ).Should().BeTrue();
+            m.MatchChar( ':' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.TryMatchJSONQuotedString( out pName ).Should().BeTrue();
+            pName.Should().Be( "n" );
+            m.MatchWhiteSpaces( 0 ).Should().BeTrue();
+            m.MatchChar( ',' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.TryMatchJSONQuotedString( out pName ).Should().BeTrue();
+            pName.Should().Be( "p2" );
+            m.MatchWhiteSpaces( 2 ).Should().BeTrue();
+            m.MatchChar( ':' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.MatchChar( '{' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.TryMatchJSONQuotedString( out pName ).Should().BeTrue();
+            pName.Should().Be( "p3" );
+            m.MatchWhiteSpaces( 0 ).Should().BeTrue();
+            m.MatchChar( ':' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.MatchChar( '[' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.TryMatchJSONQuotedString( out pName ).Should().BeTrue();
+            pName.Should().Be( "p4" );
+            m.MatchWhiteSpaces( 0 ).Should().BeTrue();
+            m.MatchChar( ':' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.MatchChar( '{' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.TryMatchJSONQuotedString().Should().BeTrue();
+            m.MatchWhiteSpaces( 0 ).Should().BeTrue();
+            m.MatchChar( ':' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.TryMatchDoubleValue().Should().BeTrue();
+            m.MatchWhiteSpaces( 0 ).Should().BeTrue();
+            m.MatchChar( ',' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.TryMatchJSONQuotedString( out pName ).Should().BeTrue();
+            pName.Should().Be( "p6" );
+            m.MatchWhiteSpaces( 0 ).Should().BeTrue();
+            m.MatchChar( ':' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.MatchChar( '[' ).Should().BeTrue();
+            m.MatchWhiteSpaces( 0 ).Should().BeTrue();
+            m.MatchChar( ']' ).Should().BeTrue();
+            m.MatchWhiteSpaces( 0 ).Should().BeTrue();
+            m.MatchChar( ',' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.TryMatchJSONQuotedString().Should().BeTrue();
+            m.MatchWhiteSpaces( 0 ).Should().BeTrue();
+            m.MatchChar( ':' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.MatchChar( '{' ).Should().BeTrue();
+            m.MatchWhiteSpaces( 0 ).Should().BeTrue();
+            m.MatchChar( '}' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.MatchChar( '}' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.MatchChar( ']' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.MatchChar( '}' ).Should().BeTrue();
+            m.MatchWhiteSpaces().Should().BeTrue();
+            m.MatchChar( '}' ).Should().BeTrue();
+            m.MatchWhiteSpaces( 2 ).Should().BeTrue();
+            m.IsEnd.Should().BeTrue();
         }
 
         [TestCase( "0", 0 )]
@@ -201,15 +246,15 @@ namespace CK.Text.Tests
         public void matching_double_values( string s, double d )
         {
             StringMatcher m = new StringMatcher( "P" + s + "S" );
-            Assert.That( m.MatchChar( 'P' ) );
-            int idx = m.StartIndex;
-            Assert.That( m.TryMatchDoubleValue() );
-            m.UncheckedMove( idx - m.StartIndex );
             double parsed;
-            Assert.That( m.TryMatchDoubleValue( out parsed ) );
-            Assert.That( parsed, Is.EqualTo( d ).Within( 1 ).Ulps );
-            Assert.That( m.MatchChar( 'S' ) );
-            Assert.That( m.IsEnd );
+            m.MatchChar( 'P' ).Should().BeTrue();
+            int idx = m.StartIndex;
+            m.TryMatchDoubleValue().Should().BeTrue();
+            m.UncheckedMove( idx - m.StartIndex );
+            m.TryMatchDoubleValue( out parsed ).Should().BeTrue();
+            parsed.Should().BeApproximately( d, 1f );
+            m.MatchChar( 'S' ).Should().BeTrue();
+            m.IsEnd.Should().BeTrue();
         }
 
         [TestCase( "N" )]
@@ -225,38 +270,41 @@ namespace CK.Text.Tests
                 string s = sId;
                 var m = new StringMatcher( s );
                 Guid readId;
-                Assert.That( m.TryMatchGuid( out readId ) && readId == id );
+                m.TryMatchGuid( out readId ).Should().BeTrue();
+                readId.Should().Be( id );
             }
             {
                 string s = "S" + sId;
                 var m = new StringMatcher( s );
                 Guid readId;
-                Assert.That( m.MatchChar( 'S' ) );
-                Assert.That( m.TryMatchGuid( out readId ) && readId == id );
+                m.TryMatchChar( 'S' ).Should().BeTrue();
+                m.TryMatchGuid( out readId ).Should().BeTrue();
+                readId.Should().Be( id );
             }
             {
                 string s = "S" + sId + "T";
                 var m = new StringMatcher( s );
                 Guid readId;
-                Assert.That( m.MatchChar( 'S' ) );
-                Assert.That( m.TryMatchGuid( out readId ) && readId == id );
-                Assert.That( m.MatchChar( 'T' ) );
+                m.MatchChar( 'S' ).Should().BeTrue();
+                m.TryMatchGuid( out readId ).Should().BeTrue();
+                readId.Should().Be( id );
+                m.MatchChar( 'T' ).Should().BeTrue();
             }
             sId = sId.Remove( sId.Length - 1 );
             {
                 string s = sId;
                 var m = new StringMatcher( s );
                 Guid readId;
-                Assert.That( m.TryMatchGuid( out readId ), Is.False );
-                Assert.That( m.StartIndex, Is.EqualTo( 0 ) );
+                m.TryMatchGuid( out readId ).Should().BeFalse();
+                m.StartIndex.Should().Be( 0 );
             }
             sId = id.ToString().Insert( 3, "K" ).Remove( 4 );
             {
                 string s = sId;
                 var m = new StringMatcher( s );
                 Guid readId;
-                Assert.That( m.TryMatchGuid( out readId ), Is.False );
-                Assert.That( m.StartIndex, Is.EqualTo( 0 ) );
+                m.TryMatchGuid( out readId ).Should().BeFalse();
+                m.StartIndex.Should().Be( 0 );
             }
         }
 

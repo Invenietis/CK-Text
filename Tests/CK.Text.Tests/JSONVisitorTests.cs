@@ -1,9 +1,9 @@
-﻿using NUnit.Framework;
+﻿using FluentAssertions;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace CK.Text.Tests
 {
@@ -54,8 +54,8 @@ namespace CK.Text.Tests
 }";
             JSONProperties p = new JSONProperties( new StringMatcher( s ) );
             p.Visit();
-            CollectionAssert.AreEqual( new[] { "p1", "p2", "p3", "p4Before", "pSub", "p4", "p5", "p6", "p7" }, p.Properties );
-            CollectionAssert.AreEqual( new[] {
+            p.Properties.ShouldBeEquivalentTo( new[] { "p1", "p2", "p3", "p4Before", "pSub", "p4", "p5", "p6", "p7" } );
+            p.Paths.ShouldBeEquivalentTo( new[] {
                 " => 0=p1",
                 " => 1=p2",
                 "1=p2 => 0=p3",
@@ -64,7 +64,7 @@ namespace CK.Text.Tests
                 "1=p2|0=p3|0= => 1=p4",
                 "1=p2|0=p3|0=|1=p4 => 0=p5",
                 "1=p2|0=p3|0=|1=p4 => 1=p6",
-                "1=p2|0=p3|0=|1=p4 => 2=p7" }, p.Paths );
+                "1=p2|0=p3|0=|1=p4 => 2=p7" } );
         }
 
         class JSONDoubleSum : JSONVisitor
@@ -96,7 +96,7 @@ namespace CK.Text.Tests
 }";
             var v = new JSONDoubleSum( data );
             v.Visit();
-            Assert.That( v.Sum, Is.EqualTo( 9.87e2 + 8.65 + 45.98 + 12.786 + 874.6324 ) );
+            v.Sum.Should().Be( 9.87e2 + 8.65 + 45.98 + 12.786 + 874.6324 );
         }
 
         class JSONDoubleRewriter : JSONVisitor
@@ -162,7 +162,7 @@ namespace CK.Text.Tests
 
             var summer = new JSONDoubleSum( rewritten );
             summer.Visit();
-            Assert.That( summer.Sum, Is.EqualTo( 987 + 8 + 45 + 12 + 874 ) );
+            summer.Sum.Should().Be( 987 + 8 + 45 + 12 + 874 );
         }
 
 
@@ -224,7 +224,7 @@ namespace CK.Text.Tests
 ]
 }";
             string mini = JSONMinifier.Minify( data );
-            Assert.That( mini, Is.EqualTo( @"{""v"":9.87e2,""a"":[8.65,true,{},{""x"":null,""y"":0.0},874]}" ) );
+            mini.Should().Be( @"{""v"":9.87e2,""a"":[8.65,true,{},{""x"":null,""y"":0.0},874]}" );
         }
 
 

@@ -11,6 +11,10 @@
     <ProjectReference Include="..\..\CK.Text\CK.Text.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="FluentAssertions" Version="4.19.2"/>
+  </ItemGroup>
+  
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp1.1' ">
     <PackageReference Include="nunitlite" Version="3.6.1" />
     <PackageReference Include="NUnit" Version="3.6.1" />
