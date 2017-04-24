@@ -156,7 +156,7 @@ namespace CK.Text
         /// or -1 if this is not an hexadecimal digit.
         /// </summary>
         /// <param name="c">This character.</param>
-        /// <returns>The value for this character.</returns>
+        /// <returns>The value for this character or -1 if this is not an hexadecimal digit.</returns>
         public static int HexDigitValue( this char c )
         {
             int cN = c - '0';
