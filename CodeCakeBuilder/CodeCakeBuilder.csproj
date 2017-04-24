@@ -71,6 +71,7 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="Bootstrap.ps1" />
+    <None Include="CoreBuild.proj" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
