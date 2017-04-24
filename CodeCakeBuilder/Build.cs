@@ -52,6 +52,7 @@ namespace CodeCake
 
             const string solutionName = "CK-Text";
             const string solutionFileName = solutionName + ".sln";
+            const string coreBuildProj = "CoreBuild.proj";
 
             var releasesDir = Cake.Directory( "CodeCakeBuilder/Releases" );
 
@@ -67,7 +68,7 @@ namespace CodeCake
             SimpleRepositoryInfo gitInfo = Cake.GetSimpleRepositoryInfo();
 
             // Configuration is either "Debug" or "Release".
-            string configuration = null;
+            string configuration = "Debug";
 
             Task( "Check-Repository" )
                 .Does( () =>
@@ -82,10 +83,11 @@ namespace CodeCake
                         else throw new Exception("Repository is not ready to be published.");
                     }
 
-                    configuration = gitInfo.IsValidRelease 
-                                    && (gitInfo.PreReleaseName.Length == 0 || gitInfo.PreReleaseName == "rc") 
-                                    ? "Release" 
-                                    : "Debug";
+                    if( gitInfo.IsValidRelease 
+                        && (gitInfo.PreReleaseName.Length == 0 || gitInfo.PreReleaseName == "rc") )
+                    {
+                        configuration = "Release";
+                    }
 
                     Cake.Information( "Publishing {0} projects with version={1} and configuration={2}: {3}",
                         projectsToPublish.Count(),
@@ -109,7 +111,7 @@ namespace CodeCake
                 .Does( () =>
                 {
                     // https://docs.microsoft.com/en-us/nuget/schema/msbuild-targets
-                    Cake.DotNetCoreRestore( new DotNetCoreRestoreSettings().AddVersionArguments( gitInfo ) );
+                    Cake.DotNetCoreRestore( coreBuildProj, new DotNetCoreRestoreSettings().AddVersionArguments( gitInfo ) );
                 } );
 
             Task("Build")
@@ -118,7 +120,7 @@ namespace CodeCake
                 .IsDependentOn("Restore-NuGet-Packages")
                 .Does(() =>
                {
-                   Cake.DotNetCoreBuild(solutionFileName,
+                   Cake.DotNetCoreBuild(coreBuildProj,
                        new DotNetCoreBuildSettings().AddVersionArguments(gitInfo, s =>
                        {
                            s.Configuration = configuration;
