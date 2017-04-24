@@ -269,7 +269,7 @@ namespace CK.Text
         }
 
         /// <summary>
-        /// Overriden to retrun adetailed string with <see cref="ErrorMessage"/> (if any),
+        /// Overriden to return a detailed string with <see cref="ErrorMessage"/> (if any),
         /// the <see cref="Head"/> character, <see cref="StartIndex"/> position and
         /// whole <see cref="Text"/> (Max character written for <see cref="Text"/> is 1024.
         /// </summary>

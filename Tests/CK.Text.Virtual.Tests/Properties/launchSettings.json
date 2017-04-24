@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "CK.Text.Giga.Tests": {
+    "CK.Text.Virtual.Tests": {
       "commandName": "Executable",
       "executablePath": "..\\..\\packages\\NUnit.Runners.Net4.2.6.4\\tools\\nunit.exe",
       "commandLineArgs": "bin\\Debug\\net451\\CK.Text.Virtual.Tests.exe"
