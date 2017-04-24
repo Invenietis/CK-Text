@@ -175,7 +175,7 @@ namespace CK.Text
         }
 
         /// <summary>
-        /// Visits a terminal value. This method simply calls <see cref="VirtualString.MatchWhiteSpaces(int)">Matcher.MatchWhiteSpaces(0)</see>
+        /// Visits a terminal value. This method simply calls <see cref="VirtualStringMatcher.MatchWhiteSpaces(long)">Matcher.MatchWhiteSpaces(0)</see>
         /// to skip any whitespace and <see cref="VirtualStringMatcherTextExtension.TryMatchJSONTerminalValue(VirtualStringMatcher)">TryMatchJSONTerminalValue</see>
         /// to skip the value itself.
         /// </summary>
@@ -187,7 +187,7 @@ namespace CK.Text
         }
 
         /// <summary>
-        /// Skips white spaces: simply calls <see cref="VirtualStringMatcher.MatchWhiteSpaces(int)"/> 
+        /// Skips white spaces: simply calls <see cref="VirtualStringMatcher.MatchWhiteSpaces(long)"/> 
         /// with 0 minimal count of spaces.
         /// </summary>
         protected virtual void SkipWhiteSpaces()
