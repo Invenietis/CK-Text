@@ -52,7 +52,7 @@ namespace CodeCake
 
             const string solutionName = "CK-Text";
             const string solutionFileName = solutionName + ".sln";
-            const string coreBuildProj = "CoreBuild.proj";
+            const string coreBuildProj = "CodeCakeBuilder/CoreBuild.proj";
 
             var releasesDir = Cake.Directory( "CodeCakeBuilder/Releases" );
 
