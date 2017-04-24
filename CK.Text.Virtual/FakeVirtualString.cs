@@ -36,7 +36,7 @@ namespace CK.Text.Virtual
         public string Text => _text;
 
         /// <summary>
-        /// Gets the char value of <see cref="Stream"/> at position <paramref name="index"/>.
+        /// Gets the char value of <see cref="System.IO.Stream"/> at position <paramref name="index"/>.
         /// </summary>
         /// <param name="index">The index to look at.</param>
         /// <returns>The char found.</returns>

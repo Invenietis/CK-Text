@@ -196,7 +196,7 @@ namespace CK.Text.Virtual
         /// <param name="charCount">The successfully matched character count. 
         /// Must be positive and should not move head past the end of the substring.</param>
         /// <returns>Always true to use it as the return statement in a match method.</returns>
-        public bool Forward( int charCount )
+        public bool Forward( long charCount )
         {
             if( charCount < 0 ) throw new ArgumentException( nameof( charCount ) );
             long newLen = _length - charCount;

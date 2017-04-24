@@ -77,6 +77,7 @@ namespace CK.Text.Virtual
         /// <value>The path.</value>
         protected IReadOnlyList<Parent> Path => _path;
 
+        /// <summary>
         /// Visits any json item: it is either a terminal (<see cref="VisitTerminalValue()"/>), 
         /// {"an":"object"} (see <see cref="VisitObjectContent()"/> or ["an","array"] (see <see cref="VisitArrayContent()"/>).
         /// </summary>

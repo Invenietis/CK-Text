@@ -34,7 +34,7 @@ namespace CK.Text.Virtual
         /// <summary>
         /// Initialises a new instance of the <see cref="VirtualString"/> class on a non null stream.
         /// </summary>
-        /// <param name="stream">The stream to parse. Must be Readable and Seekable.</param>
+        /// <param name="textStream">The stream to parse. Must be Readable and Seekable.</param>
         /// <param name="startIndex">Index where the match must start in <paramref name="textStream"/>.</param>
         /// <param name="length">Number of character to consider.</param>
         /// <param name="bufferSize">The size of the buffer used for matching.</param>
