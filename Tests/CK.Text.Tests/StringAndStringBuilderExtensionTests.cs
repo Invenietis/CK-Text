@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using System.IO;
 using System.Diagnostics;
+using FluentAssertions;
 
 namespace CK.Text.Tests
 {
@@ -17,7 +15,7 @@ namespace CK.Text.Tests
         {
             var strings = new string[] { "A", "Hello", "B", "World", null, "End" };
             var s = strings.Concatenate( "|+|" );
-            Assert.That( s, Is.EqualTo( "A|+|Hello|+|B|+|World|+||+|End" ) );
+            s.Should().Be( "A|+|Hello|+|B|+|World|+||+|End" );
         }
 
         [Test]
@@ -26,29 +24,29 @@ namespace CK.Text.Tests
             var strings = new string[] { "A", "Hello", "B", "World", null, "End" };
             var b = new StringBuilder();
             b.AppendStrings( strings, "|+|" );
-            Assert.That( b.ToString(), Is.EqualTo( "A|+|Hello|+|B|+|World|+||+|End" ) );
+            b.ToString().Should().Be( "A|+|Hello|+|B|+|World|+||+|End" );
         }
 
         [Test]
         public void appending_multiple_strings_with_a_repeat_count()
         {
-            Assert.That( new StringBuilder().Append( "A", 1 ).ToString(), Is.EqualTo( "A" ) );
-            Assert.That( new StringBuilder().Append( "AB", 2 ).ToString(), Is.EqualTo( "ABAB" ) );
-            Assert.That( new StringBuilder().Append( "|-|", 10 ).ToString(), Is.EqualTo( "|-||-||-||-||-||-||-||-||-||-|" ) );
+            new StringBuilder().Append( "A", 1 ).ToString().Should().Be( "A" );
+            new StringBuilder().Append( "AB", 2 ).ToString().Should().Be( "ABAB" );
+            new StringBuilder().Append( "|-|", 10 ).ToString().Should().Be( "|-||-||-||-||-||-||-||-||-||-|" );
         }
 
         [Test]
         public void appends_multiple_strings_silently_ignores_0_or_negative_RepeatCount()
         {
-            Assert.That( new StringBuilder().Append( "A", 0 ).ToString(), Is.Empty );
-            Assert.That( new StringBuilder().Append( "A", -1 ).ToString(), Is.Empty );
+            new StringBuilder().Append( "A", 0 ).ToString().Should().BeEmpty();
+            new StringBuilder().Append( "A", -1 ).ToString().Should().BeEmpty();
         }
 
         [Test]
         public void appends_multiple_strings_silently_ignores_null_or_empty_string_to_repeat()
         {
-            Assert.That( new StringBuilder().Append( "", 20 ).ToString(), Is.Empty );
-            Assert.That( new StringBuilder().Append( (string)null, 20 ).ToString(), Is.Empty );
+            new StringBuilder().Append( "", 20 ).ToString().Should().BeEmpty();
+            new StringBuilder().Append( (string)null, 20 ).ToString().Should().BeEmpty();
         }
 
         [TestCase( '0', 0 )]
@@ -66,7 +64,7 @@ namespace CK.Text.Tests
         [TestCase( 'Z', -1 )]
         public void HexDigitValue_extension_method_on_character( char c, int expected )
         {
-            Assert.That( c.HexDigitValue(), Is.EqualTo( expected ) );
+            c.HexDigitValue().Should().Be( expected );
         }
 
         [Test]
@@ -76,37 +74,37 @@ namespace CK.Text.Tests
                 StringBuilder b = new StringBuilder();
                 string text = @"One line.";
                 string t = b.AppendMultiLine( "|", text, true ).ToString();
-                Assert.That( t, Is.EqualTo( @"|One line." ) );
+                t.Should().Be( @"|One line." );
             }
             {
                 StringBuilder b = new StringBuilder();
                 string text = @"";
                 string t = b.AppendMultiLine( "|", text, true ).ToString();
-                Assert.That( t, Is.EqualTo( @"|" ) );
+                t.Should().Be( @"|" );
             }
             {
                 StringBuilder b = new StringBuilder();
                 string text = null;
                 string t = b.AppendMultiLine( "|", text, true ).ToString();
-                Assert.That( t, Is.EqualTo( @"|" ) );
+                t.Should().Be( @"|" );
             }
             {
                 StringBuilder b = new StringBuilder();
                 string text = @"One line.";
                 string t = b.AppendMultiLine( "|", text, false ).ToString();
-                Assert.That( t, Is.EqualTo( @"One line." ) );
+                t.Should().Be( @"One line." );
             }
             {
                 StringBuilder b = new StringBuilder();
                 string text = @"";
-                string t = b.AppendMultiLine( "|", text, false ).ToString();
-                Assert.That( t, Is.EqualTo( @"" ) );
+                string t = b.AppendMultiLine( "|", text, false ).ToString();;
+                t.Should().Be( @"" );
             }
             {
                 StringBuilder b = new StringBuilder();
                 string text = null;
                 string t = b.AppendMultiLine( "|", text, false ).ToString();
-                Assert.That( t, Is.EqualTo( @"" ) );
+                t.Should().Be( @"" );
             }
 
         }
@@ -118,25 +116,25 @@ namespace CK.Text.Tests
                 StringBuilder b = new StringBuilder();
                 string text = Environment.NewLine;
                 string t = b.AppendMultiLine( "|", text, true ).ToString();
-                Assert.That( t, Is.EqualTo( "|" ) );
+                t.Should().Be( "|" );
             }
             {
                 StringBuilder b = new StringBuilder();
                 string text = Environment.NewLine + Environment.NewLine;
                 string t = b.AppendMultiLine( "|", text, true ).ToString();
-                Assert.That( t, Is.EqualTo( "|" + Environment.NewLine + "|" ) );
+                t.Should().Be( "|" + Environment.NewLine + "|" );
             }
             {
                 StringBuilder b = new StringBuilder();
                 string text = Environment.NewLine + Environment.NewLine + Environment.NewLine;
                 string t = b.AppendMultiLine( "|", text, true ).ToString();
-                Assert.That( t, Is.EqualTo( "|" + Environment.NewLine + "|" + Environment.NewLine + "|" ) );
+                t.Should().Be( "|" + Environment.NewLine + "|" + Environment.NewLine + "|" );
             }
             {
                 StringBuilder b = new StringBuilder();
                 string text = Environment.NewLine + Environment.NewLine + Environment.NewLine + "a";
                 string t = b.AppendMultiLine( "|", text, true ).ToString();
-                Assert.That( t, Is.EqualTo( "|" + Environment.NewLine + "|" + Environment.NewLine + "|" + Environment.NewLine + "|a" ) );
+                t.Should().Be( "|" + Environment.NewLine + "|" + Environment.NewLine + "|" + Environment.NewLine + "|a" );
             }
         }
 
@@ -155,12 +153,12 @@ Last line.";
                 // git clone with LF in files instead of CRLF. 
                 // Our (slow) AppendMultiLine normalizes the end of lines to Environment.NewLine.
                 string t = b.AppendMultiLine( "|", text, true ).ToString();
-                Assert.That( t, Is.EqualTo( @"|First line.
+                t.Should().Be( @"|First line.
 |Second line.
 |    Indented.
 |
 |    Also indented.
-|Last line.".NormalizeEOL() ) );
+|Last line.".NormalizeEOL() );
             }
 
             {
@@ -172,12 +170,12 @@ Second line.
     Also indented.
 Last line.";
                 string t = b.AppendMultiLine( "|", text, false ).ToString();
-                Assert.That( t, Is.EqualTo( @"First line.
+                t.Should().Be( @"First line.
 |Second line.
 |    Indented.
 |
 |    Also indented.
-|Last line.".NormalizeEOL() ) );
+|Last line.".NormalizeEOL() );
             }
 
         }
@@ -193,20 +191,20 @@ Second line.
             {
                 StringBuilder b = new StringBuilder();
                 string t = b.AppendMultiLine( "|", text, true, prefixLastEmptyLine: false ).ToString();
-                Assert.That( t, Is.EqualTo( @"|First line.
+                t.Should().Be( @"|First line.
 |Second line.
 |
-|".NormalizeEOL() ) );
+|".NormalizeEOL() );
             }
 
             {
                 StringBuilder b = new StringBuilder();
                 string t = b.AppendMultiLine( "|", text, true, prefixLastEmptyLine: true ).ToString();
-                Assert.That( t, Is.EqualTo( @"|First line.
+                t.Should().Be( @"|First line.
 |Second line.
 |
 |
-|".NormalizeEOL() ) );
+|".NormalizeEOL() );
             }
         }
 
@@ -227,7 +225,7 @@ Second line.
             long naive = PrefixWithNaiveReplace( w, text, results );
             string aNaive = results[0];
             long better = PrefixWithOurExtension( w, text, results );
-            Assert.That( results[0], Is.EqualTo( aNaive ) );
+            results[0].Should().Be( aNaive );
             for( int i = 0; i < count; ++i )
             {
                 naive += PrefixWithNaiveReplace( w, text, results );
@@ -236,9 +234,9 @@ Second line.
             double factor = (double)better / naive;
             Console.WriteLine( $"Naive:{naive}, Extension:{better}. Factor: {factor}" );
 #if DEBUG
-            Assert.That( factor > 1 );
+            factor.Should().BeGreaterThan( 1 );
 #else
-            Assert.That( factor < 1 );
+            factor.Should().BeLessThan( 1 );
 #endif
         }
 
