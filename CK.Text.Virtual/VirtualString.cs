@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace CK.Text.Virtual
+namespace CK.Text
 {
     /// <summary>
     /// This class is used as a parameter for VirtualStringMatcher.

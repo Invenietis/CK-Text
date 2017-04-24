@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace CK.Text.Virtual
+namespace CK.Text
 {
     /// <summary>
     /// This class supports "Match and Forward" pattern for a <see cref="IVirtualString"/>.
@@ -200,7 +200,7 @@ namespace CK.Text.Virtual
         {
             if( charCount < 0 ) throw new ArgumentException( nameof( charCount ) );
             long newLen = _length - charCount;
-            if( newLen < 0 ) throw new InvalidOperationException( Impl.CoreResources.StreamMatcherForwardPastEnd );
+            if( newLen < 0 ) throw new InvalidOperationException( Impl.CoreResources.StringMatcherForwardPastEnd );
             _startIndex += charCount;
             _length = newLen;
             _errorDescription = null;

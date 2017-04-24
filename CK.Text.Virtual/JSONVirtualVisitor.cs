@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Globalization;
 
-namespace CK.Text.Virtual
+namespace CK.Text
 {
     /// <summary>
     /// JSON Visitor for big files

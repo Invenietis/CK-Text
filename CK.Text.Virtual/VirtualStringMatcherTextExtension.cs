@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace CK.Text.Virtual
+namespace CK.Text
 {
     /// <summary>
     /// Extends <see cref="VirtualStringMatcher"/> with useful (yet basic) methods.

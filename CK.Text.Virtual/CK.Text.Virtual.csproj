@@ -15,5 +15,10 @@
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
-  
+
+  <ItemGroup>
+    <ProjectReference Include="..\CK.Text\CK.Text.csproj" />
+  </ItemGroup>
+
+
 </Project>

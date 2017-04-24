@@ -1,4 +1,4 @@
-﻿namespace CK.Text.Virtual
+﻿namespace CK.Text
 {
     /// <summary>
     /// This interface contains definitions for <see cref="VirtualStringMatcher"/> paramater.
