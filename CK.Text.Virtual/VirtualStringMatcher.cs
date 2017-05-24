@@ -56,12 +56,12 @@ namespace CK.Text
         public IVirtualString Text => _text;
 
         /// <summary>
-        /// Gets a substring of the Virtual String.
+        /// Returns a substring of the Virtual String.
         /// It calls <see cref="IVirtualString.GetText(long, int)"/> on <see cref="Text"/>.
         /// </summary>
         /// <param name="index">The index where we want to start the substring.</param>
         /// <param name="length">The length of the substring.</param>
-        /// <returns></returns>
+        /// <returns>The string containing characters in the range.</returns>
         public string GetText( long index, int length )
         {
             return _text.GetText( index, length );

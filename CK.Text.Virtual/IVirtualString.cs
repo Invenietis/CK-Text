@@ -1,7 +1,7 @@
 ﻿namespace CK.Text
 {
     /// <summary>
-    /// This interface contains definitions for <see cref="VirtualStringMatcher"/> paramater.
+    /// This interface contains definitions for <see cref="VirtualStringMatcher"/> parameter.
     /// </summary>
     public interface IVirtualString
     {
@@ -19,7 +19,7 @@
         char this[long index] { get; }
 
         /// <summary>
-        /// Returns a string from the <see cref="IVirtualString"/> in the given range.
+        /// Returns a substring from the <see cref="IVirtualString"/> in the given range.
         /// </summary>
         /// <param name="index">The index to start the string from.</param>
         /// <param name="length">The length of the string.</param>

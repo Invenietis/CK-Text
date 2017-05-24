@@ -59,11 +59,11 @@ namespace CK.Text
         public string Text => _text;
 
         /// <summary>
-        /// Gets a substring of the text.
+        /// Returns a string from the string in the given range.
         /// </summary>
-        /// <param name="index">The index where we want to start the substring.</param>
-        /// <param name="length">The length of the substring.</param>
-        /// <returns></returns>
+        /// <param name="index">The index to start the string from.</param>
+        /// <param name="length">The length of the string.</param>
+        /// <returns>The string containing characters in the range.</returns>
         public string GetText( int index, int length )
         {
             return _text.Substring( index, length );
@@ -146,7 +146,7 @@ namespace CK.Text
         }
 
         /// <summary>
-        /// Adds an error (the message starts with the caller's method name) to the exisitng ones (if any).
+        /// Adds an error (the message starts with the caller's method name) to the existing ones (if any).
         /// </summary>
         /// <param name="expectedMessage">
         /// Optional object. Its <see cref="object.ToString()"/> will be used to generate an "expected '...'" message.
