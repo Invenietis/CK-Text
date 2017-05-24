@@ -113,7 +113,7 @@ namespace CK.Text.Virtual.Tests
             m.ErrorMessage.Should().NotBeNullOrEmpty();
             m.StartIndex.Should().Be( idx );
             m.Length.Should().Be( len );
-            m.SetSuccess();
+            m.ClearError();
         }
 
         [Test]

@@ -14,55 +14,6 @@ namespace CK.Text
     public static class StringMatcherTextExtension
     {
         /// <summary>
-        /// Matches Int32 values that must not start with '0' ('0' is valid but '0d', where d is any digit, is not).
-        /// A signed integer starts with a '-'. '-0' is valid but '-0d' (where d is any digit) is not.
-        /// If the value is to big for an Int32, it fails.
-        /// </summary>
-        /// <param name="this">This <see cref="StringMatcher"/>.</param>
-        /// <param name="i">The result integer. 0 on failure.</param>
-        /// <param name="minValue">Optional minimal value.</param>
-        /// <param name="maxValue">Optional maximal value.</param>
-        /// <returns><c>true</c> when matched, <c>false</c> otherwise.</returns>
-        public static bool MatchInt32( this StringMatcher @this, out int i, int minValue = int.MinValue, int maxValue = int.MaxValue )
-        {
-            i = 0;
-            int savedIndex = @this.StartIndex;
-            long value = 0;
-            bool signed;
-            if( @this.IsEnd ) return @this.SetError();
-            if( (signed = @this.TryMatchChar( '-' )) && @this.IsEnd ) return @this.BackwardAddError( savedIndex );
-
-            char c;
-            if( @this.TryMatchChar( '0' ) )
-            {
-                if( !@this.IsEnd && (c = @this.Head) >= '0' && c <= '9' ) return @this.BackwardAddError( savedIndex, "0...9" );
-                return @this.SetSuccess();
-            }
-            unchecked
-            {
-                long iMax = Int32.MaxValue;
-                if( signed ) iMax = iMax + 1;
-                while( !@this.IsEnd && (c = @this.Head) >= '0' && c <= '9' )
-                {
-                    value = value * 10 + (c - '0');
-                    if( value > iMax ) break;
-                    @this.UncheckedMove( 1 );
-                }
-            }
-            if( @this.StartIndex > savedIndex )
-            {
-                if( signed ) value = -value;
-                if( value < (long)minValue || value > (long)maxValue )
-                {
-                    return @this.BackwardAddError( savedIndex, String.Format( CultureInfo.InvariantCulture, "value between {0} and {1}", minValue, maxValue ) );
-                }
-                i = (int)value;
-                return @this.SetSuccess();
-            }
-            return @this.SetError();
-        }
-
-        /// <summary>
         /// Matches a Guid. No error is set if match fails.
         /// </summary>
         /// <remarks>
@@ -275,51 +226,6 @@ namespace CK.Text
         }
 
         /// <summary>
-        /// Tries to match a //.... or /* ... */ comment.
-        /// Proper termination of comment (by a new line or the closing */) is not required: 
-        /// a ending /*... is considered valid.
-        /// </summary>
-        /// <param name="this">This <see cref="StringMatcher"/>.</param>
-        /// <returns>True on success, false if the <see cref="StringMatcher.Head"/> is not on a /.</returns>
-        public static bool TryMatchJSComment( this StringMatcher @this )
-        {
-            if( !@this.TryMatchChar( '/' ) ) return false;
-            if( @this.TryMatchChar( '/' ) )
-            {
-                while( !@this.IsEnd && @this.Head != '\n' ) @this.UncheckedMove( 1 );
-                if( !@this.IsEnd ) @this.UncheckedMove( 1 );
-                return true;
-            }
-            else if( @this.TryMatchChar( '*' ) )
-            {
-                while( !@this.IsEnd )
-                {
-                    if( @this.Head == '*' )
-                    {
-                        @this.UncheckedMove( 1 );
-                        if( @this.IsEnd || @this.TryMatchChar( '/' ) ) return true;
-                    }
-                    @this.UncheckedMove( 1 );
-                }
-                return true;
-            }
-            @this.UncheckedMove( -1 );
-            return false;
-        }
-
-        /// <summary>
-        /// Skips any white spaces or JS comments (//... or /* ... */) and always returns true.
-        /// </summary>
-        /// <param name="this">This <see cref="StringMatcher"/>.</param>
-        /// <returns>Always true to ease composition.</returns>
-        public static bool SkipWhiteSpacesAndJSComments( this StringMatcher @this )
-        {
-            @this.MatchWhiteSpaces( 0 );
-            while( @this.TryMatchJSComment() ) @this.MatchWhiteSpaces( 0 );
-            return true;
-        }
-
-        /// <summary>
         /// Matches a JSON terminal value: a "string", null, a number (double value), true or false.
         /// This method ignores the actual value and does not set any error if match fails.
         /// </summary>
@@ -425,7 +331,7 @@ namespace CK.Text
         /// <param name="this">This <see cref="StringMatcher"/>.</param>
         /// <param name="value">
         /// A list of objects (for array), a list of KeyValuePair&lt;string,object&gt; for object or
-        /// a double, string, bollean or null (for null).</param>
+        /// a double, string, boolean or null (for null).</param>
         /// <returns>True on success, false on error.</returns>
         public static bool MatchJSONObject( this StringMatcher @this, out object value )
         {
