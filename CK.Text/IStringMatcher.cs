@@ -95,7 +95,7 @@ namespace CK.Text
         /// false to append it (as a cause: [previous] &lt;-- [added])</param>
         /// <param name="callerName">Name of the caller (automatically injected by the compiler).</param>
         /// <returns>Always false to use it as the return statement in a match method.</returns>
-        bool AddError( object expectedMesage = null, bool beforeExisting = false, [CallerMemberName]string callerName = null );
+        bool AddError( object expectedMessage = null, bool beforeExisting = false, [CallerMemberName]string callerName = null );
 
         /// <summary>
         /// Clears any error and returns true. 
