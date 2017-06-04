@@ -48,40 +48,47 @@ if (!(Test-Path $builderPackageConfig)) {
 $msbuildExe = "msbuild"
 # Accept MSBuild from PATH
 if (!(Get-Command $msbuildExe -ErrorAction SilentlyContinue)) {
-    Write-Verbose "MSBuild does not exist in path."
-    # Install VSSetup module
-    if (!(Get-Command "Get-VSSetupInstance" -ErrorAction SilentlyContinue)) {
-        Write-Verbose "Installing VSSetup module..."
-        # Install VSSetup on user
-        if($PSVersionTable.PSVersion.Major -ge 5) {
-            Write-Verbose "Installing VSSetup using Install-Module"
-            # PS5+: Use Install-Module
-            Install-PackageProvider -Name NuGet -Scope CurrentUser -Force
-            Install-Module VSSetup -Scope CurrentUser -Force
-        } else {
-            Write-Verbose "Installing VSSetup using local extraction"
-            # PS3-4: Extract locally
-            $vssetupTempFile = [System.IO.Path]::GetTempFileName()
-            Invoke-WebRequest -Uri $vssetupUrl -OutFile $vssetupTempFile
-            Add-Type -assembly "system.io.compression.filesystem"
-            $vssetupDir = "$([Environment]::GetFolderPath('MyDocuments'))\WindowsPowerShell\Modules\VSSetup"
-            Write-Verbose "VSSetup module installed in: $vssetupDir"
-            [io.compression.zipfile]::ExtractToDirectory($vssetupTempFile, $vssetupDir)
-            Remove-Item $vssetupTempFile -Force
-            Import-Module 'VSSetup'
+    Write-Verbose "MSBuild does not exist in PATH."
+    # VS 2015 and under: Get MSBuild 15 and 14 from registry
+    if (Test-Path 'HKLM:\software\Microsoft\MSBuild\ToolsVersions\15.0') {
+        $msbuildExe = Join-Path -Path (Get-ItemProperty 'HKLM:\software\Microsoft\MSBuild\ToolsVersions\15.0').MSBuildToolsPath -childpath "msbuild.exe" 
+    } elseif (Test-Path 'HKLM:\software\Microsoft\MSBuild\ToolsVersions\14.0') {
+        $msbuildExe = Join-Path -Path (Get-ItemProperty 'HKLM:\software\Microsoft\MSBuild\ToolsVersions\14.0').MSBuildToolsPath -childpath "msbuild.exe" 
+    } else {
+        # VS 2017: Install VSSetup module
+        if (!(Get-Command "Get-VSSetupInstance" -ErrorAction SilentlyContinue)) {
+            Write-Verbose "Installing VSSetup module..."
+            # Install VSSetup on user
+            if($PSVersionTable.PSVersion.Major -ge 5) {
+                Write-Verbose "Installing VSSetup using Install-Module"
+                # PS5+: Use Install-Module
+                Install-PackageProvider -Name NuGet -Scope CurrentUser -Force
+                Install-Module VSSetup -Scope CurrentUser -Force
+            } else {
+                Write-Verbose "Installing VSSetup using local extraction"
+                # PS3-4: Extract locally
+                $vssetupTempFile = [System.IO.Path]::GetTempFileName()
+                Invoke-WebRequest -Uri $vssetupUrl -OutFile $vssetupTempFile
+                Add-Type -assembly "system.io.compression.filesystem"
+                $vssetupDir = "$([Environment]::GetFolderPath('MyDocuments'))\WindowsPowerShell\Modules\VSSetup"
+                Write-Verbose "VSSetup module installed in: $vssetupDir"
+                [io.compression.zipfile]::ExtractToDirectory($vssetupTempFile, $vssetupDir)
+                Remove-Item $vssetupTempFile -Force
+                Import-Module 'VSSetup'
+            }
         }
+        if (!(Get-Command "Get-VSSetupInstance" -ErrorAction SilentlyContinue)) {
+            Throw "VSSetup module could not be loaded after installation"
+        }
+        # Find MSBuild (Package Microsoft.Component.MSBuild)
+        $vsi = Get-VSSetupInstance -All | Select-VSSetupInstance -Require 'Microsoft.Component.MSBuild' -Latest
+        if (!($vsi)) {
+            Throw "Could not find a Visual Studio installation with package Microsoft.Component.MSBuild"
+        }
+        Write-Verbose "Found Visual Studio installation in $($vsi.InstallationPath)"
+        $vsiPackage = $vsi.Packages | Where {$_.Id -eq 'Microsoft.Component.MSBuild'}
+        $msbuildExe = [io.path]::combine($vsi.InstallationPath,'MSBuild',"$($vsiPackage.Version.Major).$($vsiPackage.Version.Minor)",'Bin','MSBuild.exe')
     }
-    if (!(Get-Command "Get-VSSetupInstance" -ErrorAction SilentlyContinue)) {
-        Throw "VSSetup module could not be loaded after installation"
-    }
-    # Find MSBuild (Package Microsoft.Component.MSBuild)
-    $vsi = Get-VSSetupInstance -All | Select-VSSetupInstance -Require 'Microsoft.Component.MSBuild' -Latest
-    if (!($vsi)) {
-        Throw "Could not find a Visual Studio instance with Microsoft.Component.MSBuild"
-    }
-    Write-Verbose "Found Visual Studio installation in $($vsi.InstallationPath)"
-    $vsiPackage = $vsi.Packages | Where {$_.Id -eq 'Microsoft.Component.MSBuild'}
-    $msbuildExe = [io.path]::combine($vsi.InstallationPath,'MSBuild',"$($vsiPackage.Version.Major).$($vsiPackage.Version.Minor)",'Bin','MSBuild.exe')
 }
 
 if (!(Test-Path $msbuildExe)) {
