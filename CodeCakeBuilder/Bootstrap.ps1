@@ -47,7 +47,9 @@ if (!(Test-Path $builderPackageConfig)) {
 
 $msbuildExe = "msbuild"
 # Accept MSBuild from PATH
-if (!(Get-Command $msbuildExe -ErrorAction SilentlyContinue)) {
+if (Get-Command $msbuildExe -ErrorAction SilentlyContinue) {
+    Write-Verbose "Using MSBuild from PATH"
+} else {
     Write-Verbose "MSBuild does not exist in PATH."
     # VS 2015 and under: Get MSBuild 15 and 14 from registry
     if (Test-Path 'HKLM:\software\Microsoft\MSBuild\ToolsVersions\15.0') {
@@ -89,12 +91,12 @@ if (!(Get-Command $msbuildExe -ErrorAction SilentlyContinue)) {
         $vsiPackage = $vsi.Packages | Where {$_.Id -eq 'Microsoft.Component.MSBuild'}
         $msbuildExe = [io.path]::combine($vsi.InstallationPath,'MSBuild',"$($vsiPackage.Version.Major).$($vsiPackage.Version.Minor)",'Bin','MSBuild.exe')
     }
+    if (!(Test-Path $msbuildExe)) {
+        Throw "Could not find $msbuildExe"
+    }
+    Write-Verbose "Using MSBuild from $msbuildExe"
 }
 
-if (!(Test-Path $msbuildExe)) {
-    Throw "Could not find $msbuildExe"
-}
-Write-Verbose "Using MSBuild: $msbuildExe"
 
 # Tools directory is for nuget.exe but it may be used to 
 # contain other utilities.
