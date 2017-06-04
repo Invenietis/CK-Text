@@ -14,7 +14,7 @@ environment:
 init:
 - git config --global core.autocrlf true
 install:
-- ps: CodeCakeBuilder\Bootstrap.ps1
+- ps: CodeCakeBuilder\Bootstrap.ps1 -Verbose
 build_script:
 - CodeCakeBuilder\bin\Release\CodeCakeBuilder.exe -nointeraction
 test: off
