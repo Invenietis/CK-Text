@@ -77,9 +77,9 @@ if (Get-Command $msbuildExe -ErrorAction SilentlyContinue) {
     Write-Information "Calling: Resolve-MSBuild"
     $msbuildExe = Resolve-MSBuild
     Write-Information "Resolved MSBuild at: $msbuildExe"
-}
-if (!(Test-Path $msbuildExe)) {
-    Throw "MSBuild executable does not exist: $msbuildExe"
+    if (!(Test-Path $msbuildExe)) {
+        Throw "MSBuild executable does not exist: $msbuildExe"
+    }
 }
 
 # Tools directory is for nuget.exe but it may be used to 
