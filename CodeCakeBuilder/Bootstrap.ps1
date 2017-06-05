@@ -4,23 +4,38 @@ Builds CodeCakeBuilder, and downloads tools like NuGet.exe.
 
 .DESCRIPTION
 This script builds CodeCakeBuilder with the help of nuget.exe (in Tools/, downloaded if missing).
-Requires Visual Studio 2017.
+Requires Visual Studio 2017 and/or MSBuild.
 
 .NOTES
 You may move this Bootstrap.ps1 to the solution directory, or let it in CodeCakeBuilder folder:
 The $solutionDir and $builderDir variables are automatically set.
-VSSetup module is required to find MSBuild. If missing, it will be installed.
+PowerShell (and WMF). 5.0 is required. See https://msdn.microsoft.com/en-us/powershell/wmf/readme for availability.
+
+Note that the following PowerShell modules and scripts will be installed or updated:
+- VSSetup - https://github.com/Microsoft/vssetup.powershell
+- Resolve-MSBuild - https://github.com/nightroman/Invoke-Build/blob/master/Resolve-MSBuild.ps1
+
+.PARAMETER Run
+If specified, runs CodeCakeBuilder immediately after building it.
+Omit to only build CodeCakeBuilder without running it.
 
 .EXAMPLE
-.Bootstrap.ps1 -Verbose
+./Bootstrap.ps1 -Verbose -InformationAction Continue
+
+.EXAMPLE
+./Bootstrap.ps1 -Run
+
 #>
+#Requires -Version 5
 [CmdletBinding()]
-Param()
+Param(
+    [Parameter(Mandatory=$false)]
+    [switch] $Run
+)
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 $nugetDownloadUrl = 'https://dist.nuget.org/win-x86-commandline/latest/nuget.exe'
-$vssetupUrl = 'https://github.com/Microsoft/vssetup.powershell/releases/download/1.0.58/VSSetup.zip'
 
 # Go back a level if ./CodeCakeBuilder isn't found
 $solutionDir = $PSScriptRoot
@@ -29,15 +44,15 @@ if (!(Test-Path $builderDir -PathType Container)) {
     $builderDir = $PSScriptRoot
     $solutionDir = Join-Path $builderDir ".."
 }
-Write-Verbose "Using solution directory: $solutionDir"
-Write-Verbose "Using builder directory: $builderDir"
+Write-Information "Using solution directory: $solutionDir"
+Write-Information "Using builder directory: $builderDir"
 
 # Ensure CodeCakeBuilder project exists
 $builderProj = Join-Path $builderDir "CodeCakeBuilder.csproj"
 if (!(Test-Path $builderProj)) {
     Throw "Could not find $builderProj"
 }
-Write-Verbose "Using builder project: $builderProj"
+Write-Information "Using builder project: $builderProj"
 
 # Ensure packages.config file exists.
 $builderPackageConfig = Join-Path $builderDir "packages.config"
@@ -45,78 +60,47 @@ if (!(Test-Path $builderPackageConfig)) {
     Throw "Could not find $builderPackageConfig"
 }
 
-$msbuildExe = "msbuild"
+# Resolve MSBuild executable
 # Accept MSBuild from PATH
+$msbuildExe = "msbuild"
 if (Get-Command $msbuildExe -ErrorAction SilentlyContinue) {
-    Write-Verbose "Using MSBuild from PATH"
+    Write-Information "Using MSBuild from PATH."
 } else {
-    Write-Verbose "MSBuild does not exist in PATH."
-    # VS 2015 and under: Get MSBuild 15 and 14 from registry
-    if (Test-Path 'HKLM:\software\Microsoft\MSBuild\ToolsVersions\15.0') {
-        $msbuildExe = Join-Path -Path (Get-ItemProperty 'HKLM:\software\Microsoft\MSBuild\ToolsVersions\15.0').MSBuildToolsPath -childpath "msbuild.exe" 
-    } elseif (Test-Path 'HKLM:\software\Microsoft\MSBuild\ToolsVersions\14.0') {
-        $msbuildExe = Join-Path -Path (Get-ItemProperty 'HKLM:\software\Microsoft\MSBuild\ToolsVersions\14.0').MSBuildToolsPath -childpath "msbuild.exe" 
-    } else {
-        # VS 2017: Install VSSetup module
-        if (!(Get-Command "Get-VSSetupInstance" -ErrorAction SilentlyContinue)) {
-            Write-Verbose "Installing VSSetup module..."
-            # Install VSSetup on user
-            if($PSVersionTable.PSVersion.Major -ge 5) {
-                Write-Verbose "Installing VSSetup using Install-Module"
-                # PS5+: Use Install-Module
-                Install-PackageProvider -Name NuGet -Scope CurrentUser -Force
-                Install-Module VSSetup -Scope CurrentUser -Force
-            } else {
-                Write-Verbose "Installing VSSetup using local extraction"
-                # PS3-4: Extract locally
-                $vssetupTempFile = [System.IO.Path]::GetTempFileName()
-                Invoke-WebRequest -Uri $vssetupUrl -OutFile $vssetupTempFile
-                Add-Type -assembly "system.io.compression.filesystem"
-                $vssetupDir = "$([Environment]::GetFolderPath('MyDocuments'))\WindowsPowerShell\Modules\VSSetup"
-                Write-Verbose "VSSetup module installed in: $vssetupDir"
-                [io.compression.zipfile]::ExtractToDirectory($vssetupTempFile, $vssetupDir)
-                Remove-Item $vssetupTempFile -Force
-                Import-Module 'VSSetup'
-            }
-        }
-        if (!(Get-Command "Get-VSSetupInstance" -ErrorAction SilentlyContinue)) {
-            Throw "VSSetup module could not be loaded after installation"
-        }
-        # Find MSBuild (Package Microsoft.Component.MSBuild)
-        $vsi = Get-VSSetupInstance -All | Select-VSSetupInstance -Require 'Microsoft.Component.MSBuild' -Latest
-        if (!($vsi)) {
-            Throw "Could not find a Visual Studio installation with package Microsoft.Component.MSBuild"
-        }
-        Write-Verbose "Found Visual Studio installation in $($vsi.InstallationPath)"
-        $vsiPackage = $vsi.Packages | Where {$_.Id -eq 'Microsoft.Component.MSBuild'}
-        $msbuildExe = [io.path]::combine($vsi.InstallationPath,'MSBuild',"$($vsiPackage.Version.Major).$($vsiPackage.Version.Minor)",'Bin','MSBuild.exe')
-    }
-    if (!(Test-Path $msbuildExe)) {
-        Throw "Could not find $msbuildExe"
-    }
-    Write-Verbose "Using MSBuild from $msbuildExe"
+    Write-Information "Using MSBuild from local Visual Studio installation:"
+    # Install required PowerShell modules
+    Write-Information "Installing PackageProvider"
+    Install-PackageProvider -Name NuGet -Scope CurrentUser -Force | Out-Null
+    Write-Information "Installing module: VSSetup"
+    Install-Module -Name VSSetup -Scope CurrentUser -Force
+    Write-Information "Installing script: Resolve-MSBuild"
+    Install-Script -Name Resolve-MSBuild -Scope CurrentUser -Force
+    Write-Information "Calling: Resolve-MSBuild"
+    $msbuildExe = Resolve-MSBuild
+    Write-Information "Resolved MSBuild at: $msbuildExe"
 }
-
+if (!(Test-Path $msbuildExe)) {
+    Throw "MSBuild executable does not exist: $msbuildExe"
+}
 
 # Tools directory is for nuget.exe but it may be used to 
 # contain other utilities.
 $toolsDir = Join-Path $builderDir "Tools"
-if (!(Test-Path $toolsDir)) {
-    New-Item -ItemType Directory $toolsDir | Out-Null
-}
+New-Item -ItemType Directory $toolsDir -Force | Out-Null
 
 # Try download NuGet.exe if do not exist.
 $nugetExe = Join-Path $toolsDir "nuget.exe"
-if (!(Test-Path $nugetExe)) {
-    Write-Verbose "Downloading nuget.exe from $nugetDownloadUrl"
+if (Test-Path $nugetExe) {
+    Write-Information "Using existing nuget.exe: $nugetExe"
+} else {
+    Write-Information "Downloading nuget.exe from $nugetDownloadUrl"
     Invoke-WebRequest -Uri $nugetDownloadUrl -OutFile $nugetExe
-    # Make sure NuGet worked.
-    if (!(Test-Path $nugetExe)) {
-        Throw "Could not find NuGet.exe"
-    }
 }
 
 $nugetConfigFile = Join-Path $solutionDir "NuGet.config"
-&$nugetExe restore $builderPackageConfig -SolutionDirectory $solutionDir -configfile $nugetConfigFile
+& $nugetExe restore $builderPackageConfig -SolutionDirectory $solutionDir -configfile $nugetConfigFile
 
-&$msbuildExe $builderProj /p:Configuration=Release
+& $msbuildExe $builderProj /p:Configuration=Release
+
+if($Run) {
+    & "$builderDir/bin/Release/CodeCakeBuilder.exe"
+}
