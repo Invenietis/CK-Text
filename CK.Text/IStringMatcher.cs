@@ -4,7 +4,8 @@ using System.Runtime.CompilerServices;
 namespace CK.Text
 {
     /// <summary>
-    /// This interface contains the definition for string matchers parameters. It contains text and matcher properties and some basic methods.
+    /// This interface contains the definition for string matchers parameters. 
+    /// It contains text and matcher properties and some basic methods.
     /// </summary>
     public interface IStringMatcher
     {
