@@ -14,7 +14,7 @@ namespace CK.Text
     /// This class does not actually hide/encapsulate a lot of things: it is designed to be extended through 
     /// extension methods.
     /// </summary>
-    public sealed class VirtualStringMatcher
+    public sealed class VirtualStringMatcher : IStringMatcher
     {
         readonly IVirtualString _text;
         long _length;
@@ -56,6 +56,37 @@ namespace CK.Text
         public IVirtualString Text => _text;
 
         /// <summary>
+        /// Returns a substring of the Virtual String.
+        /// It calls <see cref="IVirtualString.GetText(long, int)"/> on <see cref="Text"/>.
+        /// </summary>
+        /// <param name="index">The index where we want to start the substring.</param>
+        /// <param name="length">The length of the substring.</param>
+        /// <returns>The string containing characters in the range.</returns>
+        public string GetText( long index, int length )
+        {
+            return _text.GetText( index, length );
+        }
+
+        /// <summary>
+        /// Gets whether the matcher should stop on error.
+        /// Setting this to true will set <see cref="ShouldStop"/> to true when <see cref="IsError"/> is true.
+        /// </summary>
+        /// <value><c>true</c> if we want to stop; otherwise, <c>false</c>.</value>
+        public bool ShouldStopOnError { get; set; }
+
+        /// <summary>
+        /// Is used by <see cref="ShouldStop"/>. Setting this to true will set <see cref="ShouldStop"/> to true.
+        /// </summary>
+        /// <value><c>true</c> on success; otherwise, <c>false</c>.</value>
+        public bool Success { get; set; }
+
+        /// <summary>
+        /// Gets whether the matcher should stop.
+        /// </summary>
+        /// <value><c>true</c> on <see cref="Success"/> or on error if <see cref="ShouldStopOnError"/> is true; otherwise, <c>false</c>.</value>
+        public bool ShouldStop => Success || (IsError && ShouldStopOnError);
+
+        /// <summary>
         /// Gets the current start index: this is incremented by <see cref="Forward(long)"/>
         /// or <see cref="UncheckedMove(long)"/>.
         /// </summary>
@@ -82,21 +113,21 @@ namespace CK.Text
 
         /// <summary>
         /// Gets whether an error has been been set.
-        /// You can call <see cref="SetSuccess"/> to clear the error.
+        /// You can call <see cref="ClearError"/> to clear the error.
         /// </summary>
         /// <value><c>true</c> on error; otherwise, <c>false</c>.</value>
         public bool IsError => _errorDescription != null;
 
         /// <summary>
         /// Gets the error message if any.
-        /// You can call <see cref="SetSuccess"/> to clear the error.
+        /// You can call <see cref="ClearError"/> to clear the error.
         /// </summary>
         /// <value>The message message. Null when no error.</value>
         public string ErrorMessage => _errorDescription;
 
         /// <summary>
         /// Sets and error and always returns false. The message starts with the caller's method name.
-        /// Use <see cref="SetSuccess()"/> to clear any existing error.
+        /// Use <see cref="ClearError()"/> to clear any existing error.
         /// </summary>
         /// <param name="expectedMessage">
         /// Optional object. Its <see cref="object.ToString()"/> will be used to generate an "expected '...'" message.
@@ -150,7 +181,7 @@ namespace CK.Text
         /// Clears any error and returns true.
         /// </summary>
         /// <returns>Always true to use it as the return statement in a match method.</returns>
-        public bool SetSuccess()
+        public bool ClearError()
         {
             _errorDescription = null;
             return true;
@@ -213,7 +244,7 @@ namespace CK.Text
         /// </summary>
         /// <param name="c">The character that must match.</param>
         /// <returns>True on success, false if the match failed.</returns>
-        public bool MatchChar( char c ) => TryMatchChar( c ) ? SetSuccess() : SetError( c );
+        public bool MatchChar( char c ) => TryMatchChar( c ) ? ClearError() : SetError( c );
 
         /// <summary>
         /// Attempts to match an exact single character.
@@ -228,7 +259,7 @@ namespace CK.Text
         /// <param name="text">The string that must match. Can not be null nor empty.</param>
         /// <param name="comparisonType">Specifies the culture, case, and sort rules.</param>
         /// <returns>True on success, false if the match failed.</returns>
-        public bool MatchText( string text, StringComparison comparisonType = StringComparison.OrdinalIgnoreCase ) => TryMatchText( text ) ? SetSuccess() : SetError();
+        public bool MatchText( string text, StringComparison comparisonType = StringComparison.OrdinalIgnoreCase ) => TryMatchText( text ) ? ClearError() : SetError();
 
         /// <summary>
         /// Matches a text without setting an error if matches fails.
@@ -253,7 +284,7 @@ namespace CK.Text
         /// </summary>
         /// <param name="minCount">Minimal number of white spaces to match.</param>
         /// <returns>True on sucess, false if the match failed.</returns>
-        public bool MatchWhiteSpaces( long minCount = 1 )
+        public bool MatchWhiteSpaces( int minCount = 1 )
         {
             long i = _startIndex;
             long len = _length;
