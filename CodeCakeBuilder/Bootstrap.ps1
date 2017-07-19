@@ -75,7 +75,8 @@ if (Get-Command $msbuildExe -ErrorAction SilentlyContinue) {
     Write-Information "Installing script: Resolve-MSBuild"
     Install-Script -Name Resolve-MSBuild -Scope CurrentUser -Force
     Write-Information "Calling: Resolve-MSBuild"
-    $msbuildExe = Resolve-MSBuild
+    $s = Get-InstalledScript -Name "Resolve-MSBuild"
+    $msbuildExe = Invoke-Expression (Join-Path $s.InstalledLocation $s.Name)
     Write-Information "Resolved MSBuild at: $msbuildExe"
     if (!(Test-Path $msbuildExe)) {
         Throw "MSBuild executable does not exist: $msbuildExe"
