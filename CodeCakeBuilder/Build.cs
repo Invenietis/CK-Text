@@ -1,4 +1,4 @@
-﻿using Cake.Common.Build;
+using Cake.Common.Build;
 using Cake.Common.Diagnostics;
 using Cake.Common.IO;
 using Cake.Common.Solution;
@@ -117,23 +117,20 @@ namespace CodeCake
                                  new
                                  {
                                      ProjectPath = p.Path.GetDirectory(),
-                                     NetCoreAppDll = p.Path.GetDirectory().CombineWithFilePath( "bin/" + configuration + "/netcoreapp1.1/" + p.Name + ".dll" ),
-                                     Net451Exe = p.Path.GetDirectory().CombineWithFilePath( "bin/" + configuration + "/net451/" + p.Name + ".exe" ),
+                                     NetCoreAppDll = p.Path.GetDirectory().CombineWithFilePath( "bin/" + configuration + "/netcoreapp2.0/" + p.Name + ".dll" ),
+                                     Net461Exe = p.Path.GetDirectory().CombineWithFilePath( "bin/" + configuration + "/net461/" + p.Name + ".exe" ),
                                  } );
 
                     foreach( var test in testDlls )
                     {
-                        using( Cake.Environment.SetWorkingDirectory( test.ProjectPath ) )
+                        Cake.Information( "Testing: {0}", test.Net461Exe );
+                        Cake.NUnit( test.Net461Exe.FullPath, new NUnitSettings()
                         {
-                            Cake.Information( "Testing: {0}", test.Net451Exe );
-                            Cake.NUnit( test.Net451Exe.FullPath, new NUnitSettings()
-                            {
-                                Framework = "v4.5",
-                                ResultsFile = test.ProjectPath.CombineWithFilePath( "TestResult.Net451.xml" )
-                            } );
-                            Cake.Information( "Testing: {0}", test.NetCoreAppDll );
-                            Cake.DotNetCoreExecute( test.NetCoreAppDll );
-                        }
+                            Framework = "v4.5",
+                            ResultsFile = test.ProjectPath.CombineWithFilePath( "TestResult.Net461.xml" )
+                        } );
+                        Cake.Information( "Testing: {0}", test.NetCoreAppDll );
+                        Cake.DotNetCoreExecute( test.NetCoreAppDll );
                     }
                 } );
 

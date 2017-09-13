@@ -1,4 +1,4 @@
-﻿#if !NET451
+﻿#if !NET461
 using NUnit.Common;
 using NUnitLite;
 using System;
