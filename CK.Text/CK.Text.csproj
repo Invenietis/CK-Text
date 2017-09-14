@@ -3,13 +3,9 @@
   <Import Project="..\Common\Shared.props" />
   
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.3;net451</TargetFrameworks>
+    <TargetFrameworks>netstandard1.3;net461</TargetFrameworks>
     <Description>Offers simple text helpers like StringMatcher, JSONVisitor and StringBuilder extension methods.</Description>
   </PropertyGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net451' ">
-    <Reference Include="System" />
-  </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Properties\" />
