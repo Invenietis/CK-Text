@@ -1,5 +1,7 @@
 # Basic appveyor configuration : CodeCakeBuilder does the job.
 version: build{build}
+image: Visual Studio 2017
+clone_folder: C:\CK-World\CK-Core-Projects\CK-Text
 branches:
   only:
   - master
@@ -14,7 +16,7 @@ environment:
 init:
 - git config --global core.autocrlf true
 install:
-- ps: CodeCakeBuilder\Bootstrap.ps1 -Verbose -InformationAction Continue
+- ps: CodeCakeBuilder\Bootstrap.ps1
 build_script:
 - CodeCakeBuilder\bin\Release\CodeCakeBuilder.exe -nointeraction
 test: off
