@@ -24,6 +24,41 @@ namespace CK.Text.Tests
             m.IsEnd.Should().BeTrue();
         }
 
+        [TestCase( "abcdef", 0xABCDEFUL )]
+        [TestCase( "12abcdef", 0x12ABCDEFUL )]
+        [TestCase( "12abcdef12abcdef", 0x12abcdef12abcdefUL )]
+        [TestCase( "00000000FFFFFFFF", 0xFFFFFFFFUL )]
+        [TestCase( "FFFFFFFFFFFFFFFF", 0xFFFFFFFFFFFFFFFFUL )]
+        public void matching_hex_number( string s, ulong v )
+        {
+            var m = new StringMatcher( s );
+            m.TryMatchHexNumber( out ulong value ).Should().BeTrue();
+            value.Should().Be( v );
+            m.IsEnd.Should().BeTrue();
+        }
+
+        [TestCase( "0|", 0x0UL, '|' )]
+        [TestCase( "AG", 0xAUL, 'G' )]
+        [TestCase( "cd", 0xCUL, 'd' )]
+        public void matching_hex_number_one_digit( string s, ulong v, char end )
+        {
+            var m = new StringMatcher( s );
+            m.TryMatchHexNumber( out ulong value, 1, 1 ).Should().BeTrue();
+            value.Should().Be( v );
+            m.IsEnd.Should().BeFalse();
+            m.Head.Should().Be( end );
+        }
+
+        [TestCase( "not a hex." )]
+        [TestCase( "FA12 but we want 5 digits min." )]
+        public void matching_hex_number_failures( string s )
+        {
+            var m = new StringMatcher( s );
+            m.TryMatchHexNumber( out ulong value, 5, 5 ).Should().BeFalse();
+            m.IsEnd.Should().BeFalse();
+            m.StartIndex.Should().Be( 0 );
+        }
+
         [Test]
         public void matching_texts_and_whitespaces()
         {

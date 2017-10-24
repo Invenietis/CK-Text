@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -121,19 +121,19 @@ namespace CK.Text
                             {
                                 if( --len == 0 ) return false;
                                 int cN;
-                                cN = ReadHexDigit( @this.Text[i++] );
+                                cN = IStringMatcherExtension.ReadHexDigit( @this.Text[i++] );
                                 if( cN < 0 || cN > 15 ) return false;
                                 int val = cN << 12;
                                 if( --len == 0 ) return false;
-                                cN = ReadHexDigit( @this.Text[i++] );
+                                cN = IStringMatcherExtension.ReadHexDigit( @this.Text[i++] );
                                 if( cN < 0 || cN > 15 ) return false;
                                 val |= cN << 8;
                                 if( --len == 0 ) return false;
-                                cN = ReadHexDigit( @this.Text[i++] );
+                                cN = IStringMatcherExtension.ReadHexDigit( @this.Text[i++] );
                                 if( cN < 0 || cN > 15 ) return false;
                                 val |= cN << 4;
                                 if( --len == 0 ) return false;
-                                cN = ReadHexDigit( @this.Text[i++] );
+                                cN = IStringMatcherExtension.ReadHexDigit( @this.Text[i++] );
                                 if( cN < 0 || cN > 15 ) return false;
                                 val |= cN;
                                 c = (char)val;
@@ -149,13 +149,6 @@ namespace CK.Text
             return @this.UncheckedMove( lenS );
         }
 
-        static int ReadHexDigit( char c )
-        {
-            int cN = c - '0';
-            if( cN >= 49 ) cN -= 39;
-            else if( cN >= 17 ) cN -= 7;
-            return cN;
-        }
 
         /// <summary>
         /// Matches a quoted string without extracting its content.
