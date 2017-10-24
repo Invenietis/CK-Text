@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 
 namespace CK.Text
@@ -11,7 +11,7 @@ namespace CK.Text
         /// <summary>
         /// Matches Int32 values that must not start with '0' ('0' is valid but '0d', where d is any digit, is not).
         /// A signed integer starts with a '-'. '-0' is valid but '-0d' (where d is any digit) is not.
-        /// If the value is to big for an Int32, it fails.
+        /// If the value is too big for an Int32, it fails.
         /// </summary>
         /// <param name="this">This <see cref="IStringMatcher"/>.</param>
         /// <param name="i">The result integer. 0 on failure.</param>
