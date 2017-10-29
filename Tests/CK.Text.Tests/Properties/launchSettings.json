@@ -1,14 +1,9 @@
 {
   "profiles": {
-    "GUI Debug": {
+    "CK.Text.Tests": {
       "commandName": "Executable",
       "executablePath": "..\\..\\packages\\NUnit.Runners.Net4.2.6.4\\tools\\nunit.exe",
-      "commandLineArgs": "bin\\Debug\\net461\\CK.Text.Tests.exe"
-    },
-    "GUI Release": {
-      "commandName": "Executable",
-      "executablePath": "..\\..\\packages\\NUnit.Runners.Net4.2.6.4\\tools\\nunit.exe",
-      "commandLineArgs": "bin\\Release\\net461\\CK.Text.Tests.exe"
+      "commandLineArgs": "bin\\Debug\\net451\\CK.Text.Tests.exe"
     }
   }
 }
