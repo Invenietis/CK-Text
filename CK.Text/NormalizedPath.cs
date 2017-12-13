@@ -1,0 +1,389 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+
+namespace CK.Text
+{
+    /// <summary>
+    /// Immmutable encapsulation of a path that normalizes <see cref="System.IO.Path.AltDirectorySeparatorChar"/>
+    /// to <see cref="System.IO.Path.DirectorySeparatorChar"/>.
+    /// </summary>
+    public struct NormalizedPath : IEquatable<NormalizedPath>, IComparable<NormalizedPath>
+    {
+        static readonly char[] _separators = new[] { System.IO.Path.AltDirectorySeparatorChar, System.IO.Path.DirectorySeparatorChar };
+
+        readonly string[] _parts;
+        readonly string _path;
+
+        /// <summary>
+        /// Gets the <see cref="System.IO.Path.DirectorySeparatorChar"/> as a string.
+        /// </summary>
+        public static readonly string DirectorySeparatorString = new String( System.IO.Path.DirectorySeparatorChar, 1 );
+
+        /// <summary>
+        /// Gets the <see cref="System.IO.Path.AltDirectorySeparatorChar"/> as a string.
+        /// </summary>
+        public static readonly string AltDirectorySeparatorString = new String( System.IO.Path.AltDirectorySeparatorChar, 1 );
+
+        /// <summary>
+        /// Explicitely builds a new <see cref="NormalizedPath"/> struct from a string.
+        /// </summary>
+        /// <param name="path">The path as a string.</param>
+        public NormalizedPath( string path )
+        {
+            _parts = path?.Split( _separators, StringSplitOptions.RemoveEmptyEntries );
+            if( _parts != null && _parts.Length == 0 ) _parts = null;
+            _path = _parts?.Concatenate( DirectorySeparatorString );
+        }
+
+        /// <summary>
+        /// Implicitely converts a path to a normalized string path.
+        /// </summary>
+        /// <param name="path">The normalized path.</param>
+        public static implicit operator string( NormalizedPath path ) => path._path;
+
+        /// <summary>
+        /// Implicitely converts a path to a boolean: an empty path is false.
+        /// </summary>
+        /// <param name="path">Normalized path to consider as a boolean.</param>
+        public static implicit operator bool( NormalizedPath path ) => !path.IsEmpty;
+
+        /// <summary>
+        /// Implicitely converts a string to a <see cref="NormalizedPath"/>.
+        /// </summary>
+        /// <param name="path"></param>
+        public static implicit operator NormalizedPath( string path ) => new NormalizedPath( path );
+
+        NormalizedPath( string[] parts, string path )
+        {
+            _parts = parts;
+            _path = path;
+        }
+
+        /// <summary>
+        /// Gets the parent list from this up to the <see cref="FirstPart"/>.
+        /// </summary>
+        public IEnumerable<NormalizedPath> Parents
+        {
+            get
+            {
+                var p = this;
+                while( !p.IsEmpty )
+                {
+                    yield return p;
+                    p = p.RemoveLastPart();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Enumerates paths from this one up to the <see cref="FirstPart"/> with <paramref name="lastParts"/>
+        /// appended in order.
+        /// When <paramref name="lastParts"/> is empty, this enumeration is empty.
+        /// </summary>
+        /// <param name="this">This path.</param>
+        /// <param name="lastParts">The last parts that will be appended in order.</param>
+        /// <returns>The <see cref="Parents"/> with the <paramref name="lastParts"/> appended.</returns>
+        public IEnumerable<NormalizedPath> PathsToFirstPart( IEnumerable<string> lastParts )
+        {
+            var p = this;
+            while( !p.IsEmpty )
+            {
+                foreach( var last in lastParts )
+                {
+                    yield return String.IsNullOrEmpty( last ) ? p : p.AppendPart( last );
+                }
+                p = p.RemoveLastPart();
+            }
+        }
+
+        /// <summary>
+        /// Enumerates paths from this one up to the <see cref="FirstPart"/> with <paramref name="suffixes"/>
+        /// combined in order.
+        /// When <paramref name="suffixes"/> is empty, this enumeration is empty.
+        /// </summary>
+        /// <param name="this">This path.</param>
+        /// <param name="suffixes">The suffixes that will be combined in order.</param>
+        /// <returns>The <see cref="Parents"/> with the <paramref name="suffixes"/> combined.</returns>
+        public IEnumerable<NormalizedPath> PathsToFirstPart( IEnumerable<NormalizedPath> suffixes )
+        {
+            var p = this;
+            while( !p.IsEmpty )
+            {
+                foreach( var suffix in suffixes )
+                {
+                    yield return suffix.IsEmpty ? p : p.Combine( suffix );
+                }
+                p = p.RemoveLastPart();
+            }
+        }
+
+        /// <summary>
+        /// Returns a path where '.' and '..' parts are resolved under a root part.
+        /// When <paramref name="throwOnAboveRoot"/> is true (the default), any '..' that would
+        /// lead to a path above the root throws an <see cref="InvalidOperationException"/>.
+        /// When false, the root acts as an absorbing element.
+        /// </summary>
+        /// <param name="rootPartsCount">
+        /// By default, the resolution can reach the empty root.
+        /// By specifying a positive number, any prefix length can be locked.
+        /// Dotted parts in this locked prefix will be ignored and left as-is in the result.
+        /// </param>
+        /// <param name="throwOnAboveRoot">
+        /// By default any attempt to resolve above the root will throw an <see cref="InvalidOperationException"/>.
+        /// By specifying false, the root acts as an absorbing element.
+        /// </param>
+        /// <returns>The resolved normalized path.</returns>
+        public NormalizedPath ResolveDots( int rootPartsCount = 0, bool throwOnAboveRoot = true )
+        {
+            int len = _parts != null ? _parts.Length : 0;
+            if( rootPartsCount > len ) throw new ArgumentOutOfRangeException( nameof( rootPartsCount ) );
+            if( rootPartsCount == len ) return this;
+            Debug.Assert( !IsEmpty );
+            string[] newParts = null;
+            int current = 0;
+            for( int i = rootPartsCount; i < len; ++i )
+            {
+                string curPart = _parts[i];
+                bool isDot = curPart == ".";
+                bool isDotDot = !isDot && curPart == "..";
+                if( isDot || isDotDot )
+                {
+                    if( newParts == null )
+                    {
+                        newParts = new string[_parts.Length];
+                        current = i - 1;
+                        if( isDotDot ) --current;
+                        if( current < rootPartsCount )
+                        {
+                            if( throwOnAboveRoot ) ThrowAboveRootException( _parts, rootPartsCount, i );
+                            current = rootPartsCount;
+                        }
+                        Array.Copy( _parts, 0, newParts, 0, current );
+                    }
+                    else if( isDotDot )
+                    {
+                        if( current == rootPartsCount )
+                        {
+                            if( throwOnAboveRoot ) ThrowAboveRootException( _parts, rootPartsCount, i );
+                        }
+                        else --current;
+                    }
+                }
+                else if( newParts != null )
+                {
+                    newParts[current++] = curPart;
+                }
+            }
+            if( newParts == null ) return this;
+            Array.Resize( ref newParts, current );
+            return new NormalizedPath( newParts, String.Join( DirectorySeparatorString, newParts ) );
+        }
+
+        static void ThrowAboveRootException( string[] parts, int rootPartsCount, int iCulprit )
+        {
+            var msg = $"Path '{String.Join( DirectorySeparatorString, parts.Skip( iCulprit ) )}' must not resolve above root '{String.Join( DirectorySeparatorString, parts.Take( rootPartsCount ) )}'.";
+            throw new InvalidOperationException( msg );
+        }
+
+        /// <summary>
+        /// Appends the given path to this one and returns a new <see cref="NormalizedPath"/>.
+        /// Note that relative parts (. and ..) are not resolved by this method.
+        /// </summary>
+        /// <param name="suffix">The path to append.</param>
+        /// <returns>The resulting path.</returns>
+        public NormalizedPath Combine( NormalizedPath suffix )
+        {
+            if( IsEmpty ) return suffix;
+            if( suffix.IsEmpty ) return this;
+            var parts = new string[_parts.Length + suffix._parts.Length];
+            Array.Copy( _parts, parts, _parts.Length );
+            Array.Copy( suffix._parts, 0, parts, _parts.Length, suffix._parts.Length );
+            return new NormalizedPath( parts, _path + System.IO.Path.DirectorySeparatorChar + suffix._path );
+        }
+
+        /// <summary>
+        /// Gets the last part of this path or the empty string if <see cref="IsEmpty"/> is true.
+        /// </summary>
+        public string LastPart => _parts?[_parts.Length - 1] ?? String.Empty;
+
+        /// <summary>
+        /// Gets the first part of this path or the empty string if <see cref="IsEmpty"/> is true.
+        /// </summary>
+        public string FirstPart => _parts?[0] ?? String.Empty;
+
+        /// <summary>
+        /// Appends a part that must not be null or empty nor contain <see cref="System.IO.Path.DirectorySeparatorChar"/>
+        /// or <see cref="System.IO.Path.AltDirectorySeparatorChar"/> and returns a new <see cref="NormalizedPath"/>.
+        /// </summary>
+        /// <param name="part">The part to append. Must not be null or empty.</param>
+        /// <returns>A new <see cref="NormalizedPath"/>.</returns>
+        public NormalizedPath AppendPart( string part )
+        {
+            if( string.IsNullOrEmpty( part ) ) throw new ArgumentNullException( nameof( part ) );
+            if( part.IndexOfAny( _separators ) >= 0 ) throw new ArgumentException( $"Illegal separators in '{part}'.", nameof( part ) );
+            if( _parts == null ) return new NormalizedPath( new[] { part }, part );
+            var parts = new string[_parts.Length + 1];
+            Array.Copy( _parts, parts, _parts.Length );
+            parts[_parts.Length] = part;
+            return new NormalizedPath( parts, _path + System.IO.Path.DirectorySeparatorChar + part );
+        }
+
+        /// <summary>
+        /// Returns a new <see cref="NormalizedPath"/> with <see cref="LastPart"/> removed.
+        /// Can be safely called when <see cref="IsEmpty"/> is true.
+        /// </summary>
+        /// <returns>A new path.</returns>
+        public NormalizedPath RemoveLastPart()
+        {
+            if( _parts == null || _parts.Length == 1 ) return new NormalizedPath();
+            var parts = new string[_parts.Length - 1];
+            Array.Copy( _parts, parts, parts.Length );
+            return new NormalizedPath( parts, _path.Substring( 0, _path.Length - _parts[_parts.Length - 1].Length - 1 ) );
+        }
+
+        /// <summary>
+        /// Returns a new <see cref="NormalizedPath"/> with <see cref="FirstPart"/> removed.
+        /// Can be safely called when <see cref="IsEmpty"/> is true.
+        /// </summary>
+        /// <returns>A new path.</returns>
+        public NormalizedPath RemoveFirstPart()
+        {
+            if( _parts == null || _parts.Length == 1 ) return new NormalizedPath();
+            var parts = new string[_parts.Length - 1];
+            Array.Copy( _parts, 1, parts, 0, parts.Length );
+            return new NormalizedPath( parts, _path.Substring( _parts[0].Length + 1 ) );
+        }
+
+        /// <summary>
+        /// Removes one of the <see cref="Parts"/> and returns a new <see cref="NormalizedPath"/>.
+        /// The <paramref name="index"/> must be valid otherwise a <see cref="IndexOutOfRangeException"/> will be thrown.
+        /// </summary>
+        /// <param name="index">Index of the part to remove.</param>
+        /// <returns>A new path.</returns>
+        public NormalizedPath RemovePart( int index ) => RemoveParts( index, 1 );
+
+        /// <summary>
+        /// Removes some of the <see cref="Parts"/> and returns a new <see cref="NormalizedPath"/>.
+        /// The <paramref name="startIndex"/> and <paramref name="index"/> must be valid
+        /// otherwise a <see cref="IndexOutOfRangeException"/> will be thrown.
+        /// </summary>
+        /// <returns>A new path.</returns>
+        public NormalizedPath RemoveParts( int startIndex, int count )
+        {
+            int to = startIndex + count;
+            if( _parts == null || startIndex < 0 || to > _parts.Length ) throw new IndexOutOfRangeException();
+            int nb = _parts.Length - count;
+            if( nb == 0 ) return new NormalizedPath();
+            var parts = new string[nb];
+            Array.Copy( _parts, parts, startIndex );
+            int sIdx = startIndex, sLen = count;
+            int tailCount = _parts.Length - to;
+            if( tailCount != 0 ) Array.Copy( _parts, to, parts, startIndex, tailCount );
+            else --sIdx;
+            int i = 0;
+            for( ; i < startIndex; ++i ) sIdx += _parts[i].Length;
+            for( ; i < to; ++i ) sLen += _parts[i].Length;
+            return new NormalizedPath( parts, _path.Remove( sIdx, sLen ) );
+        }
+
+        /// <summary>
+        /// Tests whether this <see cref="NormalizedPath"/> starts with another one.
+        /// </summary>
+        /// <param name="other">The path that may be a prefix of this path.</param>
+        /// <param name="strict">
+        /// False to allow the other path to be the same as this one.
+        /// By default this path must be longer than the other one.</param>
+        /// <returns>True if this path starts with the other one.</returns>
+        public bool StartsWith( NormalizedPath other, bool strict = true ) => !other.IsEmpty
+                                                            && !IsEmpty
+                                                            && other._parts.Length <= _parts.Length
+                                                            && (!strict || other._parts.Length < _parts.Length)
+                                                            && StringComparer.OrdinalIgnoreCase.Equals( other.LastPart, _parts[other._parts.Length - 1] )
+                                                            && _path.StartsWith( other._path, StringComparison.OrdinalIgnoreCase );
+
+        /// <summary>
+        /// Removes the prefix from this path. The prefix must starts with or be exaclty the same as this one
+        /// otherwise an <see cref="ArgumentException"/> is thrown.
+        /// </summary>
+        /// <param name="prefix">The prefix to remove.</param>
+        /// <returns>A new path.</returns>
+        public NormalizedPath RemovePrefix( NormalizedPath prefix )
+        {
+            if( !StartsWith( prefix, false ) ) throw new ArgumentException( $"'{prefix}' is not a prefix of '{_path}'." );
+            int nb = _parts.Length - prefix._parts.Length;
+            if( nb == 0 ) return new NormalizedPath();
+            var parts = new string[nb];
+            Array.Copy( _parts, prefix._parts.Length, parts, 0, nb );
+            return new NormalizedPath( parts, _path.Substring( prefix._path.Length + 1 ) );
+        }
+
+        /// <summary>
+        /// Gets whether this is an empty path. A new <see cref="NormalizedPath"/>() (default constructor),
+        /// or <c>default(NormalizedPath)</c> are empty.
+        /// </summary>
+        public bool IsEmpty => _parts == null;
+
+        /// <summary>
+        /// Gets the parts that compose this <see cref="NormalizedPath"/>.
+        /// </summary>
+        public IReadOnlyList<string> Parts => _parts ?? Array.Empty<string>();
+
+        /// <summary>
+        /// Gets this path as a normalized string.
+        /// </summary>
+        public string Path => _path ?? String.Empty;
+
+        /// <summary>
+        /// Compares this path to another one.
+        /// </summary>
+        /// <param name="other">The path to compare to.</param>
+        /// <returns>A positive interger if this is greater than other, a negative integer if this is lower than the other one and 0 if they are equal.</returns>
+        public int CompareTo( NormalizedPath other ) => StringComparer.OrdinalIgnoreCase.Compare( _path, other._path );
+
+        /// <summary>
+        /// Gets whether the <paramref name="obj"/> is a <see cref="NormalizedPath"/> that is equal to
+        /// this one.
+        /// Comparison is done by <see cref="StringComparer.OrdinalIgnoreCase"/>.
+        /// </summary>
+        /// <param name="obj">The object to challenge.</param>
+        /// <returns>True if they are equal, false otherwise.</returns>
+        public override bool Equals( object obj ) => obj is NormalizedPath p && Equals( p );
+
+        /// <summary>
+        /// Gets the hash code.
+        /// </summary>
+        /// <returns>The hash code.</returns>
+        public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode( _path );
+
+        /// <summary>
+        /// Gets whether the other path is equal to this one.
+        /// Comparison is done by <see cref="StringComparer.OrdinalIgnoreCase"/>.
+        /// </summary>
+        /// <param name="other">The other path to challenge.</param>
+        /// <returns>True if they are equal, false otherwise.</returns>
+        public bool Equals( NormalizedPath other ) => _path.Equals( other._path );
+
+        /// <summary>
+        /// Returns the string <see cref="Path"/>.
+        /// </summary>
+        /// <returns>The path as a string.</returns>
+        public override string ToString() => _path ?? String.Empty;
+
+        /// <summary>
+        /// Returns a path with a specific character as the path separator instead of <see cref="System.IO.Path.DirectorySeparatorChar"/>.
+        /// </summary>
+        /// <param name="separator">The separator to use.</param>
+        /// <returns>The path with the separator.</returns>
+        public string ToString( char separator )
+        {
+            if( _path == null ) return String.Empty;
+            if( separator == System.IO.Path.DirectorySeparatorChar || _parts.Length == 1 )
+            {
+                return _path;
+            }
+            return _path.Replace( System.IO.Path.DirectorySeparatorChar, separator );
+        }
+    }
+}
