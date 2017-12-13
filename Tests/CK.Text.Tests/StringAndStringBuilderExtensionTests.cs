@@ -4,6 +4,8 @@ using NUnit.Framework;
 using System.IO;
 using System.Diagnostics;
 using FluentAssertions;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CK.Text.Tests
 {
@@ -208,6 +210,36 @@ Second line.
             }
         }
 
+
+        [Test]
+        public void our_Concatenate_to_string_must_use_String_Join_since_it_is_faster()
+        {
+            string ConcatenateCandidate( IEnumerable<string> @this, string separator = ", " )
+            {
+                return new StringBuilder().AppendStrings( @this, separator ).ToString();
+            }
+
+            string text = File.ReadAllText( Path.Combine( TestHelper.SolutionFolder, "Tests/CK.Text.Tests/StringAndStringBuilderExtensionTests.cs" ) )
+                            .NormalizeEOLToLF();
+            var lines = text.Split( '\n' );
+            var words = text.Split( ' ', '\n' );
+
+            var rJoinLines = Benchmarker.BenchmarkTime( () => String.Join( ", ", lines ) );
+            var rJoinWords = Benchmarker.BenchmarkTime( () => String.Join( ", ", words ) );
+            var rConcatLines = Benchmarker.BenchmarkTime( () => ConcatenateCandidate( lines ) );
+            var rConcatWords = Benchmarker.BenchmarkTime( () => ConcatenateCandidate( words ) );
+
+            rJoinLines.IsSignificantlyBetterThan( rConcatLines ).Should().BeTrue();
+            rJoinWords.IsSignificantlyBetterThan( rConcatWords ).Should().BeTrue();
+
+            var smallSet = lines.Take( 20 ).ToArray();
+            var rConcatSmall = Benchmarker.BenchmarkTime( () => ConcatenateCandidate( smallSet ) );
+            var rJoinSmall = Benchmarker.BenchmarkTime( () => String.Join( ", ", smallSet ) );
+
+            rJoinSmall.IsSignificantlyBetterThan( rConcatSmall ).Should().BeTrue();
+        }
+
+
         [Test]
         public void our_appending_multi_lines_is_better_than_naive_implementation_in_release_but_not_in_debug()
         {
@@ -220,6 +252,7 @@ Second line.
 
         void TestPerf( string text, int count )
         {
+            GC.Collect();
             Stopwatch w = new Stopwatch();
             string[] results = new string[2000];
             long naive = PrefixWithNaiveReplace( w, text, results );
