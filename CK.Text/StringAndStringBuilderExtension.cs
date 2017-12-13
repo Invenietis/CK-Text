@@ -35,8 +35,7 @@ namespace CK.Text
     /// </summary>
     public static class StringAndStringBuilderExtension
     {
-
-        class EOLNormalizer
+        static class EOLNormalizer
         {
             public static readonly bool IsCRLF;
             static readonly Regex _rLFOnly;
@@ -71,7 +70,7 @@ namespace CK.Text
         /// <returns>The joined string.</returns>
         public static string Concatenate( this IEnumerable<string> @this, string separator = ", " )
         {
-            return new StringBuilder().AppendStrings( @this, separator ).ToString();
+            return String.Join( separator, @this );
         }
 
         /// <summary>

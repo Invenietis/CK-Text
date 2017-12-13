@@ -7,7 +7,9 @@ namespace CK.Text
 {
     /// <summary>
     /// Immmutable encapsulation of a path that normalizes <see cref="System.IO.Path.AltDirectorySeparatorChar"/>
-    /// to <see cref="System.IO.Path.DirectorySeparatorChar"/>.
+    /// to <see cref="System.IO.Path.DirectorySeparatorChar"/> and provides useful path manipulation methods.
+    /// This struct is implicitely convertible to and from string.
+    /// All comparisons uses <see cref="StringComparer.OrdinalIgnoreCase"/>.
     /// </summary>
     public struct NormalizedPath : IEquatable<NormalizedPath>, IComparable<NormalizedPath>
     {
@@ -78,47 +80,52 @@ namespace CK.Text
         }
 
         /// <summary>
-        /// Enumerates paths from this one up to the <see cref="FirstPart"/> with <paramref name="lastParts"/>
-        /// appended in order.
-        /// When <paramref name="lastParts"/> is empty, this enumeration is empty.
+        /// Enumerates paths from this one up to the <see cref="FirstPart"/> with <paramref name="subPaths"/>
+        /// and <paramref name="lastParts"/> cross combined and appended in order.
+        /// Each result ends with one of the <paramref name="lastParts"/>: if <paramref name="lastParts"/> is empty,
+        /// this enumeration is empty.
         /// </summary>
-        /// <param name="this">This path.</param>
-        /// <param name="lastParts">The last parts that will be appended in order.</param>
-        /// <returns>The <see cref="Parents"/> with the <paramref name="lastParts"/> appended.</returns>
-        public IEnumerable<NormalizedPath> PathsToFirstPart( IEnumerable<string> lastParts )
+        /// <param name="subPaths">The sub paths that will be combined in order. Can be null empty.</param>
+        /// <param name="lastParts">
+        /// The last parts that will be appended in order.
+        /// Can not be null and should not be empty otherwise there will be no result at all.
+        /// </param>
+        /// <returns>
+        /// All <see cref="Parents"/> with each <paramref name="subPaths"/> combined and
+        /// each <paramref name="lastParts"/> appended.
+        /// </returns>
+        public IEnumerable<NormalizedPath> PathsToFirstPart( IEnumerable<NormalizedPath> subPaths, IEnumerable<string> lastParts )
         {
+            if( lastParts == null ) throw new ArgumentNullException( nameof( lastParts ) );
             var p = this;
-            while( !p.IsEmpty )
+            if( subPaths != null && subPaths.Any() )
             {
-                foreach( var last in lastParts )
+                while( !p.IsEmpty )
                 {
-                    yield return String.IsNullOrEmpty( last ) ? p : p.AppendPart( last );
+                    foreach( var sub in subPaths )
+                    {
+                        var pSub = p.Combine( sub );
+                        foreach( var last in lastParts )
+                        {
+                            yield return String.IsNullOrEmpty( last ) ? pSub : pSub.AppendPart( last );
+                        }
+                    }
+                    p = p.RemoveLastPart();
                 }
-                p = p.RemoveLastPart();
+            }
+            else
+            {
+                while( !p.IsEmpty )
+                {
+                    foreach( var last in lastParts )
+                    {
+                        yield return String.IsNullOrEmpty( last ) ? p : p.AppendPart( last );
+                    }
+                    p = p.RemoveLastPart();
+                }
             }
         }
-
-        /// <summary>
-        /// Enumerates paths from this one up to the <see cref="FirstPart"/> with <paramref name="suffixes"/>
-        /// combined in order.
-        /// When <paramref name="suffixes"/> is empty, this enumeration is empty.
-        /// </summary>
-        /// <param name="this">This path.</param>
-        /// <param name="suffixes">The suffixes that will be combined in order.</param>
-        /// <returns>The <see cref="Parents"/> with the <paramref name="suffixes"/> combined.</returns>
-        public IEnumerable<NormalizedPath> PathsToFirstPart( IEnumerable<NormalizedPath> suffixes )
-        {
-            var p = this;
-            while( !p.IsEmpty )
-            {
-                foreach( var suffix in suffixes )
-                {
-                    yield return suffix.IsEmpty ? p : p.Combine( suffix );
-                }
-                p = p.RemoveLastPart();
-            }
-        }
-
+        
         /// <summary>
         /// Returns a path where '.' and '..' parts are resolved under a root part.
         /// When <paramref name="throwOnAboveRoot"/> is true (the default), any '..' that would
@@ -153,7 +160,7 @@ namespace CK.Text
                     if( newParts == null )
                     {
                         newParts = new string[_parts.Length];
-                        current = i - 1;
+                        current = i;
                         if( isDotDot ) --current;
                         if( current < rootPartsCount )
                         {
@@ -177,6 +184,7 @@ namespace CK.Text
                 }
             }
             if( newParts == null ) return this;
+            if( current == 0 ) return new NormalizedPath();
             Array.Resize( ref newParts, current );
             return new NormalizedPath( newParts, String.Join( DirectorySeparatorString, newParts ) );
         }
@@ -266,14 +274,17 @@ namespace CK.Text
 
         /// <summary>
         /// Removes some of the <see cref="Parts"/> and returns a new <see cref="NormalizedPath"/>.
-        /// The <paramref name="startIndex"/> and <paramref name="index"/> must be valid
+        /// The <paramref name="startIndex"/> and <paramref name="count"/> must be valid
         /// otherwise a <see cref="IndexOutOfRangeException"/> will be thrown.
         /// </summary>
+        /// <param name="startIndex">Starting index to remove.</param>
+        /// <param name="count">Number of parts to remove (can be 0).</param>
         /// <returns>A new path.</returns>
         public NormalizedPath RemoveParts( int startIndex, int count )
         {
             int to = startIndex + count;
-            if( _parts == null || startIndex < 0 || to > _parts.Length ) throw new IndexOutOfRangeException();
+            if( _parts == null || startIndex < 0 || startIndex >= _parts.Length || to > _parts.Length ) throw new IndexOutOfRangeException();
+            if( count == 0 ) return this;
             int nb = _parts.Length - count;
             if( nb == 0 ) return new NormalizedPath();
             var parts = new string[nb];
