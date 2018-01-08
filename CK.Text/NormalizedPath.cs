@@ -310,6 +310,22 @@ namespace CK.Text
                                                             && _path.StartsWith( other._path, StringComparison.OrdinalIgnoreCase ));
 
         /// <summary>
+        /// Tests whether this <see cref="NormalizedPath"/> ends with another one.
+        /// </summary>
+        /// <param name="other">The path that may be a prefix of this path.</param>
+        /// <param name="strict">
+        /// False to allow the other path to be the same as this one.
+        /// By default this path must be longer than the other one.</param>
+        /// <returns>True if this path ends with the other one.</returns>
+        public bool EndsWith( NormalizedPath other, bool strict = true ) => (other.IsEmpty && !strict)
+                                                        || (!other.IsEmpty
+                                                            && !IsEmpty
+                                                            && other._parts.Length <= _parts.Length
+                                                            && (!strict || other._parts.Length < _parts.Length)
+                                                            && StringComparer.OrdinalIgnoreCase.Equals( other.FirstPart, _parts[_parts.Length - other._parts.Length] )
+                                                            && _path.EndsWith( other._path, StringComparison.OrdinalIgnoreCase ));
+
+        /// <summary>
         /// Removes the prefix from this path. The prefix must starts with or be exaclty the same as this one
         /// otherwise an <see cref="ArgumentException"/> is thrown.
         /// </summary>

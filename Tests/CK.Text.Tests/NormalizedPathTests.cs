@@ -17,6 +17,7 @@ namespace CK.Text.Tests
         [TestCase( "a/b", "a", true )]
         [TestCase( "a\\b", "a/b", false )]
         [TestCase( "a/b/c/", "a\\b", true )]
+        [TestCase( "a/b/c/", "a\\bc", false )]
         public void StartsWith_at_work( string start, string with, bool result )
         {
             new NormalizedPath( start ).StartsWith( with ).Should().Be( result );
@@ -29,9 +30,35 @@ namespace CK.Text.Tests
         [TestCase( "a/b", "a", true )]
         [TestCase( "a\\b", "a/b", true )]
         [TestCase( "a/b/c/", "a\\b", true )]
+        [TestCase( "a/b/c/", "a\\bc", false )]
         public void StartsWith_NOT_strict_at_work( string start, string with, bool result )
         {
             new NormalizedPath( start ).StartsWith( with, strict: false ).Should().Be( result );
+        }
+
+        [TestCase( "", "", false )]
+        [TestCase( null, null, false )]
+        [TestCase( "", "a", false )]
+        [TestCase( "a", "a", false )]
+        [TestCase( "a/b", "b", true )]
+        [TestCase( "a\\b", "aa/b", false )]
+        [TestCase( "a/b/c/", "b\\c", true )]
+        [TestCase( "a/b/c/", "bb\\c", false )]
+        public void EndsWith_at_work( string root, string end, bool result )
+        {
+            new NormalizedPath( root ).EndsWith( end ).Should().Be( result );
+        }
+
+        [TestCase( "", "", true )]
+        [TestCase( null, null, true )]
+        [TestCase( "", "a", false )]
+        [TestCase( "a", "a", true )]
+        [TestCase( "a/b", "b", true )]
+        [TestCase( "a\\b", "a/b", true )]
+        [TestCase( "a/b/c/", "b\\c", true )]
+        public void EndsWith_NOT_strict_at_work( string root, string end, bool result )
+        {
+            new NormalizedPath( root ).EndsWith( end, strict: false ).Should().Be( result );
         }
 
         [TestCase( "", "", "" )]
