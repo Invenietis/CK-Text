@@ -10,6 +10,44 @@ namespace CK.Text.Tests
     [TestFixture]
     public class NormalizedPathTests
     {
+        [TestCase( "", '=', "" )]
+        [TestCase( null, '=', null )]
+        [TestCase( "", '<', "a" )]
+        [TestCase( "a", '=', "a" )]
+        [TestCase( "a/b", '>', "a" )]
+        [TestCase( "A/B", '=', "a/B" )]
+        [TestCase( "a/1", '=', "a/1" )]
+        [TestCase( "a/1a", '>', "a/1" )]
+        [TestCase( "a/1/b", '<', "a/1/c" )]
+        [TestCase( "z", '>', "a" )]
+        [TestCase( "z", '<', "a/b" )]
+        public void equality_and_comparison_operators_at_work( string p1, char op, string p2 )
+        {
+            NormalizedPath n1 = p1;
+            NormalizedPath n2 = p2;
+            if( op == '=' )
+            {
+                n1.Equals( n2 ).Should().BeTrue();
+                (n1 == n2).Should().BeTrue();
+                (n1 != n2).Should().BeFalse();
+                (n1 <= n2).Should().BeTrue();
+                (n1 < n2).Should().BeFalse();
+                (n1 >= n2).Should().BeTrue();
+                (n1 > n2).Should().BeFalse();
+            }
+            else
+            {
+                bool isGT = op == '>';
+                n1.Equals( n2 ).Should().BeFalse();
+                (n1 == n2).Should().BeFalse();
+                (n1 != n2).Should().BeTrue();
+                (n1 <= n2).Should().Be( !isGT );
+                (n1 < n2).Should().Be( !isGT );
+                (n1 >= n2).Should().Be( isGT );
+                (n1 > n2).Should().Be( isGT );
+            }
+        }
+
         [TestCase( "", "", false )]
         [TestCase( null, null, false )]
         [TestCase( "", "a", false )]

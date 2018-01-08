@@ -359,10 +359,67 @@ namespace CK.Text
 
         /// <summary>
         /// Compares this path to another one.
+        /// The <see cref="Parts"/> length is considered first and if they are equal, the
+        /// two <see cref="Path"/> are compared using <see cref="StringComparer.OrdinalIgnoreCase"/>.
         /// </summary>
         /// <param name="other">The path to compare to.</param>
-        /// <returns>A positive interger if this is greater than other, a negative integer if this is lower than the other one and 0 if they are equal.</returns>
-        public int CompareTo( NormalizedPath other ) => StringComparer.OrdinalIgnoreCase.Compare( _path, other._path );
+        /// <returns>A positive integer if this is greater than other, a negative integer if this is lower than the other one and 0 if they are equal.</returns>
+        public int CompareTo( NormalizedPath other )
+        {
+            if( _parts == null ) return other._parts == null ? 0 : -1;
+            if( other._parts == null ) return 1;
+            int cmp = _parts.Length - other._parts.Length;
+            return cmp != 0 ? cmp : StringComparer.OrdinalIgnoreCase.Compare( _path, other._path );
+        }
+
+        /// <summary>
+        /// Equality operator calls <see cref="Equals(NormalizedPath)"/>.
+        /// </summary>
+        /// <param name="p1">First path.</param>
+        /// <param name="p2">Second path.</param>
+        /// <returns>True if the two paths are equal.</returns>
+        public static bool operator ==( NormalizedPath p1, NormalizedPath p2 ) => p1.Equals( p2 );
+
+        /// <summary>
+        /// Inequality operator.
+        /// </summary>
+        /// <param name="p1">First path.</param>
+        /// <param name="p2">Second path.</param>
+        /// <returns>True if the two paths are not equal.</returns>
+        public static bool operator !=( NormalizedPath p1, NormalizedPath p2 ) => !p1.Equals( p2 );
+
+        /// <summary>
+        /// Comparison operator calls <see cref="CompareTo(NormalizedPath)"/>.
+        /// </summary>
+        /// <param name="p1">First path.</param>
+        /// <param name="p2">Second path.</param>
+        /// <returns>True p1 is greater than p2.</returns>
+        public static bool operator >( NormalizedPath p1, NormalizedPath p2 ) => p1.CompareTo( p2 ) > 0;
+
+        /// <summary>
+        /// Comparison operator calls <see cref="CompareTo(NormalizedPath)"/>.
+        /// </summary>
+        /// <param name="p1">First path.</param>
+        /// <param name="p2">Second path.</param>
+        /// <returns>True if p1 is smaller than p2.</returns>
+        public static bool operator <( NormalizedPath p1, NormalizedPath p2 ) => p1.CompareTo( p2 ) < 0;
+
+        /// <summary>
+        /// Comparison operator calls <see cref="CompareTo(NormalizedPath)"/>.
+        /// </summary>
+        /// <param name="p1">First path.</param>
+        /// <param name="p2">Second path.</param>
+        /// <returns>True if p1 is greater than or equal to p2.</returns>
+        public static bool operator >=( NormalizedPath p1, NormalizedPath p2 ) => p1.CompareTo( p2 ) >= 0;
+
+        /// <summary>
+        /// Comparison operator calls <see cref="CompareTo(NormalizedPath)"/>.
+        /// </summary>
+        /// <param name="p1">First path.</param>
+        /// <param name="p2">Second path.</param>
+        /// <returns>True if p1 is less than or equal to p2.</returns>
+        public static bool operator <=( NormalizedPath p1, NormalizedPath p2 ) => p1.CompareTo( p2 ) <= 0;
+
 
         /// <summary>
         /// Gets whether the <paramref name="obj"/> is a <see cref="NormalizedPath"/> that is equal to
@@ -377,7 +434,7 @@ namespace CK.Text
         /// Gets the hash code.
         /// </summary>
         /// <returns>The hash code.</returns>
-        public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode( _path );
+        public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode( ToString() );
 
         /// <summary>
         /// Gets whether the other path is equal to this one.
@@ -385,7 +442,12 @@ namespace CK.Text
         /// </summary>
         /// <param name="other">The other path to challenge.</param>
         /// <returns>True if they are equal, false otherwise.</returns>
-        public bool Equals( NormalizedPath other ) => _path.Equals( other._path );
+        public bool Equals( NormalizedPath other )
+        {
+            if( _parts == null ) return other._parts == null;
+            if( other._parts == null || _parts.Length != other._parts.Length ) return false;
+            return StringComparer.OrdinalIgnoreCase.Equals( _path, other._path );
+        }
 
         /// <summary>
         /// Returns the string <see cref="Path"/>.
