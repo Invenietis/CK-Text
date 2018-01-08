@@ -46,12 +46,6 @@ namespace CK.Text
         public static implicit operator string( NormalizedPath path ) => path._path;
 
         /// <summary>
-        /// Implicitely converts a path to a boolean: an empty path is false.
-        /// </summary>
-        /// <param name="path">Normalized path to consider as a boolean.</param>
-        public static implicit operator bool( NormalizedPath path ) => !path.IsEmpty;
-
-        /// <summary>
         /// Implicitely converts a string to a <see cref="NormalizedPath"/>.
         /// </summary>
         /// <param name="path"></param>
