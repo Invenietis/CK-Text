@@ -10,6 +10,30 @@ namespace CK.Text.Tests
     [TestFixture]
     public class NormalizedPathTests
     {
+        [TestCase( "", "", false )]
+        [TestCase( null, null, false )]
+        [TestCase( "", "a", false )]
+        [TestCase( "a", "a", false )]
+        [TestCase( "a/b", "a", true )]
+        [TestCase( "a\\b", "a/b", false )]
+        [TestCase( "a/b/c/", "a\\b", true )]
+        public void StartsWith_at_work( string start, string with, bool result )
+        {
+            new NormalizedPath( start ).StartsWith( with ).Should().Be( result );
+        }
+
+        [TestCase( "", "", true )]
+        [TestCase( null, null, true )]
+        [TestCase( "", "a", false )]
+        [TestCase( "a", "a", true )]
+        [TestCase( "a/b", "a", true )]
+        [TestCase( "a\\b", "a/b", true )]
+        [TestCase( "a/b/c/", "a\\b", true )]
+        public void StartsWith_NOT_strict_at_work( string start, string with, bool result )
+        {
+            new NormalizedPath( start ).StartsWith( with, strict: false ).Should().Be( result );
+        }
+
         [TestCase( "", "", "" )]
         [TestCase( null, null, "" )]
         [TestCase( "", "a", "a" )]

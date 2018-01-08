@@ -48,7 +48,7 @@ namespace CK.Text
         /// <summary>
         /// Implicitely converts a string to a <see cref="NormalizedPath"/>.
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="path">The path as a string.</param>
         public static implicit operator NormalizedPath( string path ) => new NormalizedPath( path );
 
         NormalizedPath( string[] parts, string path )
@@ -301,12 +301,13 @@ namespace CK.Text
         /// False to allow the other path to be the same as this one.
         /// By default this path must be longer than the other one.</param>
         /// <returns>True if this path starts with the other one.</returns>
-        public bool StartsWith( NormalizedPath other, bool strict = true ) => !other.IsEmpty
+        public bool StartsWith( NormalizedPath other, bool strict = true ) => (other.IsEmpty && !strict)
+                                                        || (!other.IsEmpty
                                                             && !IsEmpty
                                                             && other._parts.Length <= _parts.Length
                                                             && (!strict || other._parts.Length < _parts.Length)
                                                             && StringComparer.OrdinalIgnoreCase.Equals( other.LastPart, _parts[other._parts.Length - 1] )
-                                                            && _path.StartsWith( other._path, StringComparison.OrdinalIgnoreCase );
+                                                            && _path.StartsWith( other._path, StringComparison.OrdinalIgnoreCase ));
 
         /// <summary>
         /// Removes the prefix from this path. The prefix must starts with or be exaclty the same as this one
