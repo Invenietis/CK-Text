@@ -29,9 +29,9 @@ namespace CK.Text
         public static readonly string AltDirectorySeparatorString = new String( System.IO.Path.AltDirectorySeparatorChar, 1 );
 
         /// <summary>
-        /// Explicitely builds a new <see cref="NormalizedPath"/> struct from a string.
+        /// Explicitely builds a new <see cref="NormalizedPath"/> struct from a string (that can be null or empty).
         /// </summary>
-        /// <param name="path">The path as a string.</param>
+        /// <param name="path">The path as a string (can be null or empty).</param>
         public NormalizedPath( string path )
         {
             _parts = path?.Split( _separators, StringSplitOptions.RemoveEmptyEntries );
