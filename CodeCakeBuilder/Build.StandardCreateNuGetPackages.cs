@@ -2,6 +2,7 @@ using Cake.Common.Diagnostics;
 using Cake.Common.Solution;
 using Cake.Common.Tools.DotNetCore;
 using Cake.Common.Tools.DotNetCore.Pack;
+using Cake.Core.IO;
 using SimpleGitVersion;
 using System.Collections.Generic;
 
@@ -9,7 +10,7 @@ namespace CodeCake
 {
     public partial class Build
     {
-        void StandardCreateNuGetPackages( Cake.Common.IO.Paths.ConvertableDirectoryPath releasesDir, IEnumerable<SolutionProject> projectsToPublish, SimpleRepositoryInfo gitInfo, string configuration )
+        void StandardCreateNuGetPackages( DirectoryPath releasesDir, IEnumerable<SolutionProject> projectsToPublish, SimpleRepositoryInfo gitInfo, string configuration )
         {
             var settings = new DotNetCorePackSettings().AddVersionArguments( gitInfo, c =>
             {
