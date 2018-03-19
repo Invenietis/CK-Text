@@ -127,13 +127,13 @@ namespace CK.Text.Tests
             if( result == "ArgumentNullException" )
             {
                 new NormalizedPath( root ).Invoking( sut => sut.AppendPart( suffix ) )
-                        .ShouldThrow<ArgumentNullException>();
+                        .Should().Throw<ArgumentNullException>();
 
             }
             else if( result == "ArgumentException" )
             {
                 new NormalizedPath( root ).Invoking( sut => sut.AppendPart( suffix ) )
-                        .ShouldThrow<ArgumentException>();
+                        .Should().Throw<ArgumentException>();
 
             }
             else
@@ -151,7 +151,7 @@ namespace CK.Text.Tests
         public void Parents_does_not_contain_the_empty_root( string p, string result )
         {
             new NormalizedPath( p ).Parents.Select( a => a.ToString() )
-                    .ShouldBeEquivalentTo( NormalizeExpectedResultAsStrings( result ), o => o.WithStrictOrdering() );
+                    .Should().BeEquivalentTo( NormalizeExpectedResultAsStrings( result ), o => o.WithStrictOrdering() );
         }
 
         [TestCase( "", "", "" )]
@@ -163,7 +163,7 @@ namespace CK.Text.Tests
         {
             var nParts = parts.Split( ',' ).Where( x => x.Length > 0 );
             new NormalizedPath( root ).PathsToFirstPart( null, nParts ).Select( a => a.ToString() )
-                    .ShouldBeEquivalentTo( NormalizeExpectedResultAsStrings( result ), o => o.WithStrictOrdering() );
+                    .Should().BeEquivalentTo( NormalizeExpectedResultAsStrings( result ), o => o.WithStrictOrdering() );
         }
 
         [TestCase( "", "", "part", "" )]
@@ -176,7 +176,7 @@ namespace CK.Text.Tests
             var nPaths = paths.Split( ',' ).Where( x => x.Length > 0 ).Select( x => new NormalizedPath( x ) );
             var nParts = parts.Split( ',' ).Where( x => x.Length > 0 );
             new NormalizedPath( root ).PathsToFirstPart( nPaths, nParts ).Select( a => a.ToString() )
-                    .ShouldBeEquivalentTo( NormalizeExpectedResultAsStrings( result ), o => o.WithStrictOrdering() );
+                    .Should().BeEquivalentTo( NormalizeExpectedResultAsStrings( result ), o => o.WithStrictOrdering() );
         }
 
         [TestCase( "", "" )]
@@ -191,7 +191,7 @@ namespace CK.Text.Tests
             if( result == "InvalidOperationException" )
             {
                 new NormalizedPath( path ).Invoking( sut => sut.ResolveDots() )
-                        .ShouldThrow<InvalidOperationException>();
+                        .Should().Throw<InvalidOperationException>();
             }
             else
             {
@@ -221,12 +221,12 @@ namespace CK.Text.Tests
             if( result == "ArgumentOutOfRangeException" )
             {
                 new NormalizedPath( path ).Invoking( sut => sut.ResolveDots( rootPartsCount: rootPartsCount ) )
-                        .ShouldThrow<ArgumentOutOfRangeException>();
+                        .Should().Throw<ArgumentOutOfRangeException>();
             }
             else if( result == "InvalidOperationException" )
             {
                 new NormalizedPath( path ).Invoking( sut => sut.ResolveDots( rootPartsCount: rootPartsCount ) )
-                        .ShouldThrow<InvalidOperationException>();
+                        .Should().Throw<InvalidOperationException>();
             }
             else
             {
@@ -249,7 +249,7 @@ namespace CK.Text.Tests
             if( result == "IndexOutOfRangeException" )
             {
                 new NormalizedPath( path ).Invoking( sut => sut.RemovePart( index ) )
-                        .ShouldThrow<IndexOutOfRangeException>();
+                        .Should().Throw<IndexOutOfRangeException>();
             }
             else
             {
@@ -272,7 +272,7 @@ namespace CK.Text.Tests
             if( result == "IndexOutOfRangeException" )
             {
                 new NormalizedPath( path ).Invoking( sut => sut.RemoveParts( startIndex, count ) )
-                        .ShouldThrow<IndexOutOfRangeException>();
+                        .Should().Throw<IndexOutOfRangeException>();
             }
             else
             {

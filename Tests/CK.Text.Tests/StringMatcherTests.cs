@@ -81,8 +81,8 @@ namespace CK.Text.Tests
             m.StartIndex.Should().Be( s.Length );
             m.IsEnd.Should().BeTrue();
 
-            a = () => m.MatchText( "c" ); a.ShouldNotThrow();
-            a = () => m.MatchWhiteSpaces(); a.ShouldNotThrow();
+            a = () => m.MatchText( "c" ); a.Should().NotThrow();
+            a = () => m.MatchWhiteSpaces(); a.Should().NotThrow();
             m.MatchText( "A" ).Should().BeFalse();
             m.MatchWhiteSpaces().Should().BeFalse();
         }

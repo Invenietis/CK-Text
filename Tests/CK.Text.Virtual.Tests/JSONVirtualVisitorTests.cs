@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NUnit.Framework;
 using System;
 
@@ -31,8 +31,8 @@ namespace CK.Text.Virtual.Tests
 }";
             JSONProperties p = new JSONProperties(new VirtualStringMatcher(new FakeVirtualString(s)));
             p.Visit();
-            p.Properties.ShouldBeEquivalentTo( new[] { "p1", "p2", "p3", "p4Before", "pSub", "p4", "p5", "p6", "p7" } );
-            p.Paths.ShouldBeEquivalentTo( new[] {
+            p.Properties.Should().BeEquivalentTo( new[] { "p1", "p2", "p3", "p4Before", "pSub", "p4", "p5", "p6", "p7" } );
+            p.Paths.Should().BeEquivalentTo( new[] {
                 " => 0=p1",
                 " => 1=p2",
                 "1=p2 => 0=p3",
