@@ -4,23 +4,19 @@
     <TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
     <OutputType Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">Exe</OutputType>
   </PropertyGroup>
-  
   <ItemGroup>
     <ProjectReference Include="..\..\CK.Text\CK.Text.csproj" />
     <PackageReference Include="FluentAssertions" Version="5.2.0" />
   </ItemGroup>
-  
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
     <PackageReference Include="NUnitLite" Version="3.10.1" />
     <PackageReference Include="NUnit" Version="3.10.1" />
   </ItemGroup>
-  
   <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
     <PackageReference Include="NUnit" Version="[2.6.4]" />
     <Reference Include="System" />
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
-  
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
