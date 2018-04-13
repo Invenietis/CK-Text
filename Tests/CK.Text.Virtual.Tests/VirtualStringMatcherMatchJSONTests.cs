@@ -13,21 +13,21 @@ namespace CK.Text.Virtual.Tests
         {
             {
                 var j = @"{""A"":1,""B"":2}";
-                VirtualStringMatcher m = new VirtualStringMatcher(new FakeVirtualString(j));
+                VirtualStringMatcher m = new VirtualStringMatcher( new FakeVirtualString( j ) );
                 m.MatchJSONObject( out object o ).Should().BeTrue();
                 var list = o as List<KeyValuePair<string, object>>;
                 list.Select( k => k.Key + '|' + k.Value ).Concatenate().Should().Be( "A|1, B|2" );
             }
             {
                 var j = @"{ ""A"" : 1.0, ""B"" : 2 }";
-                VirtualStringMatcher m = new VirtualStringMatcher(new FakeVirtualString(j));
+                VirtualStringMatcher m = new VirtualStringMatcher( new FakeVirtualString( j ) );
                 m.MatchJSONObject( out object o ).Should().BeTrue();
                 var list = o as List<KeyValuePair<string, object>>;
                 list.Select( k => k.Key + '|' + k.Value ).Concatenate().Should().Be( "A|1, B|2" );
             }
             {
                 var j = @"{ ""A"" : [ ""a"" , 3 , null , 6], ""B"" : [ 2, 3, ""XX"" ] }";
-                VirtualStringMatcher m = new VirtualStringMatcher(new FakeVirtualString(j));
+                VirtualStringMatcher m = new VirtualStringMatcher( new FakeVirtualString( j ) );
                 m.MatchJSONObject( out object o ).Should().BeTrue();
                 var list = o as List<KeyValuePair<string, object>>;
                 list.Select( k => k.Key
@@ -42,14 +42,14 @@ namespace CK.Text.Virtual.Tests
         {
             {
                 var j = @"{}";
-                VirtualStringMatcher m = new VirtualStringMatcher(new FakeVirtualString(j));
+                VirtualStringMatcher m = new VirtualStringMatcher( new FakeVirtualString( j ) );
                 m.MatchJSONObject( out object o ).Should().BeTrue();
                 var list = o as List<KeyValuePair<string, object>>;
                 list.Should().BeEmpty();
             }
             {
                 var j = @"[]";
-                VirtualStringMatcher m = new VirtualStringMatcher(new FakeVirtualString(j));
+                VirtualStringMatcher m = new VirtualStringMatcher( new FakeVirtualString( j ) );
                 m.MatchJSONObject( out object o ).Should().BeTrue();
                 var list = o as List<object>;
                 list.Should().BeEmpty();
@@ -68,7 +68,7 @@ namespace CK.Text.Virtual.Tests
 /*" )]
         public void match_JSON_skips_JS_comments( string jsonWithComment )
         {
-            VirtualStringMatcher m = new VirtualStringMatcher(new FakeVirtualString(jsonWithComment));
+            VirtualStringMatcher m = new VirtualStringMatcher( new FakeVirtualString( jsonWithComment ) );
             m.MatchJSONObject( out object o ).Should().BeTrue();
             o.Should().Be( 1.2 );
         }

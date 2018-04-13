@@ -10,8 +10,8 @@ namespace CK.Text.Virtual.Tests
         [Test]
         public void virtualstring_matching()
         {
-            FakeVirtualString v = new FakeVirtualString("Hello world!");
-            var m = new VirtualStringMatcher(v);
+            FakeVirtualString v = new FakeVirtualString( "Hello world!" );
+            var m = new VirtualStringMatcher( v );
             m.Text.GetText( 0, (int)m.Length ).Should().Be( "Hello world!" );
             m.Text.GetText( 0, (int)m.Length - 1 ).Should().NotBe( "Hello world!" );
             m.Text[5].Should().Be( ' ' );
@@ -23,7 +23,7 @@ namespace CK.Text.Virtual.Tests
         [Test]
         public void simple_char_matching()
         {
-            var m = new VirtualStringMatcher(new FakeVirtualString("ABCD"));
+            var m = new VirtualStringMatcher( new FakeVirtualString( "ABCD" ) );
             m.MatchChar( 'a' ).Should().BeFalse();
             m.MatchChar( 'A' ).Should().BeTrue();
             m.StartIndex.Should().Be( 1 );
@@ -39,8 +39,8 @@ namespace CK.Text.Virtual.Tests
         [Test]
         public void matching_texts_and_whitespaces()
         {
-            FakeVirtualString v = new FakeVirtualString(" AB  \t\r C");
-            var m = new VirtualStringMatcher(v);
+            FakeVirtualString v = new FakeVirtualString( " AB  \t\r C" );
+            var m = new VirtualStringMatcher( v );
             Action a;
             m.MatchText( "A" ).Should().BeFalse();
             m.StartIndex.Should().Be( 0 );
@@ -67,7 +67,7 @@ namespace CK.Text.Virtual.Tests
         [Test]
         public void matching_integers()
         {
-            var m = new VirtualStringMatcher(new FakeVirtualString("X3712Y"));
+            var m = new VirtualStringMatcher( new FakeVirtualString( "X3712Y" ) );
             m.MatchChar( 'X' ).Should().BeTrue();
             m.MatchInt32( out int i ).Should().BeTrue();
             i.Should().Be( 3712 );
@@ -77,7 +77,7 @@ namespace CK.Text.Virtual.Tests
         [Test]
         public void matching_integers_with_min_max_values()
         {
-            var m = new VirtualStringMatcher(new FakeVirtualString("3712 -435 56"));
+            var m = new VirtualStringMatcher( new FakeVirtualString( "3712 -435 56" ) );
             m.MatchInt32( out int i, -500, -400 ).Should().BeFalse();
             m.MatchInt32( out i, 0, 3712 ).Should().BeTrue();
             i.Should().Be( 3712 );
@@ -95,7 +95,7 @@ namespace CK.Text.Virtual.Tests
         [Test]
         public void match_methods_must_set_an_error()
         {
-            var m = new VirtualStringMatcher(new FakeVirtualString("A"));
+            var m = new VirtualStringMatcher( new FakeVirtualString( "A" ) );
 
             CheckMatchError( m, () => m.MatchChar( 'B' ) );
             CheckMatchError( m, () => m.MatchInt32( out int i ) );
@@ -119,7 +119,7 @@ namespace CK.Text.Virtual.Tests
         [Test]
         public void ToString_constains_the_text_and_the_error()
         {
-            var m = new VirtualStringMatcher(new FakeVirtualString("The Text"));
+            var m = new VirtualStringMatcher( new FakeVirtualString( "The Text" ) );
             m.SetError( "Plouf..." );
             m.ToString().Contains( "The Text" );
             m.ToString().Contains( "Plouf..." );
@@ -137,8 +137,8 @@ namespace CK.Text.Virtual.Tests
         [TestCase( @"""\uabCd\u07fC""X", "\uABCD\u07FC", "X" )]
         public void matching_JSONQUotedString( string s, string parsed, string textAfter )
         {
-            FakeVirtualString v = new FakeVirtualString(s);
-            var m = new VirtualStringMatcher(v);
+            FakeVirtualString v = new FakeVirtualString( s );
+            var m = new VirtualStringMatcher( v );
             m.TryMatchJSONQuotedString( out string result, true ).Should().BeTrue();
             result.Should().Be( parsed );
             m.TryMatchText( textAfter ).Should().BeTrue();
@@ -167,7 +167,7 @@ namespace CK.Text.Virtual.Tests
         ] 
     } 
 }  ";
-            var m = new VirtualStringMatcher(new FakeVirtualString(s));
+            var m = new VirtualStringMatcher( new FakeVirtualString( s ) );
             m.MatchWhiteSpaces().Should().BeTrue();
             m.MatchChar( '{' ).Should().BeTrue();
             m.MatchWhiteSpaces().Should().BeTrue();
@@ -254,7 +254,7 @@ namespace CK.Text.Virtual.Tests
         [TestCase( "-80.34E-98", -80.34E-98 )]
         public void matching_double_values( string s, double d )
         {
-            VirtualStringMatcher m = new VirtualStringMatcher(new FakeVirtualString("P" + s + "S"));
+            VirtualStringMatcher m = new VirtualStringMatcher( new FakeVirtualString( "P" + s + "S" ) );
 
             m.MatchChar( 'P' ).Should().BeTrue();
             long idx = m.StartIndex;
@@ -274,20 +274,20 @@ namespace CK.Text.Virtual.Tests
         public void matching_the_5_forms_of_guid( string form )
         {
             var id = Guid.NewGuid();
-            string sId = id.ToString(form);
+            string sId = id.ToString( form );
             {
-                var m = new VirtualStringMatcher(new FakeVirtualString(sId));
+                var m = new VirtualStringMatcher( new FakeVirtualString( sId ) );
                 m.TryMatchGuid( out Guid readId ).Should().BeTrue();
                 readId.Should().Be( id );
             }
             {
-                var m = new VirtualStringMatcher(new FakeVirtualString("S" + sId));
+                var m = new VirtualStringMatcher( new FakeVirtualString( "S" + sId ) );
                 m.TryMatchChar( 'S' ).Should().BeTrue();
                 m.TryMatchGuid( out Guid readId ).Should().BeTrue();
                 readId.Should().Be( id );
             }
             {
-                var m = new VirtualStringMatcher(new FakeVirtualString("S" + sId + "T"));
+                var m = new VirtualStringMatcher( new FakeVirtualString( "S" + sId + "T" ) );
                 m.MatchChar( 'S' ).Should().BeTrue();
                 m.TryMatchGuid( out Guid readId ).Should().BeTrue();
                 readId.Should().Be( id );
@@ -295,13 +295,13 @@ namespace CK.Text.Virtual.Tests
             }
             sId = sId.Remove( sId.Length - 1 );
             {
-                var m = new VirtualStringMatcher(new FakeVirtualString(sId));
+                var m = new VirtualStringMatcher( new FakeVirtualString( sId ) );
                 m.TryMatchGuid( out Guid readId ).Should().BeFalse();
                 m.StartIndex.Should().Be( 0 );
             }
             sId = id.ToString().Insert( 3, "K" ).Remove( 4 );
             {
-                var m = new VirtualStringMatcher(new FakeVirtualString(sId));
+                var m = new VirtualStringMatcher( new FakeVirtualString( sId ) );
                 m.TryMatchGuid( out Guid readId ).Should().BeFalse();
                 m.StartIndex.Should().Be( 0 );
             }
