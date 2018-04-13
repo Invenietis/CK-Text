@@ -233,29 +233,62 @@ namespace CK.Text
         }
 
         /// <summary>
-        /// Returns a new <see cref="NormalizedPath"/> with <see cref="LastPart"/> removed.
+        /// Returns a new <see cref="NormalizedPath"/> with <see cref="LastPart"/> removed (or more).
         /// Can be safely called when <see cref="IsEmpty"/> is true.
         /// </summary>
+        /// <param name="count">Number of parts to remove.</param>
         /// <returns>A new path.</returns>
-        public NormalizedPath RemoveLastPart()
+        public NormalizedPath RemoveLastPart( int count = 1 )
         {
-            if( _parts == null || _parts.Length == 1 ) return new NormalizedPath();
-            var parts = new string[_parts.Length - 1];
+            if( count <= 0 )
+            {
+                if( count == 0 ) return this;
+                throw new ArgumentException();
+            }
+            if( _parts == null )
+            {
+                if( count == 0 ) return this;
+                throw new ArgumentException();
+            }
+            if( count >= _parts.Length )
+            {
+                if( count == _parts.Length ) return new NormalizedPath();
+                throw new ArgumentException();
+            }
+            var parts = new string[_parts.Length - count];
             Array.Copy( _parts, parts, parts.Length );
-            return new NormalizedPath( parts, _path.Substring( 0, _path.Length - _parts[_parts.Length - 1].Length - 1 ) );
+            int len = _parts[_parts.Length - 1].Length + count;
+            while( --count > 0 ) len += _parts[_parts.Length - count - 2].Length;
+            return new NormalizedPath( parts, _path.Substring( 0, _path.Length - len ) );
         }
 
         /// <summary>
-        /// Returns a new <see cref="NormalizedPath"/> with <see cref="FirstPart"/> removed.
+        /// Returns a new <see cref="NormalizedPath"/> with <see cref="FirstPart"/> removed (or more).
         /// Can be safely called when <see cref="IsEmpty"/> is true.
         /// </summary>
         /// <returns>A new path.</returns>
-        public NormalizedPath RemoveFirstPart()
+        public NormalizedPath RemoveFirstPart( int count = 1 )
         {
-            if( _parts == null || _parts.Length == 1 ) return new NormalizedPath();
-            var parts = new string[_parts.Length - 1];
-            Array.Copy( _parts, 1, parts, 0, parts.Length );
-            return new NormalizedPath( parts, _path.Substring( _parts[0].Length + 1 ) );
+            if( count <= 0 )
+            {
+                if( count == 0 ) return this;
+                throw new ArgumentException();
+            }
+            if( _parts == null )
+            {
+                if( count == 0 ) return this;
+                throw new ArgumentException();
+            }
+            if( count >= _parts.Length )
+            {
+                if( count == _parts.Length ) return new NormalizedPath();
+                throw new ArgumentException();
+            }
+            var parts = new string[_parts.Length - count];
+            Array.Copy( _parts, count, parts, 0, parts.Length );
+            int len = _parts[0].Length + count;
+            while( --count > 0 ) len += _parts[count + 1].Length;
+            return new NormalizedPath( parts, _path.Substring( len ) );
         }
 
         /// <summary>
