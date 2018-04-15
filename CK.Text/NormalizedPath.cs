@@ -258,7 +258,7 @@ namespace CK.Text
             var parts = new string[_parts.Length - count];
             Array.Copy( _parts, parts, parts.Length );
             int len = _parts[_parts.Length - 1].Length + count;
-            while( --count > 0 ) len += _parts[_parts.Length - count - 2].Length;
+            while( count > 1 ) len += _parts[_parts.Length - count--].Length;
             return new NormalizedPath( parts, _path.Substring( 0, _path.Length - len ) );
         }
 
@@ -287,7 +287,7 @@ namespace CK.Text
             var parts = new string[_parts.Length - count];
             Array.Copy( _parts, count, parts, 0, parts.Length );
             int len = _parts[0].Length + count;
-            while( --count > 0 ) len += _parts[count + 1].Length;
+            while( count > 1 ) len += _parts[--count].Length;
             return new NormalizedPath( parts, _path.Substring( len ) );
         }
 

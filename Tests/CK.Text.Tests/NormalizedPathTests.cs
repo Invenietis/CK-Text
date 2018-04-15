@@ -299,6 +299,7 @@ namespace CK.Text.Tests
         [TestCase( "A/B/C/D", 3, "A" )]
         [TestCase( "A/B/C/D", 4, "" )]
         [TestCase( "A/B/C/D", 5, "ArgumentException" )]
+        [TestCase( @"C:\Dev\CK-Database-Projects\CK-Sqlite\CK.Sqlite.Setup.Runtime\bin\Debug\netcoreapp2.0\publish", 4, @"C:\Dev\CK-Database-Projects\CK-Sqlite\CK.Sqlite.Setup.Runtime" )]
         public void RemoveLastPart_at_work( string path, int count, string result )
         {
             if( result == "ArgumentException" )
@@ -330,6 +331,7 @@ namespace CK.Text.Tests
         [TestCase( "A/B/C/D", 3, "D" )]
         [TestCase( "A/B/C/D", 4, "" )]
         [TestCase( "A/B/C/D", 5, "ArgumentException" )]
+        [TestCase( @"C:\Dev\CK-Database-Projects\CK-Sqlite\CK.Sqlite.Setup.Runtime\bin\Debug\netcoreapp2.0\publish", 4, @"CK.Sqlite.Setup.Runtime\bin\Debug\netcoreapp2.0\publish" )]
         public void RemoveFirstPart_at_work( string path, int count, string result )
         {
             if( result == "ArgumentException" )
