@@ -281,6 +281,71 @@ namespace CK.Text.Tests
             }
         }
 
+        [TestCase( "", -1, "ArgumentException" )]
+        [TestCase( "", 0, "" )]
+        [TestCase( "", 1, "ArgumentException" )]
+        [TestCase( "A", -1, "ArgumentException" )]
+        [TestCase( "A", 1, "" )]
+        [TestCase( "A/B", 1, "A" )]
+        [TestCase( "A/B", 2, "" )]
+        [TestCase( "A/B/C", 1, "A/B" )]
+        [TestCase( "A/B/C", 2, "A" )]
+        [TestCase( "A/B/C", 3, "" )]
+        [TestCase( "A/B/C", 4, "ArgumentException" )]
+        [TestCase( "A/B/C/D", -1, "ArgumentException" )]
+        [TestCase( "A/B/C/D", 0, "A/B/C/D" )]
+        [TestCase( "A/B/C/D", 1, "A/B/C" )]
+        [TestCase( "A/B/C/D", 2, "A/B" )]
+        [TestCase( "A/B/C/D", 3, "A" )]
+        [TestCase( "A/B/C/D", 4, "" )]
+        [TestCase( "A/B/C/D", 5, "ArgumentException" )]
+        [TestCase( @"C:\Dev\CK-Database-Projects\CK-Sqlite\CK.Sqlite.Setup.Runtime\bin\Debug\netcoreapp2.0\publish", 4, @"C:\Dev\CK-Database-Projects\CK-Sqlite\CK.Sqlite.Setup.Runtime" )]
+        public void RemoveLastPart_at_work( string path, int count, string result )
+        {
+            if( result == "ArgumentException" )
+            {
+                new NormalizedPath( path ).Invoking( sut => sut.RemoveLastPart( count ) )
+                        .Should().Throw<ArgumentException>();
+            }
+            else
+            {
+                new NormalizedPath( path ).RemoveLastPart( count )
+                        .Should().Be( new NormalizedPath( result ) );
+            }
+        }
+        [TestCase( "", -1, "ArgumentException" )]
+        [TestCase( "", 0, "" )]
+        [TestCase( "", 1, "ArgumentException" )]
+        [TestCase( "A", -1, "ArgumentException" )]
+        [TestCase( "A", 1, "" )]
+        [TestCase( "A/B", 1, "B" )]
+        [TestCase( "A/B", 2, "" )]
+        [TestCase( "A/B/C", 1, "B/C" )]
+        [TestCase( "A/B/C", 2, "C" )]
+        [TestCase( "A/B/C", 3, "" )]
+        [TestCase( "A/B/C", 4, "ArgumentException" )]
+        [TestCase( "A/B/C/D", -1, "ArgumentException" )]
+        [TestCase( "A/B/C/D", 0, "A/B/C/D" )]
+        [TestCase( "A/B/C/D", 1, "B/C/D" )]
+        [TestCase( "A/B/C/D", 2, "C/D" )]
+        [TestCase( "A/B/C/D", 3, "D" )]
+        [TestCase( "A/B/C/D", 4, "" )]
+        [TestCase( "A/B/C/D", 5, "ArgumentException" )]
+        [TestCase( @"C:\Dev\CK-Database-Projects\CK-Sqlite\CK.Sqlite.Setup.Runtime\bin\Debug\netcoreapp2.0\publish", 4, @"CK.Sqlite.Setup.Runtime\bin\Debug\netcoreapp2.0\publish" )]
+        public void RemoveFirstPart_at_work( string path, int count, string result )
+        {
+            if( result == "ArgumentException" )
+            {
+                new NormalizedPath( path ).Invoking( sut => sut.RemoveFirstPart( count ) )
+                        .Should().Throw<ArgumentException>();
+            }
+            else
+            {
+                new NormalizedPath( path ).RemoveFirstPart( count )
+                        .Should().Be( new NormalizedPath( result ) );
+            }
+        }
+
         static IEnumerable<string> NormalizeExpectedResultAsStrings( string result ) => NormalizeExpectedResult( result ).Select( x => x.ToString() );
 
         static IEnumerable<NormalizedPath> NormalizeExpectedResult( string result )

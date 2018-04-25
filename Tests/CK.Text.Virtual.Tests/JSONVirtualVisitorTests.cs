@@ -29,7 +29,7 @@ namespace CK.Text.Virtual.Tests
         ] 
     } 
 }";
-            JSONProperties p = new JSONProperties(new VirtualStringMatcher(new FakeVirtualString(s)));
+            JSONProperties p = new JSONProperties( new VirtualStringMatcher( new FakeVirtualString( s ) ) );
             p.Visit();
             p.Properties.Should().BeEquivalentTo( new[] { "p1", "p2", "p3", "p4Before", "pSub", "p4", "p5", "p6", "p7" } );
             p.Paths.Should().BeEquivalentTo( new[] {
@@ -52,7 +52,7 @@ namespace CK.Text.Virtual.Tests
     ""v"": 9.87e2, 
     ""a"": [ 8.65, true, {}, {""x"" : 45.98, ""y"":12.786}, 874.6324 ]
 }";
-            var v = new JSONDoubleSum(new VirtualStringMatcher(new FakeVirtualString(data)));
+            var v = new JSONDoubleSum( new VirtualStringMatcher( new FakeVirtualString( data ) ) );
             v.Visit();
             v.Sum.Should().Be( 9.87e2 + 8.65 + 45.98 + 12.786 + 874.6324 );
         }
@@ -65,15 +65,15 @@ namespace CK.Text.Virtual.Tests
     ""v"": 9.87e2, 
     ""a"": [ 8.65, true, {}, {""x"" : 45.98, ""y"":12.786}, 874.6324 ]
 }";
-            var v = new JSONDoubleRewriter(new VirtualStringMatcher(new FakeVirtualString(data)), d =>
-            {
-                Console.WriteLine("{0} => {1}", d, Math.Floor(d).ToString());
-                return Math.Floor(d).ToString();
-            });
+            var v = new JSONDoubleRewriter( new VirtualStringMatcher( new FakeVirtualString( data ) ), d =>
+                 {
+                     Console.WriteLine( "{0} => {1}", d, Math.Floor( d ).ToString() );
+                     return Math.Floor( d ).ToString();
+                 } );
 
             string rewritten = v.Rewrite();
 
-            var summer = new JSONDoubleSum(new VirtualStringMatcher(new FakeVirtualString(rewritten)));
+            var summer = new JSONDoubleSum( new VirtualStringMatcher( new FakeVirtualString( rewritten ) ) );
             summer.Visit();
             summer.Sum.Should().Be( 987 + 8 + 45 + 12 + 874 );
         }
@@ -94,7 +94,7 @@ namespace CK.Text.Virtual.Tests
         , 874 
 ]
 }";
-            string mini = JSONMinifier.Minify(new VirtualStringMatcher(new FakeVirtualString(data)));
+            string mini = JSONMinifier.Minify( new VirtualStringMatcher( new FakeVirtualString( data ) ) );
             mini.Should().Be( @"{""v"":9.87e2,""a"":[8.65,true,{},{""x"":null,""y"":0.0},874]}" );
         }
     }
