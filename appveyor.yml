@@ -1,11 +1,10 @@
-# Basic appveyor configuration : CodeCakeBuilder does the job.
 version: build{build}
 image: Visual Studio 2017
 clone_folder: C:\CK-World\CK-Core-Projects\CK-Text
 branches:
   only:
-  - master
-  - develop
+    - master
+    - develop
 environment:
   MYGET_RELEASE_API_KEY:
     secure: BmENGV1y8uv5cLhMhwpoDLwQiLJh4C66c53+FW8FuuVfu5Lf4Ac6NvSuqO/1MbPm
@@ -13,10 +12,6 @@ environment:
     secure: CfEqNYjhrGX9DyalZ4jcadzJ/x8q25GulMCbZQDRRs+XetfHn2AEP79OJXE1wSJ8
   MYGET_CI_API_KEY:
     secure: z3ZFnSM3FPCaJYkLhqjZmFTCw1Wf1hmRznQ0/UfxY/5haxctmymvFhh+PTz+/eHw
-init:
-- git config --global core.autocrlf true
-install:
-- ps: CodeCakeBuilder\Bootstrap.ps1
 build_script:
-- CodeCakeBuilder\bin\Release\CodeCakeBuilder.exe -nointeraction
+  - dotnet run --project CodeCakeBuilder -nointeraction
 test: off

@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using System;
 using NUnit.Framework;
 using System.IO;
@@ -13,8 +13,7 @@ namespace CK.Text.Virtual.Tests
         {
             using( Stream fileStream = new FileStream( Path.Combine( TestHelper.DataFolder, "basic.json" ), FileMode.Open, FileAccess.Read ) )
             {
-                VirtualStringMatcher m = new VirtualStringMatcher(new VirtualString(fileStream, 0, 20));
-                m.Should().NotBeNull();
+                VirtualStringMatcher m = new VirtualStringMatcher( new VirtualString( fileStream, 0, 20 ) );
                 m.Text[0].Should().Be( '{' );
                 m.Text[12].Should().Be( 'n' );
                 m.Text[m.Length - 1].Should().Be( '}' );
@@ -31,10 +30,10 @@ namespace CK.Text.Virtual.Tests
         {
             using( Stream fileStream = new FileStream( Path.Combine( TestHelper.DataFolder, "properties.json" ), FileMode.Open, FileAccess.Read ) )
             {
-                JSONProperties p = new JSONProperties(new VirtualStringMatcher(new VirtualString(fileStream)));
+                JSONProperties p = new JSONProperties( new VirtualStringMatcher( new VirtualString( fileStream ) ) );
                 p.Visit();
-                p.Properties.ShouldBeEquivalentTo( new[] { "p1", "p2", "p3", "p4Before", "pSub", "p4", "p5", "p6", "p7" } );
-                p.Paths.ShouldBeEquivalentTo( new[] {
+                p.Properties.Should().BeEquivalentTo( new[] { "p1", "p2", "p3", "p4Before", "pSub", "p4", "p5", "p6", "p7" } );
+                p.Paths.Should().BeEquivalentTo( new[] {
                 " => 0=p1",
                 " => 1=p2",
                 "1=p2 => 0=p3",
@@ -52,7 +51,7 @@ namespace CK.Text.Virtual.Tests
         {
             using( Stream fileStream = new FileStream( Path.Combine( TestHelper.DataFolder, "doubles.json" ), FileMode.Open, FileAccess.Read ) )
             {
-                var v = new JSONDoubleSum(new VirtualStringMatcher(new VirtualString(fileStream)));
+                var v = new JSONDoubleSum( new VirtualStringMatcher( new VirtualString( fileStream ) ) );
                 v.Visit();
                 v.Sum.Should().Be( 9.87e2 + 8.65 + 45.98 + 12.786 + 874.6324 );
             }
@@ -63,15 +62,15 @@ namespace CK.Text.Virtual.Tests
         {
             using( Stream fileStream = new FileStream( Path.Combine( TestHelper.DataFolder, "doubles.json" ), FileMode.Open, FileAccess.Read ) )
             {
-                var v = new JSONDoubleRewriter(new VirtualStringMatcher(new VirtualString(fileStream)), d =>
-                {
-                    Console.WriteLine("{0} => {1}", d, Math.Floor(d).ToString());
-                    return Math.Floor(d).ToString();
-                });
+                var v = new JSONDoubleRewriter( new VirtualStringMatcher( new VirtualString( fileStream ) ), d =>
+                     {
+                         Console.WriteLine( "{0} => {1}", d, Math.Floor( d ).ToString() );
+                         return Math.Floor( d ).ToString();
+                     } );
 
                 string rewritten = v.Rewrite();
 
-                var summer = new JSONDoubleSum(new VirtualStringMatcher(new FakeVirtualString(rewritten)));
+                var summer = new JSONDoubleSum( new VirtualStringMatcher( new FakeVirtualString( rewritten ) ) );
                 summer.Visit();
                 summer.Sum.Should().Be( 987 + 8 + 45 + 12 + 874 );
             }
@@ -82,7 +81,7 @@ namespace CK.Text.Virtual.Tests
         {
             using( Stream fileStream = new FileStream( Path.Combine( TestHelper.DataFolder, "minifying.json" ), FileMode.Open, FileAccess.Read ) )
             {
-                string mini = JSONMinifier.Minify(new VirtualStringMatcher(new VirtualString(fileStream)));
+                string mini = JSONMinifier.Minify( new VirtualStringMatcher( new VirtualString( fileStream ) ) );
                 mini.Should().Be( @"{""v"":9.87e2,""a"":[8.65,true,{},{""x"":null,""y"":0.0},874]}" );
             }
         }

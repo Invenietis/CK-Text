@@ -36,7 +36,7 @@ namespace CK.Text.Tests
         }
 
         /// <summary>
-        /// Uses <see cref="NormalizedMean"/> and <see cref="StandardDeviation"/ >to test whether this
+        /// Uses <see cref="NormalizedMean"/> and <see cref="StandardDeviation"/> to test whether this
         /// result is significantly better than the other one.
         /// </summary>
         /// <param name="other">Other result. Must not be null.</param>

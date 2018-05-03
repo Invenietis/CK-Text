@@ -184,12 +184,14 @@ namespace CK.Text
         /// The <see cref="Regex"/> that <see cref="TryMatchDoubleValue(StringMatcher)"/> uses to avoid
         /// calling <see cref="double.TryParse(string, out double)"/> when resolving the value is 
         /// useless.
+        /// Note that this regex allow a leading minus (-) sign, but not a plus (+).
         /// </summary>
         static public readonly Regex RegexDouble = new Regex( @"^-?(0|[1-9][0-9]*)(\.[0-9]+)?((e|E)(\+|-)?[0-9]+)?", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture );
 
         /// <summary>
         /// Matches a double without getting its value nor setting an error if match fails.
         /// This uses <see cref="RegexDouble"/>.
+        /// The text may start with a minus (-) but not with a plus (+).
         /// </summary>
         /// <param name="this">This <see cref="StringMatcher"/>.</param>
         /// <returns><c>true</c> when matched, <c>false</c> otherwise.</returns>
@@ -202,6 +204,7 @@ namespace CK.Text
 
         /// <summary>
         /// Matches a double and gets its value. No error is set if match fails.
+        /// The text may start with a minus (-) but not with a plus (+).
         /// </summary>
         /// <param name="this">This <see cref="StringMatcher"/>.</param>
         /// <param name="value">The read value on success.</param>
