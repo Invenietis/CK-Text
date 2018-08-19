@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -293,7 +293,7 @@ namespace CK.Text
         /// Use <paramref name="minCount"/> = 0 to skip any white spaces.
         /// </summary>
         /// <param name="minCount">Minimal number of white spaces to match.</param>
-        /// <returns>True on success, false if the match failed.</returns>
+        /// <returns>True on success, false if the match failed (if <see cref="IsEnd"/> is reached before <paramref name="minCount"/>).</returns>
         public bool MatchWhiteSpaces( int minCount = 1 )
         {
             int i = _startIndex;
