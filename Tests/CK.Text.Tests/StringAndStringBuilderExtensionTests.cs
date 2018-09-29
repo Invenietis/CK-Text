@@ -6,6 +6,7 @@ using System.Diagnostics;
 using FluentAssertions;
 using System.Collections.Generic;
 using System.Linq;
+using CK.Core;
 
 namespace CK.Text.Tests
 {
@@ -224,17 +225,17 @@ Second line.
             var lines = text.Split( '\n' );
             var words = text.Split( ' ', '\n' );
 
-            var rJoinLines = Benchmarker.BenchmarkTime( () => String.Join( ", ", lines ) );
-            var rJoinWords = Benchmarker.BenchmarkTime( () => String.Join( ", ", words ) );
-            var rConcatLines = Benchmarker.BenchmarkTime( () => ConcatenateCandidate( lines ) );
-            var rConcatWords = Benchmarker.BenchmarkTime( () => ConcatenateCandidate( words ) );
+            var rJoinLines = MicroBenchmark.MeasureTime( () => String.Join( ", ", lines ) );
+            var rJoinWords = MicroBenchmark.MeasureTime( () => String.Join( ", ", words ) );
+            var rConcatLines = MicroBenchmark.MeasureTime( () => ConcatenateCandidate( lines ) );
+            var rConcatWords = MicroBenchmark.MeasureTime( () => ConcatenateCandidate( words ) );
 
             rJoinLines.IsSignificantlyBetterThan( rConcatLines ).Should().BeTrue();
             rJoinWords.IsSignificantlyBetterThan( rConcatWords ).Should().BeTrue();
 
             var smallSet = lines.Take( 20 ).ToArray();
-            var rConcatSmall = Benchmarker.BenchmarkTime( () => ConcatenateCandidate( smallSet ) );
-            var rJoinSmall = Benchmarker.BenchmarkTime( () => String.Join( ", ", smallSet ) );
+            var rConcatSmall = MicroBenchmark.MeasureTime( () => ConcatenateCandidate( smallSet ) );
+            var rJoinSmall = MicroBenchmark.MeasureTime( () => String.Join( ", ", smallSet ) );
 
             rJoinSmall.IsSignificantlyBetterThan( rConcatSmall ).Should().BeTrue();
         }
@@ -300,6 +301,29 @@ Second line.
             }
             w.Stop();
             return w.ElapsedTicks;
+        }
+
+        [TestCase( null, "" )]
+        [TestCase( "", "" )]
+        [TestCase( "A", "A" )]
+        [TestCase( @"A""b", @"A\""b" )]
+        [TestCase( "A$\r\nB\t", @"A$\r\nB\t" )]
+        [TestCase( "\r\n\t\\", @"\r\n\t\\" )]
+        [TestCase( "A\0B", @"A\u0000B" )]
+        public void StringBuilder_AppendJSONEscaped( string text, string json )
+        {
+            var b = new StringBuilder();
+            b.AppendJSONEscaped( text );
+            b.ToString().Should().Be( json );
+        }
+
+        public void StringBuilder_AppendJSONEscaped_substring()
+        {
+            var b = new StringBuilder();
+            b.AppendJSONEscaped( "AB\rCD", 2, 1 );
+            b.Invoking( sut => sut.AppendJSONEscaped( null, 0, 1 ) ).Should().Throw<ArgumentNullException>();
+            b.AppendJSONEscaped( "A\t\n\0BCD", 1, 3 );
+            b.ToString().Should().Be( @"\r\t\n\u0000" );
         }
 
     }

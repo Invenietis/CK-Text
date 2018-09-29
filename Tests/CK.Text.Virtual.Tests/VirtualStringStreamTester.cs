@@ -2,6 +2,7 @@ using FluentAssertions;
 using System;
 using NUnit.Framework;
 using System.IO;
+using System.Text;
 
 namespace CK.Text.Virtual.Tests
 {
@@ -11,9 +12,11 @@ namespace CK.Text.Virtual.Tests
         [Test]
         public void open_and_read_file()
         {
-            using( Stream fileStream = new FileStream( Path.Combine( TestHelper.DataFolder, "basic.json" ), FileMode.Open, FileAccess.Read ) )
+            string content = File.ReadAllText( Path.Combine( TestHelper.DataFolder, "basic.json" ) ).NormalizeEOLToCRLF();
+
+            using( Stream stream = new MemoryStream( Encoding.UTF8.GetBytes( content ) ) )
             {
-                VirtualStringMatcher m = new VirtualStringMatcher( new VirtualString( fileStream, 0, 20 ) );
+                VirtualStringMatcher m = new VirtualStringMatcher( new VirtualString( stream, 0, 20 ) );
                 m.Text[0].Should().Be( '{' );
                 m.Text[12].Should().Be( 'n' );
                 m.Text[m.Length - 1].Should().Be( '}' );
