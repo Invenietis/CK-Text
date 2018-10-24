@@ -13,7 +13,7 @@ namespace CodeCake
         /// <summary>
         /// Pushes produced packages in CodeCakeBuilder/Releases for projects that appear in
         /// <see cref="CheckRepositoryInfo.ActualPackagesToPublish"/> into <see cref="CheckRepositoryInfo.LocalFeedPath"/>
-        /// and <see cref="CheckRepositoryInfo.RemoteFeed"/> if there are packages to push for each of them.
+        /// and <see cref="CheckRepositoryInfo.RemoteFeeds"/> if there are packages to push for each of them.
         /// </summary>
         /// <param name="globalInfo">The configured <see cref="CheckRepositoryInfo"/>.</param>
         /// <param name="releasesDir">The releasesDir (normally 'CodeCakeBuilder/Releases').</param>
@@ -39,33 +39,14 @@ namespace CodeCake
                 Cake.CopyFiles( ToPackageFiles( globalInfo.LocalFeedPackagesToCopy ), globalInfo.LocalFeedPath );
                 Cake.CopyFiles( ToSymbolFiles( globalInfo.LocalFeedPackagesToCopy ), globalInfo.LocalFeedPath );
             }
-            if( globalInfo.RemoteFeed != null && globalInfo.RemoteFeed.PackagesToPush.Count > 0 )
+            foreach( var remote in globalInfo.RemoteFeeds )
             {
                 var settings = new NuGetPushSettings
                 {
-                    Source = globalInfo.RemoteFeed.PushUrl,
-                    ApiKey = globalInfo.RemoteFeed.ActualAPIKey,
+                    Source = remote.Url,
                     Verbosity = NuGetVerbosity.Detailed
                 };
-                foreach( var file in ToPackageFiles( globalInfo.RemoteFeed.PackagesToPush ) )
-                {
-                    Cake.Information( $"Pushing '{file}' to '{globalInfo.RemoteFeed.PushUrl}'." );
-                    Cake.NuGetPush( file, settings );
-                }
-                if( globalInfo.RemoteFeed.PushSymbolUrl != null )
-                {
-                    NuGetPushSettings symbSettings = new NuGetPushSettings
-                    {
-                        Source = globalInfo.RemoteFeed.PushSymbolUrl,
-                        ApiKey = globalInfo.RemoteFeed.ActualAPIKey,
-                        Verbosity = NuGetVerbosity.Detailed
-                    };
-                    foreach( var file in ToSymbolFiles( globalInfo.RemoteFeed.PackagesToPush ) )
-                    {
-                        Cake.Information( $"Pushing Symbols '{file}' to '{globalInfo.RemoteFeed.PushSymbolUrl}'." );
-                        Cake.NuGetPush( file, symbSettings );
-                    }
-                }
+                Cake.NuGetPush( ToPackageFiles( remote.PackagesToPublish ).Select( p => new Cake.Core.IO.FilePath(p) ), settings );
             }
         }
 

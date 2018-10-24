@@ -3,6 +3,7 @@
   <!--<Debug IgnoreDirtyWorkingFolder="true"/>-->
   <PossibleVersionsMode>AllSuccessors</PossibleVersionsMode>
   <Branches>
-    <Branch Name="develop" VersionName="develop" CIVersionMode="LastReleaseBased" />
-  </Branches>
+     <Branch Name="develop" VersionName="develop" CIVersionMode="LastReleaseBased" />
+     <Branch Name="test-azure-feed" VersionName="develop" CIVersionMode="ZeroTimed" />
+ </Branches>
 </RepositoryInfo>
