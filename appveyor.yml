@@ -25,8 +25,8 @@ environment:
 #       "password":"xxx"}
 #       ]}
 
-#install:
-#  - CodeCakeBuilder/Installcredprovider.ps1 -AddNetfx 
+install:
+  - CodeCakeBuilder/InstallCredentialProvider.ps1 -AddNetfx 
 build_script:
   - dotnet run --project CodeCakeBuilder -nointeraction
 test: off
