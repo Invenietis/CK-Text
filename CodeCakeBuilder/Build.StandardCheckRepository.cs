@@ -36,6 +36,11 @@ namespace CodeCake
             public string Version { get; set; }
 
             /// <summary>
+            /// Gets the version of the packages, without any build meta information (if any).
+            /// </summary>
+            public string FilePartVersion => CSemVer.SVersion.Parse( Version ).NormalizedText;
+
+            /// <summary>
             /// Gets or sets the local feed path to which <see cref="LocalFeedPackagesToCopy"/> should be copied.
             /// Can be null if no local feed exists or if no push to local feed should be done.
             /// </summary>

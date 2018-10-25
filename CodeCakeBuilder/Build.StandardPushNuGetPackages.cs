@@ -22,13 +22,13 @@ namespace CodeCake
             // For packages: each of them must exist.
             IEnumerable<string> ToPackageFiles( IEnumerable<SolutionProject> projects )
             {
-                return projects.Select( p => System.IO.Path.Combine( releasesDir, $"{p.Name}.{globalInfo.Version}.nupkg" ) );
+                return projects.Select( p => System.IO.Path.Combine( releasesDir, $"{p.Name}.{globalInfo.FilePartVersion}.nupkg" ) );
             }
             // For symbols, handle the fact that they may not exist.
             IEnumerable<string> ToSymbolFiles( IEnumerable<SolutionProject> projects )
             {
                 return projects
-                        .Select( p => System.IO.Path.Combine( releasesDir, $"{p.Name}.{globalInfo.Version}.symbols.nupkg" ) )
+                        .Select( p => System.IO.Path.Combine( releasesDir, $"{p.Name}.{globalInfo.FilePartVersion}.symbols.nupkg" ) )
                         .Select( p => new { Path = p, Exists = System.IO.File.Exists( p ) } )
                         .Where( p => p.Exists )
                         .Select( p => p.Path );
