@@ -24,7 +24,9 @@ environment:
 #       "username":"SignatureOpenSourceAzurePackaging",
 #       "password":"xxx"}
 #       ]}
- 
+
+#install:
+#  - CodeCakeBuilder/Installcredprovider.ps1 -AddNetfx 
 build_script:
   - dotnet run --project CodeCakeBuilder -nointeraction
 test: off

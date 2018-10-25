@@ -2,7 +2,9 @@ using Cake.Common.Diagnostics;
 using Cake.Common.Solution;
 using Cake.Core;
 using CK.Text;
+using NuGet.Common;
 using NuGet.Configuration;
+using NuGet.Credentials;
 using NuGet.Packaging.Core;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
@@ -10,6 +12,7 @@ using NuGet.Versioning;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,7 +25,9 @@ namespace CodeCake
         {
             static SourceCacheContext _sourceCache;
             static List<Lazy<INuGetResourceProvider>> _providers;
-            static NuGet.Common.ILogger _logger;
+            static ILogger _logger;
+            static ISettings _settings;
+            static IPackageSourceProvider _sourceProvider;
 
             static NuGetHelper()
             {
@@ -30,6 +35,111 @@ namespace CodeCake
                 _providers = new List<Lazy<INuGetResourceProvider>>();
                 _providers.AddRange( Repository.Provider.GetCoreV3() );
             }
+
+            public static void SetupCredentialService( IPackageSourceProvider sourceProvider, ILogger logger, bool nonInteractive )
+            {
+                var providers = new AsyncLazy<IEnumerable<ICredentialProvider>>( async () => await GetCredentialProvidersAsync( sourceProvider, logger ) );
+                HttpHandlerResourceV3.CredentialService = new Lazy<ICredentialService>(
+                    () => new CredentialService(
+                                providers: providers,
+                                nonInteractive: nonInteractive,
+                                handlesDefaultCredentials: true ) );
+
+            }
+
+            #region Credential provider for Credential section of nuget.config.
+            // Must be upgraded when a 4.9 or 5.0 is out.
+            // This currently only support "basic" authentication type.
+            public class SettingsCredentialProvider : ICredentialProvider
+            {
+                private readonly IPackageSourceProvider _packageSourceProvider;
+
+                public SettingsCredentialProvider( IPackageSourceProvider packageSourceProvider )
+                {
+                    if( packageSourceProvider == null )
+                    {
+                        throw new ArgumentNullException( nameof( packageSourceProvider ) );
+                    }
+                    _packageSourceProvider = packageSourceProvider;
+                    Id = $"{typeof( SettingsCredentialProvider ).Name}_{Guid.NewGuid()}";
+                }
+
+                /// <summary>
+                /// Unique identifier of this credential provider
+                /// </summary>
+                public string Id { get; }
+
+
+                public Task<CredentialResponse> GetAsync(
+                    Uri uri,
+                    IWebProxy proxy,
+                    CredentialRequestType type,
+                    string message,
+                    bool isRetry,
+                    bool nonInteractive,
+                    CancellationToken cancellationToken )
+                {
+                    if( uri == null ) throw new ArgumentNullException( nameof( uri ) );
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    ICredentials cred = null;
+
+                    // If we are retrying, the stored credentials must be invalid.
+                    if( !isRetry && type != CredentialRequestType.Proxy )
+                    {
+                        cred = GetCredentials( uri );
+                    }
+
+                    var response = cred != null
+                        ? new CredentialResponse( cred )
+                        : new CredentialResponse( CredentialStatus.ProviderNotApplicable );
+
+                    return System.Threading.Tasks.Task.FromResult( response );
+                }
+
+                private ICredentials GetCredentials( Uri uri )
+                {
+                    var source = _packageSourceProvider.LoadPackageSources().FirstOrDefault( p =>
+                    {
+                        Uri sourceUri;
+                        return p.Credentials != null
+                            && p.Credentials.IsValid()
+                            && Uri.TryCreate( p.Source, UriKind.Absolute, out sourceUri )
+                            && UriEquals( sourceUri, uri );
+                    } );
+                    if( source == null )
+                    {
+                        // The source is not in the config file
+                        return null;
+                    }
+                    // In 4.8.0 version, there is not yet the ValidAuthenticationTypes nor the ToICredentials() method.
+                    // return source.Credentials.ToICredentials();
+                    return new AuthTypeFilteredCredentials( new NetworkCredential( source.Credentials.Username, source.Credentials.Password ), new[] { "basic" } );
+                }
+
+                /// <summary>
+                /// Determines if the scheme, server and path of two Uris are identical.
+                /// </summary>
+                private static bool UriEquals( Uri uri1, Uri uri2 )
+                {
+                    uri1 = CreateODataAgnosticUri( uri1.OriginalString.TrimEnd( '/' ) );
+                    uri2 = CreateODataAgnosticUri( uri2.OriginalString.TrimEnd( '/' ) );
+
+                    return Uri.Compare( uri1, uri2, UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.SafeUnescaped, StringComparison.OrdinalIgnoreCase ) == 0;
+                }
+
+                // Bug 2379: SettingsCredentialProvider does not work
+                private static Uri CreateODataAgnosticUri( string uri )
+                {
+                    if( uri.EndsWith( "$metadata", StringComparison.OrdinalIgnoreCase ) )
+                    {
+                        uri = uri.Substring( 0, uri.Length - 9 ).TrimEnd( '/' );
+                    }
+                    return new Uri( uri );
+                }
+            }
+            #endregion
 
             class Logger : NuGet.Common.ILogger
             {
@@ -69,7 +179,31 @@ namespace CodeCake
                 }
             }
 
-            static NuGet.Common.ILogger GetLogger( ICakeContext ctx ) => _logger ?? (_logger = new Logger( ctx ));
+            static NuGet.Common.ILogger Initialize( ICakeContext ctx )
+            {
+                if( _logger == null )
+                {
+                    _logger = new Logger( ctx );
+                    _settings = Settings.LoadDefaultSettings( Environment.CurrentDirectory );
+                    _sourceProvider = new PackageSourceProvider( _settings );
+                    var credProviders = new AsyncLazy<IEnumerable<ICredentialProvider>>( async () => await GetCredentialProvidersAsync( _sourceProvider, _logger ) );
+                    HttpHandlerResourceV3.CredentialService = new Lazy<ICredentialService>(
+                        () => new CredentialService(
+                            providers: credProviders,
+                            nonInteractive: true,
+                            handlesDefaultCredentials: true ) );
+                }
+                return _logger;
+            }
+            static async Task<IEnumerable<ICredentialProvider>> GetCredentialProvidersAsync( IPackageSourceProvider sourceProvider, ILogger logger )
+            {
+                var providers = new List<ICredentialProvider>();
+
+                var securePluginProviders = await new SecurePluginCredentialProviderBuilder( pluginManager: PluginManager.Instance, canShowDialog: false, logger: logger ).BuildAllAsync();
+                providers.AddRange( securePluginProviders );
+                providers.Add( new SettingsCredentialProvider( sourceProvider ) );
+                return providers;
+            }
 
             public class Feed
             {
@@ -102,7 +236,7 @@ namespace CodeCake
                         foreach( var p in projectsToPublish )
                         {
                             var id = new PackageIdentity( p.Name, targetVersion );
-                            if( await meta.Exists( id, _sourceCache, GetLogger( ctx ), CancellationToken.None ) )
+                            if( await meta.Exists( id, _sourceCache, Initialize( ctx ), CancellationToken.None ) )
                             {
                                 ++PackagesAlreadyPublishedCount;
                             }

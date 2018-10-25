@@ -31,6 +31,9 @@ namespace CodeCake
         {
             Cake.Log.Verbosity = Verbosity.Diagnostic;
 
+            var ppp = Cake.Environment.ExpandEnvironmentVariables( @"%UserProfile%\.nuget\plugins\netcore\CredentialProvider.Microsoft" );
+            Cake.Information( $"{ppp} => {System.IO.Directory.Exists( ppp )}" );
+
             const string solutionName = "CK-Text";
             const string solutionFileName = solutionName + ".sln";
 
