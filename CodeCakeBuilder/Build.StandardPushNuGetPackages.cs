@@ -41,12 +41,7 @@ namespace CodeCake
             }
             foreach( var remote in globalInfo.RemoteFeeds )
             {
-                var settings = new NuGetPushSettings
-                {
-                    Source = remote.Url,
-                    Verbosity = NuGetVerbosity.Detailed
-                };
-                Cake.NuGetPush( ToPackageFiles( remote.PackagesToPublish ).Select( p => new Cake.Core.IO.FilePath(p) ), settings );
+                remote.PushPackages( Cake, ToPackageFiles( remote.PackagesToPublish ) ).GetAwaiter().GetResult();
             }
         }
 
