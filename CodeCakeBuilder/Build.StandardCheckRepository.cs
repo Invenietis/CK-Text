@@ -60,13 +60,13 @@ namespace CodeCake
             /// <summary>
             /// Gets the mutable list of remote feeds to which packages should be pushed.
             /// </summary>
-            public List<NuGetHelper.Feed> RemoteFeeds { get; } = new List<NuGetHelper.Feed>();
+            public List<NuGetHelper.Feed> Feeds { get; } = new List<NuGetHelper.Feed>();
 
             /// <summary>
-            /// Gets the union of <see cref="LocalFeedPackagesToCopy"/> and <see cref="RemoteFeeds"/>'s
+            /// Gets the union of <see cref="LocalFeedPackagesToCopy"/> and <see cref="Feeds"/>'s
             /// <see cref="NuGetHelper.Feed.PackagesToPublish"/> without duplicates.
             /// </summary>
-            public IEnumerable<SolutionProject> ActualPackagesToPublish => LocalFeedPackagesToCopy.Concat( RemoteFeeds.SelectMany( f => f.PackagesToPublish ) ).Distinct();
+            public IEnumerable<SolutionProject> ActualPackagesToPublish => LocalFeedPackagesToCopy.Concat( Feeds.SelectMany( f => f.PackagesToPublish ) ).Distinct();
 
             /// <summary>
             /// Gets whether it is useless to continue. By default if <see cref="NoPackagesToProduce"/> is true, this is true,
@@ -85,7 +85,7 @@ namespace CodeCake
             /// </summary>
             public bool NoPackagesToProduce => (LocalFeedPath == null || LocalFeedPackagesToCopy.Count == 0)
                                                &&
-                                               !RemoteFeeds.SelectMany( f => f.PackagesToPublish ).Any();
+                                               !Feeds.SelectMany( f => f.PackagesToPublish ).Any();
         }
 
         /// <summary>
@@ -140,7 +140,12 @@ namespace CodeCake
                     System.IO.Directory.CreateDirectory( localFeed );
                 }
                 result.IsLocalCIRelease = isLocalCIRelease;
-                result.LocalFeedPath = localFeed;
+
+                if( localFeed != null )
+                {
+                    result.Feeds.Add( new LocalFeed( localFeed ) );
+                    result.LocalFeedPath = localFeed;
+                }
 
                 // Creating the right NuGetRemoteFeed according to the release level.
                 if( !isLocalCIRelease )
@@ -149,54 +154,54 @@ namespace CodeCake
                     {
                         if( gitInfo.PreReleaseName == "" )
                         {
-                            result.RemoteFeeds.Add( new SignatureOpenSourcePublicFeed( "Stable" ) );
-                            result.RemoteFeeds.Add( new SignatureOpenSourcePublicFeed( "Latest" ) );
+                            result.Feeds.Add( new SignatureOpenSourcePublicFeed( "Stable" ) );
                         }
                         else if( gitInfo.PreReleaseName == "prerelease"
                                 || gitInfo.PreReleaseName == "rc" )
                         {
-                            result.RemoteFeeds.Add( new SignatureOpenSourcePublicFeed( "Latest" ) );
+                            result.Feeds.Add( new SignatureOpenSourcePublicFeed( "Latest" ) );
                         }
                         else
                         {
                             // An alpha, beta, delta, epsilon, gamma, kappa goes to preview feed.
-                            result.RemoteFeeds.Add( new SignatureOpenSourcePublicFeed( "Preview" ) );
+                            result.Feeds.Add( new SignatureOpenSourcePublicFeed( "Preview" ) );
                         }
                     }
                     else
                     {
                         Debug.Assert( gitInfo.IsValidCIBuild );
-                        result.RemoteFeeds.Add( new SignatureOpenSourcePublicFeed( "CI" ) );
+                        result.Feeds.Add( new SignatureOpenSourcePublicFeed( "CI" ) );
                     }
                 }
             }
 
             // Now that Local/RemoteFeeds are selected, we can check the packages that already exist
             // in those feeds.
-            var all = result.RemoteFeeds.Select( f => f.InitializePackagesToPublishAsync( Cake, projectsToPublish, gitInfo.SafeNuGetVersion ) );
+            var all = result.Feeds.Select( f => f.InitializePackagesToPublishAsync( Cake, projectsToPublish, gitInfo.SafeNuGetVersion ) );
             System.Threading.Tasks.Task.WaitAll( all.ToArray() );
-            foreach( var remote in result.RemoteFeeds )
+            foreach( var feed in result.Feeds )
             {
-                remote.Information( Cake, projectsToPublish );
+                feed.Information( Cake, projectsToPublish );
             }
 
-            if( result.LocalFeedPath != null )
-            {
-                var lookup = projectsToPublish
-                                .Select( p => new
-                                {
-                                    Project = p,
-                                    Path = System.IO.Path.Combine( result.LocalFeedPath, $"{p.Name}.{gitInfo.SafeNuGetVersion}.nupkg" )
-                                } )
-                                .Select( x => new
-                                {
-                                    x.Project,
-                                    Exists = System.IO.File.Exists( x.Path )
-                                } )
-                                .ToList();
-                var notOk = lookup.Where( r => !r.Exists ).Select( r => r.Project );
-                result.LocalFeedPackagesToCopy.AddRange( notOk );
-            }
+            //if( result.LocalFeedPath != null )
+            //{
+            //    var lookup = projectsToPublish
+            //                    .Select( p => new
+            //                    {
+            //                        Project = p,
+            //                        Path = System.IO.Path.Combine( result.LocalFeedPath, $"{p.Name}.{gitInfo.SafeNuGetVersion}.nupkg" )
+            //                    } )
+            //                    .Select( x => new
+            //                    {
+            //                        x.Project,
+            //                        Exists = System.IO.File.Exists( x.Path )
+            //                    } )
+            //                    .ToList();
+            //    var notOk = lookup.Where( r => !r.Exists ).Select( r => r.Project );
+            //    result.LocalFeedPackagesToCopy.AddRange( notOk );
+            //}
+
             int nbPackagesToPublish = result.ActualPackagesToPublish.Count();
             if( nbPackagesToPublish == 0 )
             {

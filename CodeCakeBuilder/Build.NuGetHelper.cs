@@ -217,38 +217,49 @@ namespace CodeCake
                 /// </summary>
                 /// <param name="name">Name of the feed.</param>
                 /// <param name="urlV3">Must be a v3/index.json url otherwise an argument exception is thrown.</param>
-                public Feed( string name, string urlV3 )
+                protected Feed( string name, string urlV3 )
+                    : this( FromUrl( name, urlV3 ) )
+                {
+                }
+
+                /// <summary>
+                /// Initialize a new local feed.
+                /// </summary>
+                /// <param name="localPath">Local path.</param>
+                protected Feed( string localPath )
+                    : this( FromPath( localPath ) )
+                {
+                }
+
+                static PackageSource FromUrl( string name, string urlV3 )
                 {
                     if( String.IsNullOrEmpty( urlV3 ) || !urlV3.EndsWith( "/v3/index.json" ) )
                     {
-                        throw new ArgumentException( "Remote feed requires a /v3/index.json url.", nameof( urlV3 ) );
+                        throw new ArgumentException( "Feed requires a /v3/index.json url.", nameof( urlV3 ) );
                     }
-                    _packageSource = new PackageSource( urlV3, name );
+                    if( String.IsNullOrWhiteSpace( name ) )
+                    {
+                        throw new ArgumentNullException( nameof( name ) );
+                    }
+                    return new PackageSource( urlV3, name );
+                }
+
+                static PackageSource FromPath( string localPath )
+                {
+                    if( String.IsNullOrWhiteSpace( localPath ) ) throw new ArgumentNullException( nameof( localPath ) );
+                    localPath = System.IO.Path.GetFullPath( localPath );
+                    var name = System.IO.Path.GetFileName( localPath );
+                    return new PackageSource( localPath, name );
+                }
+
+                Feed( PackageSource s )
+                {
+                    _packageSource = s;
                     _sourceRepository = new SourceRepository( _packageSource, _providers );
                     _updater = new AsyncLazy<PackageUpdateResource>( async () =>
                     {
                         var r = await _sourceRepository.GetResourceAsync<PackageUpdateResource>();
                         // TODO: Update for next NuGet version.
-                        // r.Settings = _settings;
-                        return r;
-                    } );
-                }
-
-                /// <summary>
-                /// Initialize a new local feed.
-                /// The folder is created if it does not exists.
-                /// </summary>
-                /// <param name="localFolderPath">Local path. Must be rooted path to a directory.</param>
-                public Feed( string localFolderPath )
-                {
-                    if( String.IsNullOrEmpty( localFolderPath ) ) throw new ArgumentNullException( nameof( localFolderPath ) );
-                    var name = System.IO.Path.GetFileName( localFolderPath );
-                    _packageSource = new PackageSource( localFolderPath, name );
-                    _sourceRepository = new SourceRepository( _packageSource, _providers );
-                    _updater = new AsyncLazy<PackageUpdateResource>( async () =>
-                    {
-                        var r = await _sourceRepository.GetResourceAsync<PackageUpdateResource>();
-                        // TODO: Should be updated for next NuGet version.
                         // r.Settings = _settings;
                         return r;
                     } );
@@ -389,6 +400,17 @@ namespace CodeCake
             }
 
         }
+
+        class LocalFeed : NuGetHelper.Feed
+        {
+            public LocalFeed( string path )
+                : base( path )
+            {
+            }
+
+            protected override string ResolveAPIKey( ICakeContext ctx ) => null;
+        }
+
 
         class SignatureOpenSourcePublicFeed : VSTSFeed
         {

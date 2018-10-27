@@ -13,7 +13,7 @@ namespace CodeCake
         /// <summary>
         /// Pushes produced packages in CodeCakeBuilder/Releases for projects that appear in
         /// <see cref="CheckRepositoryInfo.ActualPackagesToPublish"/> into <see cref="CheckRepositoryInfo.LocalFeedPath"/>
-        /// and <see cref="CheckRepositoryInfo.RemoteFeeds"/> if there are packages to push for each of them.
+        /// and <see cref="CheckRepositoryInfo.Feeds"/> if there are packages to push for each of them.
         /// </summary>
         /// <param name="globalInfo">The configured <see cref="CheckRepositoryInfo"/>.</param>
         /// <param name="releasesDir">The releasesDir (normally 'CodeCakeBuilder/Releases').</param>
@@ -24,24 +24,25 @@ namespace CodeCake
             {
                 return projects.Select( p => System.IO.Path.Combine( releasesDir, $"{p.Name}.{globalInfo.FilePartVersion}.nupkg" ) );
             }
-            // For symbols, handle the fact that they may not exist.
-            IEnumerable<string> ToSymbolFiles( IEnumerable<SolutionProject> projects )
-            {
-                return projects
-                        .Select( p => System.IO.Path.Combine( releasesDir, $"{p.Name}.{globalInfo.FilePartVersion}.symbols.nupkg" ) )
-                        .Select( p => new { Path = p, Exists = System.IO.File.Exists( p ) } )
-                        .Where( p => p.Exists )
-                        .Select( p => p.Path );
-            }
 
-            if( globalInfo.LocalFeedPath != null && globalInfo.LocalFeedPackagesToCopy.Count > 0 )
+            //// For symbols, handle the fact that they may not exist.
+            //IEnumerable<string> ToSymbolFiles( IEnumerable<SolutionProject> projects )
+            //{
+            //    return projects
+            //            .Select( p => System.IO.Path.Combine( releasesDir, $"{p.Name}.{globalInfo.FilePartVersion}.symbols.nupkg" ) )
+            //            .Select( p => new { Path = p, Exists = System.IO.File.Exists( p ) } )
+            //            .Where( p => p.Exists )
+            //            .Select( p => p.Path );
+            //}
+
+            //if( globalInfo.LocalFeedPath != null && globalInfo.LocalFeedPackagesToCopy.Count > 0 )
+            //{
+            //    Cake.CopyFiles( ToPackageFiles( globalInfo.LocalFeedPackagesToCopy ), globalInfo.LocalFeedPath );
+            //    Cake.CopyFiles( ToSymbolFiles( globalInfo.LocalFeedPackagesToCopy ), globalInfo.LocalFeedPath );
+            //}
+            foreach( var feed in globalInfo.Feeds )
             {
-                Cake.CopyFiles( ToPackageFiles( globalInfo.LocalFeedPackagesToCopy ), globalInfo.LocalFeedPath );
-                Cake.CopyFiles( ToSymbolFiles( globalInfo.LocalFeedPackagesToCopy ), globalInfo.LocalFeedPath );
-            }
-            foreach( var remote in globalInfo.RemoteFeeds )
-            {
-                remote.PushPackages( Cake, ToPackageFiles( remote.PackagesToPublish ) ).GetAwaiter().GetResult();
+                feed.PushPackages( Cake, ToPackageFiles( feed.PackagesToPublish ) ).GetAwaiter().GetResult();
             }
         }
 
