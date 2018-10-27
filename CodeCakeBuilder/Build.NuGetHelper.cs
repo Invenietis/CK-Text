@@ -205,7 +205,7 @@ namespace CodeCake
                 return providers;
             }
 
-            public class Feed
+            public abstract class Feed
             {
                 readonly PackageSource _packageSource;
                 readonly SourceRepository _sourceRepository;
@@ -260,13 +260,6 @@ namespace CodeCake
 
                 public string Name => _packageSource.Name;
 
-                /// <summary>
-                /// Gets or sets the push API key name.
-                /// This is the environment variable name that must contain the NuGet API key required to push.
-                /// For Azure feeds, this must be "VSTS".
-                /// </summary>
-                public string APIKeyName { get; set; }
-
                 public IReadOnlyList<SolutionProject> PackagesToPublish => _packagesToPublish;
 
                 public async Task PushPackages( ICakeContext ctx, IEnumerable<string> packagePaths, int timeoutSeconds = 20 )
@@ -274,15 +267,10 @@ namespace CodeCake
                     string apiKey = null;
                     if( !_packageSource.IsLocal )
                     {
-                        if( String.IsNullOrEmpty( APIKeyName ) )
-                        {
-                            ctx.Information( $"An APIKeyName must be set on feed {Name} => {Url}. Push is skipped." );
-                            return;
-                        }
-                        apiKey = ctx.InteractiveEnvironmentVariable( APIKeyName );
+                        apiKey = ResolveAPIKey( ctx );
                         if( string.IsNullOrEmpty( apiKey ) )
                         {
-                            ctx.Information( $"Could not resolve {APIKeyName}. Push to {Name} => {Url} is skipped." );
+                            ctx.Information( $"Could not resolve API key. Push to '{Name}' => '{Url}' is skipped." );
                             return;
                         }
                     }
@@ -301,6 +289,8 @@ namespace CodeCake
                             log: logger );
                     }
                 }
+
+                protected abstract string ResolveAPIKey( ICakeContext ctx );
 
                 public int PackagesAlreadyPublishedCount { get; private set; }
 
@@ -347,12 +337,64 @@ namespace CodeCake
             }
         }
 
-        class SignatureOpenSourcePublicFeed : NuGetHelper.Feed
+        /// <summary>
+        /// A VSTS feed uses "VSTS" for the API key.
+        /// </summary>
+        class VSTSFeed : NuGetHelper.Feed
+        {
+            /// <summary>
+            /// Initialize a new remote VSTS feed.
+            /// </summary>
+            /// <param name="name">Name of the feed.</param>
+            /// <param name="urlV3">Must be a v3/index.json url otherwise an argument exception is thrown.</param>
+            public VSTSFeed( string name, string urlV3 )
+                : base( name, urlV3 )
+            {
+            }
+            protected override string ResolveAPIKey( ICakeContext ctx ) => "VSTS";
+
+        }
+
+        /// <summary>
+        /// A remote feed where push is controlled by its <see cref="APIKeyName"/>.
+        /// </summary>
+        class RemoteFeed : NuGetHelper.Feed
+        {
+            /// <summary>
+            /// Initialize a new remote feed.
+            /// The push is controlled by an API key name that is the name of an environment variable
+            /// that must contain the actual API key to push packages.
+            /// </summary>
+            /// <param name="name">Name of the feed.</param>
+            /// <param name="urlV3">Must be a v3/index.json url otherwise an argument exception is thrown.</param>
+            public RemoteFeed( string name, string urlV3 )
+                : base( name, urlV3 )
+            {
+            }
+
+            /// <summary>
+            /// Gets or sets the push API key name.
+            /// This is the environment variable name that must contain the NuGet API key required to push.
+            /// </summary>
+            public string APIKeyName { get; set; }
+
+            protected override string ResolveAPIKey( ICakeContext ctx )
+            {
+                if( String.IsNullOrEmpty( APIKeyName ) )
+                {
+                    ctx.Information( $"Remote feed '{Name}' APIKeyName is null or empty." );
+                    return null;
+                }
+                return ctx.InteractiveEnvironmentVariable( APIKeyName );
+            }
+
+        }
+
+        class SignatureOpenSourcePublicFeed : VSTSFeed
         {
             public SignatureOpenSourcePublicFeed( string feedName )
                 : base( feedName, $"https://pkgs.dev.azure.com/Signature-OpenSource/_packaging/{feedName}/nuget/v3/index.json" )
             {
-                APIKeyName = "VSTS";
             }
         }
 
