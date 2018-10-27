@@ -179,7 +179,7 @@ namespace CodeCake
                 }
             }
 
-            static NuGet.Common.ILogger Initialize( ICakeContext ctx )
+            static NuGet.Common.ILogger InitializeAndGetLogger( ICakeContext ctx )
             {
                 if( _logger == null )
                 {
@@ -209,20 +209,98 @@ namespace CodeCake
             {
                 readonly PackageSource _packageSource;
                 readonly SourceRepository _sourceRepository;
+                readonly AsyncLazy<PackageUpdateResource> _updater;
                 List<SolutionProject> _packagesToPublish;
 
+                /// <summary>
+                /// Initialize a new remote feed.
+                /// </summary>
+                /// <param name="name">Name of the feed.</param>
+                /// <param name="urlV3">Must be a v3/index.json url otherwise an argument exception is thrown.</param>
                 public Feed( string name, string urlV3 )
                 {
-                    Name = name;
-                    _packageSource = new PackageSource( urlV3 );
+                    if( String.IsNullOrEmpty( urlV3 ) || !urlV3.EndsWith( "/v3/index.json" ) )
+                    {
+                        throw new ArgumentException( "Remote feed requires a /v3/index.json url.", nameof( urlV3 ) );
+                    }
+                    _packageSource = new PackageSource( urlV3, name );
                     _sourceRepository = new SourceRepository( _packageSource, _providers );
+                    _updater = new AsyncLazy<PackageUpdateResource>( async () =>
+                    {
+                        var r = await _sourceRepository.GetResourceAsync<PackageUpdateResource>();
+                        // TODO: Update for next NuGet version.
+                        // r.Settings = _settings;
+                        return r;
+                    } );
+                }
+
+                /// <summary>
+                /// Initialize a new local feed.
+                /// The folder is created if it does not exists.
+                /// </summary>
+                /// <param name="localFolderPath">Local path. Must be rooted path to a directory.</param>
+                public Feed( string localFolderPath )
+                {
+                    if( String.IsNullOrEmpty( localFolderPath ) ) throw new ArgumentNullException( nameof( localFolderPath ) );
+                    var name = System.IO.Path.GetFileName( localFolderPath );
+                    _packageSource = new PackageSource( localFolderPath, name );
+                    _sourceRepository = new SourceRepository( _packageSource, _providers );
+                    _updater = new AsyncLazy<PackageUpdateResource>( async () =>
+                    {
+                        var r = await _sourceRepository.GetResourceAsync<PackageUpdateResource>();
+                        // TODO: Should be updated for next NuGet version.
+                        // r.Settings = _settings;
+                        return r;
+                    } );
                 }
 
                 public string Url => _packageSource.Source;
 
-                public string Name { get; }
+                public bool IsLocal => _packageSource.IsLocal;
+
+                public string Name => _packageSource.Name;
+
+                /// <summary>
+                /// Gets or sets the push API key name.
+                /// This is the environment variable name that must contain the NuGet API key required to push.
+                /// For Azure feeds, this must be "VSTS".
+                /// </summary>
+                public string APIKeyName { get; set; }
 
                 public IReadOnlyList<SolutionProject> PackagesToPublish => _packagesToPublish;
+
+                public async Task PushPackages( ICakeContext ctx, IEnumerable<string> packagePaths, int timeoutSeconds = 20 )
+                {
+                    string apiKey = null;
+                    if( !_packageSource.IsLocal )
+                    {
+                        if( String.IsNullOrEmpty( APIKeyName ) )
+                        {
+                            ctx.Information( $"An APIKeyName must be set on feed {Name} => {Url}. Push is skipped." );
+                            return;
+                        }
+                        apiKey = ctx.InteractiveEnvironmentVariable( APIKeyName );
+                        if( string.IsNullOrEmpty( apiKey ) )
+                        {
+                            ctx.Information( $"Could not resolve {APIKeyName}. Push to {Name} => {Url} is skipped." );
+                            return;
+                        }
+                    }
+                    var logger = InitializeAndGetLogger( ctx );
+                    var updater = await _updater;
+                    foreach( var f in packagePaths )
+                    {
+                        await updater.Push(
+                            f,
+                            String.Empty, // no Symbol source.
+                            timeoutSeconds,
+                            disableBuffering: false,
+                            getApiKey: endpoint => apiKey,
+                            getSymbolApiKey: symbolsEndpoint => null,
+                            noServiceEndpoint: false,
+                            log: logger );
+                    }
+                }
 
                 public int PackagesAlreadyPublishedCount { get; private set; }
 
@@ -236,7 +314,7 @@ namespace CodeCake
                         foreach( var p in projectsToPublish )
                         {
                             var id = new PackageIdentity( p.Name, targetVersion );
-                            if( await meta.Exists( id, _sourceCache, Initialize( ctx ), CancellationToken.None ) )
+                            if( await meta.Exists( id, _sourceCache, InitializeAndGetLogger( ctx ), CancellationToken.None ) )
                             {
                                 ++PackagesAlreadyPublishedCount;
                             }
