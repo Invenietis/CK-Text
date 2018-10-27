@@ -352,6 +352,7 @@ namespace CodeCake
             public SignatureOpenSourcePublicFeed( string feedName )
                 : base( feedName, $"https://pkgs.dev.azure.com/Signature-OpenSource/_packaging/{feedName}/nuget/v3/index.json" )
             {
+                APIKeyName = "VSTS";
             }
         }
 
