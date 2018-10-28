@@ -25,21 +25,6 @@ namespace CodeCake
                 return projects.Select( p => System.IO.Path.Combine( releasesDir, $"{p.Name}.{globalInfo.FilePartVersion}.nupkg" ) );
             }
 
-            //// For symbols, handle the fact that they may not exist.
-            //IEnumerable<string> ToSymbolFiles( IEnumerable<SolutionProject> projects )
-            //{
-            //    return projects
-            //            .Select( p => System.IO.Path.Combine( releasesDir, $"{p.Name}.{globalInfo.FilePartVersion}.symbols.nupkg" ) )
-            //            .Select( p => new { Path = p, Exists = System.IO.File.Exists( p ) } )
-            //            .Where( p => p.Exists )
-            //            .Select( p => p.Path );
-            //}
-
-            //if( globalInfo.LocalFeedPath != null && globalInfo.LocalFeedPackagesToCopy.Count > 0 )
-            //{
-            //    Cake.CopyFiles( ToPackageFiles( globalInfo.LocalFeedPackagesToCopy ), globalInfo.LocalFeedPath );
-            //    Cake.CopyFiles( ToSymbolFiles( globalInfo.LocalFeedPackagesToCopy ), globalInfo.LocalFeedPath );
-            //}
             foreach( var feed in globalInfo.Feeds )
             {
                 feed.PushPackages( Cake, ToPackageFiles( feed.PackagesToPublish ) ).GetAwaiter().GetResult();

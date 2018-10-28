@@ -41,21 +41,9 @@ namespace CodeCake
             public string FilePartVersion => CSemVer.SVersion.Parse( Version ).NormalizedText;
 
             /// <summary>
-            /// Gets or sets the local feed path to which <see cref="LocalFeedPackagesToCopy"/> should be copied.
-            /// Can be null if no local feed exists or if no push to local feed should be done.
-            /// </summary>
-            public string LocalFeedPath { get; set; }
-
-            /// <summary>
             /// Gets whether this is a blank build.
             /// </summary>
             public bool IsLocalCIRelease { get; set; }
-
-            /// <summary>
-            /// Gets a mutable list of SolutionProject for which packages should be created and copied
-            /// to the <see cref="LocalFeedPath"/>.
-            /// </summary>
-            public List<SolutionProject> LocalFeedPackagesToCopy { get; } = new List<SolutionProject>();
 
             /// <summary>
             /// Gets the mutable list of remote feeds to which packages should be pushed.
@@ -63,10 +51,9 @@ namespace CodeCake
             public List<NuGetHelper.Feed> Feeds { get; } = new List<NuGetHelper.Feed>();
 
             /// <summary>
-            /// Gets the union of <see cref="LocalFeedPackagesToCopy"/> and <see cref="Feeds"/>'s
-            /// <see cref="NuGetHelper.Feed.PackagesToPublish"/> without duplicates.
+            /// Gets the union of <see cref="Feeds"/>'s <see cref="NuGetHelper.Feed.PackagesToPublish"/> without duplicates.
             /// </summary>
-            public IEnumerable<SolutionProject> ActualPackagesToPublish => LocalFeedPackagesToCopy.Concat( Feeds.SelectMany( f => f.PackagesToPublish ) ).Distinct();
+            public IEnumerable<SolutionProject> ActualPackagesToPublish => Feeds.SelectMany( f => f.PackagesToPublish ).Distinct();
 
             /// <summary>
             /// Gets whether it is useless to continue. By default if <see cref="NoPackagesToProduce"/> is true, this is true,
@@ -83,9 +70,7 @@ namespace CodeCake
             /// <summary>
             /// Gets whether there is at least one package to produce and push.
             /// </summary>
-            public bool NoPackagesToProduce => (LocalFeedPath == null || LocalFeedPackagesToCopy.Count == 0)
-                                               &&
-                                               !Feeds.SelectMany( f => f.PackagesToPublish ).Any();
+            public bool NoPackagesToProduce => !Feeds.SelectMany( f => f.PackagesToPublish ).Any();
         }
 
         /// <summary>
@@ -144,7 +129,6 @@ namespace CodeCake
                 if( localFeed != null )
                 {
                     result.Feeds.Add( new LocalFeed( localFeed ) );
-                    result.LocalFeedPath = localFeed;
                 }
 
                 // Creating the right NuGetRemoteFeed according to the release level.
@@ -183,24 +167,6 @@ namespace CodeCake
             {
                 feed.Information( Cake, projectsToPublish );
             }
-
-            //if( result.LocalFeedPath != null )
-            //{
-            //    var lookup = projectsToPublish
-            //                    .Select( p => new
-            //                    {
-            //                        Project = p,
-            //                        Path = System.IO.Path.Combine( result.LocalFeedPath, $"{p.Name}.{gitInfo.SafeNuGetVersion}.nupkg" )
-            //                    } )
-            //                    .Select( x => new
-            //                    {
-            //                        x.Project,
-            //                        Exists = System.IO.File.Exists( x.Path )
-            //                    } )
-            //                    .ToList();
-            //    var notOk = lookup.Where( r => !r.Exists ).Select( r => r.Project );
-            //    result.LocalFeedPackagesToCopy.AddRange( notOk );
-            //}
 
             int nbPackagesToPublish = result.ActualPackagesToPublish.Count();
             if( nbPackagesToPublish == 0 )

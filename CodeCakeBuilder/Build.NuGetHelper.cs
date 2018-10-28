@@ -401,6 +401,9 @@ namespace CodeCake
 
         }
 
+        /// <summary>
+        /// Local feed. Push are always possible.
+        /// </summary>
         class LocalFeed : NuGetHelper.Feed
         {
             public LocalFeed( string path )
