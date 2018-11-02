@@ -315,6 +315,7 @@ namespace CodeCake
 $@"<configuration>
   <packageSources>
     <add key=""Signature-OpenSource-FIX-For-Push"" value=""{_packageSource.Source}"" />
+  </packageSources>
 </configuration>" );
 
                 }
