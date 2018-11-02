@@ -325,7 +325,7 @@ namespace CodeCake
                     var updater = await _updater;
                     foreach( var package in packages )
                     {
-                        var fullPath = System.IO.Path.Combine( path, package.ToString() );
+                        var fullPath = System.IO.Path.Combine( path, package.ToString() + ".nupkg" );
                         await updater.Push(
                             fullPath,
                             String.Empty, // no Symbol source.
