@@ -66,6 +66,7 @@ namespace CodeCake
 
             static NuGetHelper()
             {
+                Environment.SetEnvironmentVariable( "DOTNET_HOST_PATH", "dotnet" );
                 _sourceCache = new SourceCacheContext();
                 _providers = new List<Lazy<INuGetResourceProvider>>();
                 _providers.AddRange( Repository.Provider.GetCoreV3() );
