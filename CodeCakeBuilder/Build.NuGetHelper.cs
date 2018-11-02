@@ -91,99 +91,99 @@ namespace CodeCake
 
             }
 
-            #region Credential provider for Credential section of nuget.config.
-            // Must be upgraded when a 4.9 or 5.0 is out.
-            // This currently only support "basic" authentication type.
-            public class SettingsCredentialProvider : ICredentialProvider
-            {
-                private readonly IPackageSourceProvider _packageSourceProvider;
+            //#region Credential provider for Credential section of nuget.config.
+            //// Must be upgraded when a 4.9 or 5.0 is out.
+            //// This currently only support "basic" authentication type.
+            //public class SettingsCredentialProvider : ICredentialProvider
+            //{
+            //    private readonly IPackageSourceProvider _packageSourceProvider;
 
-                public SettingsCredentialProvider( IPackageSourceProvider packageSourceProvider )
-                {
-                    if( packageSourceProvider == null )
-                    {
-                        throw new ArgumentNullException( nameof( packageSourceProvider ) );
-                    }
-                    _packageSourceProvider = packageSourceProvider;
-                    Id = $"{typeof( SettingsCredentialProvider ).Name}_{Guid.NewGuid()}";
-                }
+            //    public SettingsCredentialProvider( IPackageSourceProvider packageSourceProvider )
+            //    {
+            //        if( packageSourceProvider == null )
+            //        {
+            //            throw new ArgumentNullException( nameof( packageSourceProvider ) );
+            //        }
+            //        _packageSourceProvider = packageSourceProvider;
+            //        Id = $"{typeof( SettingsCredentialProvider ).Name}_{Guid.NewGuid()}";
+            //    }
 
-                /// <summary>
-                /// Unique identifier of this credential provider
-                /// </summary>
-                public string Id { get; }
+            //    /// <summary>
+            //    /// Unique identifier of this credential provider
+            //    /// </summary>
+            //    public string Id { get; }
 
 
-                public Task<CredentialResponse> GetAsync(
-                    Uri uri,
-                    IWebProxy proxy,
-                    CredentialRequestType type,
-                    string message,
-                    bool isRetry,
-                    bool nonInteractive,
-                    CancellationToken cancellationToken )
-                {
-                    if( uri == null ) throw new ArgumentNullException( nameof( uri ) );
+            //    public Task<CredentialResponse> GetAsync(
+            //        Uri uri,
+            //        IWebProxy proxy,
+            //        CredentialRequestType type,
+            //        string message,
+            //        bool isRetry,
+            //        bool nonInteractive,
+            //        CancellationToken cancellationToken )
+            //    {
+            //        if( uri == null ) throw new ArgumentNullException( nameof( uri ) );
 
-                    cancellationToken.ThrowIfCancellationRequested();
+            //        cancellationToken.ThrowIfCancellationRequested();
 
-                    ICredentials cred = null;
+            //        ICredentials cred = null;
 
-                    // If we are retrying, the stored credentials must be invalid.
-                    if( !isRetry && type != CredentialRequestType.Proxy )
-                    {
-                        cred = GetCredentials( uri );
-                    }
+            //        // If we are retrying, the stored credentials must be invalid.
+            //        if( !isRetry && type != CredentialRequestType.Proxy )
+            //        {
+            //            cred = GetCredentials( uri );
+            //        }
 
-                    var response = cred != null
-                        ? new CredentialResponse( cred )
-                        : new CredentialResponse( CredentialStatus.ProviderNotApplicable );
+            //        var response = cred != null
+            //            ? new CredentialResponse( cred )
+            //            : new CredentialResponse( CredentialStatus.ProviderNotApplicable );
 
-                    return System.Threading.Tasks.Task.FromResult( response );
-                }
+            //        return System.Threading.Tasks.Task.FromResult( response );
+            //    }
 
-                private ICredentials GetCredentials( Uri uri )
-                {
-                    var source = _packageSourceProvider.LoadPackageSources().FirstOrDefault( p =>
-                    {
-                        Uri sourceUri;
-                        return p.Credentials != null
-                            && p.Credentials.IsValid()
-                            && Uri.TryCreate( p.Source, UriKind.Absolute, out sourceUri )
-                            && UriEquals( sourceUri, uri );
-                    } );
-                    if( source == null )
-                    {
-                        // The source is not in the config file
-                        return null;
-                    }
-                    // In 4.8.0 version, there is not yet the ValidAuthenticationTypes nor the ToICredentials() method.
-                    // return source.Credentials.ToICredentials();
-                    return new AuthTypeFilteredCredentials( new NetworkCredential( source.Credentials.Username, source.Credentials.Password ), new[] { "basic" } );
-                }
+            //    private ICredentials GetCredentials( Uri uri )
+            //    {
+            //        var source = _packageSourceProvider.LoadPackageSources().FirstOrDefault( p =>
+            //        {
+            //            Uri sourceUri;
+            //            return p.Credentials != null
+            //                && p.Credentials.IsValid()
+            //                && Uri.TryCreate( p.Source, UriKind.Absolute, out sourceUri )
+            //                && UriEquals( sourceUri, uri );
+            //        } );
+            //        if( source == null )
+            //        {
+            //            // The source is not in the config file
+            //            return null;
+            //        }
+            //        // In 4.8.0 version, there is not yet the ValidAuthenticationTypes nor the ToICredentials() method.
+            //        // return source.Credentials.ToICredentials();
+            //        return new AuthTypeFilteredCredentials( new NetworkCredential( source.Credentials.Username, source.Credentials.Password ), new[] { "basic" } );
+            //    }
 
-                /// <summary>
-                /// Determines if the scheme, server and path of two Uris are identical.
-                /// </summary>
-                private static bool UriEquals( Uri uri1, Uri uri2 )
-                {
-                    uri1 = CreateODataAgnosticUri( uri1.OriginalString.TrimEnd( '/' ) );
-                    uri2 = CreateODataAgnosticUri( uri2.OriginalString.TrimEnd( '/' ) );
+            //    /// <summary>
+            //    /// Determines if the scheme, server and path of two Uris are identical.
+            //    /// </summary>
+            //    private static bool UriEquals( Uri uri1, Uri uri2 )
+            //    {
+            //        uri1 = CreateODataAgnosticUri( uri1.OriginalString.TrimEnd( '/' ) );
+            //        uri2 = CreateODataAgnosticUri( uri2.OriginalString.TrimEnd( '/' ) );
 
-                    return Uri.Compare( uri1, uri2, UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.SafeUnescaped, StringComparison.OrdinalIgnoreCase ) == 0;
-                }
+            //        return Uri.Compare( uri1, uri2, UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.SafeUnescaped, StringComparison.OrdinalIgnoreCase ) == 0;
+            //    }
 
-                // Bug 2379: SettingsCredentialProvider does not work
-                private static Uri CreateODataAgnosticUri( string uri )
-                {
-                    if( uri.EndsWith( "$metadata", StringComparison.OrdinalIgnoreCase ) )
-                    {
-                        uri = uri.Substring( 0, uri.Length - 9 ).TrimEnd( '/' );
-                    }
-                    return new Uri( uri );
-                }
-            }
-            #endregion
+            //    // Bug 2379: SettingsCredentialProvider does not work
+            //    private static Uri CreateODataAgnosticUri( string uri )
+            //    {
+            //        if( uri.EndsWith( "$metadata", StringComparison.OrdinalIgnoreCase ) )
+            //        {
+            //            uri = uri.Substring( 0, uri.Length - 9 ).TrimEnd( '/' );
+            //        }
+            //        return new Uri( uri );
+            //    }
+            //}
+            //#endregion
 
             class Logger : NuGet.Common.ILogger
             {
@@ -245,7 +245,7 @@ namespace CodeCake
 
                 var securePluginProviders = await new SecurePluginCredentialProviderBuilder( pluginManager: PluginManager.Instance, canShowDialog: false, logger: logger ).BuildAllAsync();
                 providers.AddRange( securePluginProviders );
-                providers.Add( new SettingsCredentialProvider( sourceProvider ) );
+                //providers.Add( new SettingsCredentialProvider( sourceProvider ) );
                 return providers;
             }
 
