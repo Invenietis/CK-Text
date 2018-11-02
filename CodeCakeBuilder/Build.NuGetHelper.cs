@@ -473,10 +473,11 @@ namespace CodeCake
                 {
                     foreach( var view in GetViewNames( p.Version ) )
                     {
+                        HttpRequestMessage req = new HttpRequestMessage( HttpMethod.Post, $"https://pkgs.dev.azure.com/{Organization}/_apis/packaging/feeds/{FeedId}/nuget/packagesBatch" );
+                        req.Headers.Add( "Authorization", "Bearer " + AzureFeedPersonalAccessToken );
                         var body = GetPromotionJSONBody( p.PackageId, p.PackageIdentity.Version.ToString(), view );
-                        var c = new StringContent( body, Encoding.UTF8, "application/json" );
-                        c.Headers.Add( "Authorization", "Bearer " + AzureFeedPersonalAccessToken );
-                        var m = await NuGetHelper.SharedHttpClient.PostAsync( $"https://pkgs.dev.azure.com/{Organization}/_apis/packaging/feeds/{FeedId}/nuget/packagesBatch", c );
+                        req.Content = new StringContent( body, Encoding.UTF8, "application/json" );
+                        var m = await NuGetHelper.SharedHttpClient.SendAsync( req );
                         m.EnsureSuccessStatusCode();
                     }
                 }
