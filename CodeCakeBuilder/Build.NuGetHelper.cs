@@ -314,7 +314,7 @@ namespace CodeCake
                     System.IO.File.WriteAllText( f,
 $@"<configuration>
   <packageSources>
-    <add key=""Signature-OpenSource-FIX-For-Push"" value=""{_packageSource.Source}"" />
+    <add key=""Signature-OpenSource-FIX-For-Push"" value=""https://pkgs.dev.azure.com/Signature-OpenSource/_packaging/Default/nuget/v3/index.json"" />
   </packageSources>
 </configuration>" );
 
