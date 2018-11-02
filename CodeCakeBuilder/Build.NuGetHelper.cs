@@ -2,6 +2,7 @@ using Cake.Common.Diagnostics;
 using Cake.Common.Solution;
 using Cake.Core;
 using CK.Text;
+using CSemVer;
 using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Credentials;
@@ -13,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,6 +23,32 @@ namespace CodeCake
 {
     public partial class Build
     {
+        struct SimplePackageId
+        {
+            /// <summary>
+            /// Gets the NuGet PackageIdentity object.
+            /// </summary>
+            public readonly PackageIdentity PackageIdentity;
+
+            /// <summary>
+            /// Gets the SVersion of the package.
+            /// </summary>
+            public readonly SVersion Version;
+
+            /// <summary>
+            /// Gets the name of the package.
+            /// </summary>
+            public string PackageId => PackageIdentity.Id;
+
+            public SimplePackageId( string packageId, SVersion v )
+            {
+                PackageIdentity = new PackageIdentity( packageId, NuGetVersion.Parse( v.ToString() ) );
+                Version = v;
+            }
+
+            public override string ToString() => PackageId + '.' + Version.ToNuGetPackageString();
+        }
+
         static class NuGetHelper
         {
             static SourceCacheContext _sourceCache;
@@ -29,11 +57,19 @@ namespace CodeCake
             static ISettings _settings;
             static IPackageSourceProvider _sourceProvider;
 
+            /// <summary>
+            /// Shared http client.
+            /// See: https://aspnetmonsters.com/2016/08/2016-08-27-httpclientwrong/
+            /// Do not add any default on it.
+            /// </summary>
+            public static readonly HttpClient SharedHttpClient;
+
             static NuGetHelper()
             {
                 _sourceCache = new SourceCacheContext();
                 _providers = new List<Lazy<INuGetResourceProvider>>();
                 _providers.AddRange( Repository.Provider.GetCoreV3() );
+                SharedHttpClient = new HttpClient();
             }
 
             public static void SetupCredentialService( IPackageSourceProvider sourceProvider, ILogger logger, bool nonInteractive )
@@ -210,7 +246,7 @@ namespace CodeCake
                 readonly PackageSource _packageSource;
                 readonly SourceRepository _sourceRepository;
                 readonly AsyncLazy<PackageUpdateResource> _updater;
-                List<SolutionProject> _packagesToPublish;
+                List<SimplePackageId> _packagesToPublish;
 
                 /// <summary>
                 /// Initialize a new remote feed.
@@ -259,7 +295,7 @@ namespace CodeCake
                     _updater = new AsyncLazy<PackageUpdateResource>( async () =>
                     {
                         var r = await _sourceRepository.GetResourceAsync<PackageUpdateResource>();
-                        // TODO: Update for next NuGet version.
+                        // TODO: Update for next NuGet version?
                         // r.Settings = _settings;
                         return r;
                     } );
@@ -271,9 +307,9 @@ namespace CodeCake
 
                 public string Name => _packageSource.Name;
 
-                public IReadOnlyList<SolutionProject> PackagesToPublish => _packagesToPublish;
+                public IReadOnlyList<SimplePackageId> PackagesToPublish => _packagesToPublish;
 
-                public async Task PushPackages( ICakeContext ctx, IEnumerable<string> packagePaths, int timeoutSeconds = 20 )
+                public async Task PushPackages( ICakeContext ctx, string path, IEnumerable<SimplePackageId> packages, int timeoutSeconds = 20 )
                 {
                     string apiKey = null;
                     if( !_packageSource.IsLocal )
@@ -287,10 +323,11 @@ namespace CodeCake
                     }
                     var logger = InitializeAndGetLogger( ctx );
                     var updater = await _updater;
-                    foreach( var f in packagePaths )
+                    foreach( var package in packages )
                     {
+                        var fullPath = System.IO.Path.Combine( path, package.ToString() );
                         await updater.Push(
-                            f,
+                            fullPath,
                             String.Empty, // no Symbol source.
                             timeoutSeconds,
                             disableBuffering: false,
@@ -298,30 +335,40 @@ namespace CodeCake
                             getSymbolApiKey: symbolsEndpoint => null,
                             noServiceEndpoint: false,
                             log: logger );
+                        await OnPackagePushed( ctx, path, package );
                     }
+                    await OnAllPackagesPushed( ctx, path, packages );
+                }
+
+                protected virtual Task OnPackagePushed( ICakeContext ctx, string path, SimplePackageId package )
+                {
+                    return System.Threading.Tasks.Task.CompletedTask;
+                }
+
+                protected virtual Task OnAllPackagesPushed( ICakeContext ctx, string path, IEnumerable<SimplePackageId> packages )
+                {
+                    return System.Threading.Tasks.Task.CompletedTask;
                 }
 
                 protected abstract string ResolveAPIKey( ICakeContext ctx );
 
                 public int PackagesAlreadyPublishedCount { get; private set; }
 
-                public async Task InitializePackagesToPublishAsync( ICakeContext ctx, IEnumerable<SolutionProject> projectsToPublish, string nuGetVersion )
+                public async Task InitializePackagesToPublishAsync( ICakeContext ctx, IEnumerable<SimplePackageId> allPackagesToPublish )
                 {
                     if( _packagesToPublish == null )
                     {
-                        _packagesToPublish = new List<SolutionProject>();
-                        var targetVersion = NuGetVersion.Parse( nuGetVersion );
+                        _packagesToPublish = new List<SimplePackageId>();
                         MetadataResource meta = await _sourceRepository.GetResourceAsync<MetadataResource>();
-                        foreach( var p in projectsToPublish )
+                        foreach( var p in allPackagesToPublish )
                         {
-                            var id = new PackageIdentity( p.Name, targetVersion );
-                            if( await meta.Exists( id, _sourceCache, InitializeAndGetLogger( ctx ), CancellationToken.None ) )
+                            if( await meta.Exists( p.PackageIdentity, _sourceCache, InitializeAndGetLogger( ctx ), CancellationToken.None ) )
                             {
                                 ++PackagesAlreadyPublishedCount;
                             }
                             else
                             {
-                                ctx.Debug( $"Package {p.Name} must be published to remote feed '{Name}'." );
+                                ctx.Debug( $"Package {p.PackageId} must be published to remote feed '{Name}'." );
                                 _packagesToPublish.Add( p );
                             }
                         }
@@ -329,7 +376,7 @@ namespace CodeCake
                     ctx.Debug( $" ==> {_packagesToPublish.Count} package(s) must be published to remote feed '{Name}'." );
                 }
 
-                public void Information( ICakeContext ctx, IEnumerable<SolutionProject> projectsToPublish )
+                public void Information( ICakeContext ctx, IEnumerable<SimplePackageId> allPackagesToPublish )
                 {
                     if( PackagesToPublish.Count == 0 )
                     {
@@ -341,12 +388,13 @@ namespace CodeCake
                     }
                     else
                     {
-                        ctx.Information( $"Feed '{Name}': {PackagesToPublish.Count} packages must be pushed: {PackagesToPublish.Select( p => p.Name ).Concatenate()}." );
-                        ctx.Information( $"               => {PackagesAlreadyPublishedCount} packages already pushed: {projectsToPublish.Except( PackagesToPublish ).Select( p => p.Name ).Concatenate()}." );
+                        ctx.Information( $"Feed '{Name}': {PackagesToPublish.Count} packages must be pushed: {PackagesToPublish.Select( p => p.PackageId ).Concatenate()}." );
+                        ctx.Information( $"               => {PackagesAlreadyPublishedCount} packages already pushed: {allPackagesToPublish.Except( PackagesToPublish ).Select( p => p.PackageId ).Concatenate()}." );
                     }
                 }
             }
         }
+
 
         /// <summary>
         /// A VSTS feed uses "VSTS" for the API key.
@@ -362,7 +410,102 @@ namespace CodeCake
                 : base( name, urlV3 )
             {
             }
+
             protected override string ResolveAPIKey( ICakeContext ctx ) => "VSTS";
+        }
+
+        /// <summary>
+        /// A SignatureVSTSFeed handles Stable, Latest, Preview and CI Azure feed views with
+        /// package promotion based on the published version.
+        /// To handle package promotion, a Personal Access Token, "VSTS_PAT" environment variable
+        /// must be defined and contains the token.
+        /// If this "VSTS_PAT" is not defined or empty, push is skipped.
+        /// </summary>
+        class SignatureVSTSFeed : VSTSFeed
+        {
+            string _vstsPAT;
+
+            /// <summary>
+            /// Initialize a new SignatureVSTSFeed.
+            /// Its <see cref="NuGetHelper.Feed.Name"/> is set to "<paramref name="organization"/>-<paramref name="feedId"/>".
+            /// </summary>
+            /// <param name="organization">Name of the organization.</param>
+            /// <param name="feedId">Identifier of the feed in Azure, inside the organization.</param>
+            public SignatureVSTSFeed( string organization = "Signature-OpenSource", string feedId = "Default" )
+                : base( organization+"-"+feedId, $"https://pkgs.dev.azure.com/{organization}/_packaging/{feedId}/nuget/v3/index.json" )
+            {
+                Organization = organization;
+                FeedId = feedId;
+            }
+
+            /// <summary>
+            /// Gets the organization name.
+            /// </summary>
+            public string Organization { get; }
+
+            /// <summary>
+            /// Gets the feed identifier.
+            /// </summary>
+            public string FeedId { get; }
+
+            /// <summary>
+            /// Gets the VSTS Personal Access Token obtained from the "VSTS_PAT" environment variable.
+            /// When null, push is disabled.
+            /// </summary>
+            protected string VSTSPersonalAccessToken => _vstsPAT;
+
+            protected override string ResolveAPIKey( ICakeContext ctx )
+            {
+                _vstsPAT = ctx.InteractiveEnvironmentVariable( "VSTS_PAT" );
+                if( String.IsNullOrWhiteSpace( _vstsPAT ) ) _vstsPAT = null;
+                return _vstsPAT != null ? "VSTS" : null;
+            }
+
+            protected override async Task OnAllPackagesPushed( ICakeContext ctx, string path, IEnumerable<SimplePackageId> packages )
+            {
+                foreach( var p in packages )
+                {
+                    foreach( var view in GetViewNames( p.Version ) )
+                    {
+                        var body = GetPromotionJSONBody( p.PackageId, p.PackageIdentity.Version.ToString(), view );
+                        var c = new StringContent( body, Encoding.UTF8, "application/json" );
+                        c.Headers.Add( "Authorization", "Bearer " + VSTSPersonalAccessToken );
+                        var m = await NuGetHelper.SharedHttpClient.PostAsync( $"https://pkgs.dev.azure.com/{Organization}/_apis/packaging/feeds/{FeedId}/nuget/packagesBatch", c );
+                        m.EnsureSuccessStatusCode();
+                    }
+                }
+            }
+
+            IEnumerable<string> GetViewNames( SVersion v )
+            {
+                yield return "CI";
+                if( v.IsLatestLabel )
+                {
+                    yield return "Latest";
+                    yield return "Preview";
+                    if( v.IsStableLabel ) yield return "Stable";
+                }
+                else if( v.IsPreviewLabel ) yield return "Preview";
+            }
+
+            string GetPromotionJSONBody( string packageName, string packageVersion, string viewId, bool npm = false )
+            {
+                var bodyFormat = @"{
+ ""data"": {
+    ""viewId"": ""{viewId}""
+  },
+  ""operation"": 0,
+  ""packages"": [{
+    ""id"": ""{packageName}"",
+    ""version"": ""{packageVersion}"",
+    ""protocolType"": ""{NuGetOrNpm}""
+  }]
+}";
+                return bodyFormat.Replace( "{NuGetOrNpm}", npm ? "Npm" : "NuGet" )
+                                 .Replace( "{viewId}", viewId )
+                                 .Replace( "{packageName}", packageName )
+                                 .Replace( "{packageVersion}", packageVersion );
+            }
 
         }
 
@@ -414,14 +557,6 @@ namespace CodeCake
             protected override string ResolveAPIKey( ICakeContext ctx ) => null;
         }
 
-
-        class SignatureOpenSourcePublicFeed : VSTSFeed
-        {
-            public SignatureOpenSourcePublicFeed( string feedName )
-                : base( feedName, $"https://pkgs.dev.azure.com/Signature-OpenSource/_packaging/{feedName}/nuget/v3/index.json" )
-            {
-            }
-        }
 
     }
 }

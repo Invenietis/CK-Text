@@ -31,9 +31,6 @@ namespace CodeCake
         {
             Cake.Log.Verbosity = Verbosity.Diagnostic;
 
-            var ppp = Cake.Environment.ExpandEnvironmentVariables( @"%UserProfile%\.nuget\plugins\netcore\CredentialProvider.Microsoft" );
-            Cake.Information( $"{ppp} => {System.IO.Directory.Exists( ppp )}" );
-
             const string solutionName = "CK-Text";
             const string solutionFileName = solutionName + ".sln";
 
@@ -52,7 +49,7 @@ namespace CodeCake
             SimpleRepositoryInfo gitInfo = Cake.GetSimpleRepositoryInfo();
             // This default global info will be replaced by Check-Repository task.
             // It is allocated here to ease debugging and/or manual work on complex build script.
-            CheckRepositoryInfo globalInfo = new CheckRepositoryInfo { Version = gitInfo.SafeNuGetVersion };
+            CheckRepositoryInfo globalInfo = new CheckRepositoryInfo( gitInfo, projectsToPublish );
 
             Task( "Check-Repository" )
                 .Does( () =>
