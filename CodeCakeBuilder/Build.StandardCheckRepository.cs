@@ -154,28 +154,6 @@ namespace CodeCake
                 if( !isLocalCIRelease )
                 {
                     result.Feeds.Add( new SignatureVSTSFeed() );
-                    //    if( gitInfo.IsValidRelease )
-                    //    {
-                    //        if( gitInfo.PreReleaseName == "" )
-                    //        {
-                    //            result.Feeds.Add( new SignatureOpenSourcePublicFeed( "Stable" ) );
-                    //        }
-                    //        else if( gitInfo.PreReleaseName == "prerelease"
-                    //                || gitInfo.PreReleaseName == "rc" )
-                    //        {
-                    //            result.Feeds.Add( new SignatureOpenSourcePublicFeed( "Latest" ) );
-                    //        }
-                    //        else
-                    //        {
-                    //            // An alpha, beta, delta, epsilon, gamma, kappa goes to preview feed.
-                    //            result.Feeds.Add( new SignatureOpenSourcePublicFeed( "Preview" ) );
-                    //        }
-                    //    }
-                    //    else
-                    //    {
-                    //        Debug.Assert( gitInfo.IsValidCIBuild );
-                    //        result.Feeds.Add( new SignatureOpenSourcePublicFeed( "CI" ) );
-                    //    }
                 }
             }
 

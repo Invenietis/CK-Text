@@ -66,6 +66,13 @@ namespace CodeCake
 
             static NuGetHelper()
             {
+                // Workaround for dev/NuGet.Client\src\NuGet.Core\NuGet.Protocol\Plugins\PluginFactory.cs line 161:
+                // FileName = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH"),
+                // This line should be:
+                // FileName = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ?? "dotnet",
+                //
+                // Issue: https://github.com/NuGet/Home/issues/7438
+                //
                 Environment.SetEnvironmentVariable( "DOTNET_HOST_PATH", "dotnet" );
                 _sourceCache = new SourceCacheContext();
                 _providers = new List<Lazy<INuGetResourceProvider>>();
@@ -473,12 +480,26 @@ namespace CodeCake
                 {
                     foreach( var view in GetViewNames( p.Version ) )
                     {
-                        HttpRequestMessage req = new HttpRequestMessage( HttpMethod.Post, $"https://pkgs.dev.azure.com/{Organization}/_apis/packaging/feeds/{FeedId}/nuget/packagesBatch" );
-                        req.Headers.Add( "Authorization", "Bearer " + AzureFeedPersonalAccessToken );
-                        var body = GetPromotionJSONBody( p.PackageId, p.PackageIdentity.Version.ToString(), view );
-                        req.Content = new StringContent( body, Encoding.UTF8, "application/json" );
-                        var m = await NuGetHelper.SharedHttpClient.SendAsync( req );
-                        m.EnsureSuccessStatusCode();
+                        using( HttpRequestMessage req = new HttpRequestMessage( HttpMethod.Post, $"https://pkgs.dev.azure.com/{Organization}/_apis/packaging/feeds/{FeedId}/nuget/packagesBatch?api-version=5.0-preview.1" ) )
+                        {
+
+                            var basicAuth = Convert.ToBase64String( ASCIIEncoding.ASCII.GetBytes( ":" + AzureFeedPersonalAccessToken ) );
+                            req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue( "Basic", basicAuth );
+                            var body = GetPromotionJSONBody( p.PackageId, p.PackageIdentity.Version.ToString(), view );
+                            req.Content = new StringContent( body, Encoding.UTF8, "application/json" );
+                            using( var m = await NuGetHelper.SharedHttpClient.SendAsync( req ) )
+                            {
+                                if( m.IsSuccessStatusCode )
+                                {
+                                    ctx.Information( $"Package '{p}' promoted to view '@{view}'." );
+                                }
+                                else 
+                                {
+                                    ctx.Error( $"Package '{p}' promotion to view '@{view}' failed." );
+                                    m.EnsureSuccessStatusCode();
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -552,7 +573,7 @@ namespace CodeCake
         }
 
         /// <summary>
-        /// Local feed. Push are always possible.
+        /// Local feed. Pushes are always possible.
         /// </summary>
         class LocalFeed : NuGetHelper.Feed
         {
