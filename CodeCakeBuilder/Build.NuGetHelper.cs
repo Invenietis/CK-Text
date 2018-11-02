@@ -307,6 +307,16 @@ namespace CodeCake
                         // r.Settings = _settings;
                         return r;
                     } );
+
+                    // Test.
+                    var f = System.IO.Path.GetDirectoryName( Environment.CurrentDirectory );
+                    f = System.IO.Path.Combine( f, "NuGet.config" );
+                    System.IO.File.WriteAllText( f,
+$@"<configuration>
+  <packageSources>
+    <add key=""Signature-OpenSource-FIX-For-Push"" value=""{_packageSource.Source}"" />
+</configuration>" );
+
                 }
 
                 public string Url => _packageSource.Source;
