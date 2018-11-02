@@ -417,13 +417,13 @@ namespace CodeCake
         /// <summary>
         /// A SignatureVSTSFeed handles Stable, Latest, Preview and CI Azure feed views with
         /// package promotion based on the published version.
-        /// To handle package promotion, a Personal Access Token, "VSTS_PAT" environment variable
+        /// To handle package promotion, a Personal Access Token, "AZURE_FEED_PAT" environment variable
         /// must be defined and contains the token.
-        /// If this "VSTS_PAT" is not defined or empty, push is skipped.
+        /// If this "AZURE_FEED_PAT" is not defined or empty, push is skipped.
         /// </summary>
         class SignatureVSTSFeed : VSTSFeed
         {
-            string _vstsPAT;
+            string _azureFeedPAT;
 
             /// <summary>
             /// Initialize a new SignatureVSTSFeed.
@@ -449,16 +449,21 @@ namespace CodeCake
             public string FeedId { get; }
 
             /// <summary>
-            /// Gets the VSTS Personal Access Token obtained from the "VSTS_PAT" environment variable.
+            /// Gets the Azure Feed Personal Access Token obtained from the "AZURE_FEED_PAT" environment variable.
             /// When null, push is disabled.
             /// </summary>
-            protected string VSTSPersonalAccessToken => _vstsPAT;
+            protected string AzureFeedPersonalAccessToken => _azureFeedPAT;
 
             protected override string ResolveAPIKey( ICakeContext ctx )
             {
-                _vstsPAT = ctx.InteractiveEnvironmentVariable( "VSTS_PAT" );
-                if( String.IsNullOrWhiteSpace( _vstsPAT ) ) _vstsPAT = null;
-                return _vstsPAT != null ? "VSTS" : null;
+                _azureFeedPAT = ctx.InteractiveEnvironmentVariable( "AZURE_FEED_PAT" );
+                if( String.IsNullOrWhiteSpace( _azureFeedPAT ) )
+                {
+                    ctx.Warning( "No AZURE_FEED_PAT environment variable found." );
+                    _azureFeedPAT = null;
+                }
+                // The API key for the Credential Provider must be "VSTS".
+                return _azureFeedPAT != null ? "VSTS" : null;
             }
 
             protected override async Task OnAllPackagesPushed( ICakeContext ctx, string path, IEnumerable<SimplePackageId> packages )
@@ -469,7 +474,7 @@ namespace CodeCake
                     {
                         var body = GetPromotionJSONBody( p.PackageId, p.PackageIdentity.Version.ToString(), view );
                         var c = new StringContent( body, Encoding.UTF8, "application/json" );
-                        c.Headers.Add( "Authorization", "Bearer " + VSTSPersonalAccessToken );
+                        c.Headers.Add( "Authorization", "Bearer " + AzureFeedPersonalAccessToken );
                         var m = await NuGetHelper.SharedHttpClient.PostAsync( $"https://pkgs.dev.azure.com/{Organization}/_apis/packaging/feeds/{FeedId}/nuget/packagesBatch", c );
                         m.EnsureSuccessStatusCode();
                     }

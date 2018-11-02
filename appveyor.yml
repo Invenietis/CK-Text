@@ -14,7 +14,7 @@ environment:
   #   FileName = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ?? "dotnet",
   DOTNET_HOST_PATH: dotnet
 
-  VSS_PAT:
+  AZURE_FEED_PAT:
      secure: MOjOpNMfab3UseEjZW3bGL6+7uXkbmExMOLMn2Mg+61uUO0qdrSZ28DsChFgR60/Huc+D2bcJ/GXP4CB8Cb8Vg==
 
   VSS_NUGET_EXTERNAL_FEED_ENDPOINTS:
