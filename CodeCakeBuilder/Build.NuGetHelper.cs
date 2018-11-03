@@ -64,6 +64,10 @@ namespace CodeCake
             /// </summary>
             public static readonly HttpClient SharedHttpClient;
 
+            /// <summary>
+            /// Implements a IPackageSourceProvider that mixes sources from NuGet.config settings
+            /// and sources that are used by the build chain.
+            /// </summary>
             class PackageProviderProxy : IPackageSourceProvider
             {
                 readonly IPackageSourceProvider _fromSettings;
@@ -110,10 +114,11 @@ namespace CodeCake
 
                 event EventHandler IPackageSourceProvider.PackageSourcesChanged { add { } remove { } }
 
-                public IEnumerable<PackageSource> LoadPackageSources()
-                {
-                    return _sources.Value;
-                }
+                /// <summary>
+                /// Gets all the sources.
+                /// </summary>
+                /// <returns></returns>
+                public IEnumerable<PackageSource> LoadPackageSources() => _sources.Value;
 
                 bool IPackageSourceProvider.IsPackageSourceEnabled( PackageSource source ) => true;
 
@@ -423,9 +428,9 @@ namespace CodeCake
             }
         }
 
-
         /// <summary>
         /// A VSTS feed uses "VSTS" for the API key.
+        /// The https://github.com/Microsoft/artifacts-credprovider must be installed.
         /// </summary>
         class VSTSFeed : NuGetHelper.Feed
         {
@@ -439,6 +444,11 @@ namespace CodeCake
             {
             }
 
+            /// <summary>
+            /// Always "VSTS".
+            /// </summary>
+            /// <param name="ctx">The Cake context.</param>
+            /// <returns>The "VSTS" key.</returns>
             protected override string ResolveAPIKey( ICakeContext ctx ) => "VSTS";
         }
 
@@ -455,7 +465,8 @@ namespace CodeCake
 
             /// <summary>
             /// Initialize a new SignatureVSTSFeed.
-            /// Its <see cref="NuGetHelper.Feed.Name"/> is set to "<paramref name="organization"/>-<paramref name="feedId"/>".
+            /// Its <see cref="NuGetHelper.Feed.Name"/> is set to "<paramref name="organization"/>-<paramref name="feedId"/>"
+            /// (and may be prefixed with "CCB-" if it doesn't correspond to a source defined in the NuGet.config settings.
             /// </summary>
             /// <param name="organization">Name of the organization.</param>
             /// <param name="feedId">Identifier of the feed in Azure, inside the organization.</param>
@@ -482,6 +493,12 @@ namespace CodeCake
             /// </summary>
             protected string AzureFeedPersonalAccessToken => _azureFeedPAT;
 
+            /// <summary>
+            /// Looks up for the "AZURE_FEED_PAT" environment variable that is required to promote packages.
+            /// If this variable is empty or not defined, push is skipped.
+            /// </summary>
+            /// <param name="ctx">The Cake context.</param>
+            /// <returns>The "VSTS" API key or null to skip the push.</returns>
             protected override string ResolveAPIKey( ICakeContext ctx )
             {
                 _azureFeedPAT = ctx.InteractiveEnvironmentVariable( "AZURE_FEED_PAT" );
@@ -494,6 +511,13 @@ namespace CodeCake
                 return _azureFeedPAT != null ? "VSTS" : null;
             }
 
+            /// <summary>
+            /// Implements Package promotion in @CI, @Preview, @Latest and @Stable views.
+            /// </summary>
+            /// <param name="ctx">The Cake context.</param>
+            /// <param name="path">The path where the .nupkg mus be found.</param>
+            /// <param name="packages">The set of packages to push.</param>
+            /// <returns>The awaitable.</returns>
             protected override async Task OnAllPackagesPushed( ICakeContext ctx, string path, IEnumerable<SimplePackageId> packages )
             {
                 foreach( var p in packages )
@@ -580,6 +604,11 @@ namespace CodeCake
             /// </summary>
             public string APIKeyName { get; set; }
 
+            /// <summary>
+            /// Resolves the API key from <see cref="APIKeyName"/> environment variable.
+            /// </summary>
+            /// <param name="ctx">The Cake context.</param>
+            /// <returns>The API key or null.</returns>
             protected override string ResolveAPIKey( ICakeContext ctx )
             {
                 if( String.IsNullOrEmpty( APIKeyName ) )
