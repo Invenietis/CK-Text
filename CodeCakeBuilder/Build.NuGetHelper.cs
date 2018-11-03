@@ -490,7 +490,6 @@ namespace CodeCake
                     ctx.Warning( "No AZURE_FEED_PAT environment variable found." );
                     _azureFeedPAT = null;
                 }
-                return _azureFeedPAT;
                 // The API key for the Credential Provider must be "VSTS".
                 return _azureFeedPAT != null ? "VSTS" : null;
             }
