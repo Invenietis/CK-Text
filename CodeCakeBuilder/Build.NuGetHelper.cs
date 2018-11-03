@@ -108,7 +108,7 @@ namespace CodeCake
 
                 string IPackageSourceProvider.DefaultPushSource => _fromSettings.DefaultPushSource;
 
-                public event EventHandler PackageSourcesChanged;
+                event EventHandler IPackageSourceProvider.PackageSourcesChanged { add { } remove { } }
 
                 public IEnumerable<PackageSource> LoadPackageSources()
                 {
@@ -195,7 +195,11 @@ namespace CodeCake
             {
                 if( _logger == null )
                 {
-                    ctx.Information( $"Initializing with sources: {_sourceProvider.LoadPackageSources().Select( p => $"{p.Name} => {p.Source}" ).Concatenate()}." );
+                    ctx.Information( $"Initializing with sources:" );
+                    foreach( var s in _sourceProvider.LoadPackageSources() )
+                    {
+                        ctx.Information( $"{s.Name} => {s.Source}" );
+                    }
                     _logger = new Logger( ctx );
                     var credProviders = new AsyncLazy<IEnumerable<ICredentialProvider>>( async () => await GetCredentialProvidersAsync( _sourceProvider, _logger ) );
                     HttpHandlerResourceV3.CredentialService = new Lazy<ICredentialService>(
@@ -214,6 +218,9 @@ namespace CodeCake
                 return providers;
             }
 
+            /// <summary>
+            /// Base class for NuGet feeds.
+            /// </summary>
             public abstract class Feed
             {
                 readonly PackageSource _packageSource;
@@ -223,6 +230,9 @@ namespace CodeCake
 
                 /// <summary>
                 /// Initialize a new remote feed.
+                /// Its final <see cref="Name"/> is the one of the existing feed if it appears in the existing
+                /// sources (from NuGet configuration files) or "CCB-<paramref name="name"/>" if this is
+                /// an unexisting source (CCB is for CodeCakeBuilder). 
                 /// </summary>
                 /// <param name="name">Name of the feed.</param>
                 /// <param name="urlV3">Must be a v3/index.json url otherwise an argument exception is thrown.</param>
@@ -233,6 +243,9 @@ namespace CodeCake
 
                 /// <summary>
                 /// Initialize a new local feed.
+                /// Its final <see cref="Name"/> is the one of the existing feed if it appears in the existing
+                /// sources (from NuGet configuration files) or "CCB-GetDirectoryName(localPath)" if this is
+                /// an unexisting source (CCB is for CodeCakeBuilder). 
                 /// </summary>
                 /// <param name="localPath">Local path.</param>
                 protected Feed( string localPath )
@@ -253,15 +266,38 @@ namespace CodeCake
                     } );
                 }
 
+                /// <summary>
+                /// The url of the source. Can be a local path.
+                /// </summary>
                 public string Url => _packageSource.Source;
 
+                /// <summary>
+                /// Gets whether this is a local feed (a directory).
+                /// </summary>
                 public bool IsLocal => _packageSource.IsLocal;
 
+                /// <summary>
+                /// Gets the source name.
+                /// If the source appears in NuGet configuration files, it is the configured name of the source, otherwise
+                /// it is prefixed with "CCB-" (CCB is for CodeCakeBuilder). 
+                /// </summary>
                 public string Name => _packageSource.Name;
 
+                /// <summary>
+                /// Gets the list of packages that must be published (ie. they don't already exist in the feed).
+                /// </summary>
                 public IReadOnlyList<SimplePackageId> PackagesToPublish => _packagesToPublish;
 
-                public async Task PushPackages( ICakeContext ctx, string path, IEnumerable<SimplePackageId> packages, int timeoutSeconds = 20 )
+                /// <summary>
+                /// Pushes a set of packages (this is typically <see cref="PackagesToPublish"/>) from .nupkg files
+                /// that must exist in <paramref name="path"/>.
+                /// </summary>
+                /// <param name="ctx">The Cake context.</param>
+                /// <param name="path">The path where the .nupkg mus be found.</param>
+                /// <param name="packages">The set of packages to push.</param>
+                /// <param name="timeoutSeconds">Timeout in seconds.</param>
+                /// <returns>The awaitable.</returns>
+                public async Task PushPackagesAsync( ICakeContext ctx, string path, IEnumerable<SimplePackageId> packages, int timeoutSeconds = 20 )
                 {
                     string apiKey = null;
                     if( !_packageSource.IsLocal )
@@ -292,43 +328,82 @@ namespace CodeCake
                     await OnAllPackagesPushed( ctx, path, packages );
                 }
 
+                /// <summary>
+                /// Called for each package pushed.
+                /// Does nothing at this level.
+                /// </summary>
+                /// <param name="ctx">The Cake context.</param>
+                /// <param name="path">The path where the .nupkg mus be found.</param>
+                /// <param name="packages">The set of packages to push.</param>
+                /// <returns>The awaitable.</returns>
                 protected virtual Task OnPackagePushed( ICakeContext ctx, string path, SimplePackageId package )
                 {
                     return System.Threading.Tasks.Task.CompletedTask;
                 }
 
+                /// <summary>
+                /// Called once all the packages are pushed.
+                /// Does nothing at this level.
+                /// </summary>
+                /// <param name="ctx">The Cake context.</param>
+                /// <param name="path">The path where the .nupkg mus be found.</param>
+                /// <param name="packages">The set of packages to push.</param>
+                /// <returns>The awaitable.</returns>
                 protected virtual Task OnAllPackagesPushed( ICakeContext ctx, string path, IEnumerable<SimplePackageId> packages )
                 {
                     return System.Threading.Tasks.Task.CompletedTask;
                 }
 
+                /// <summary>
+                /// Must resolve the API key required to push the package.
+                /// </summary>
+                /// <param name="ctx"></param>
+                /// <returns></returns>
                 protected abstract string ResolveAPIKey( ICakeContext ctx );
 
+                /// <summary>
+                /// Gets the number of packages that exist in the feed.
+                /// This is computed by <see cref="InitializePackagesToPublishAsync"/>.
+                /// </summary>
                 public int PackagesAlreadyPublishedCount { get; private set; }
 
+                /// <summary>
+                /// Initializes the <see cref="PackagesToPublish"/> and <see cref="PackagesAlreadyPublishedCount"/>.
+                /// This can be called multiple times.
+                /// </summary>
+                /// <param name="ctx">The Cake context.</param>
+                /// <param name="allPackagesToPublish">The set of packages </param>
+                /// <returns>The awaitable.</returns>
                 public async Task InitializePackagesToPublishAsync( ICakeContext ctx, IEnumerable<SimplePackageId> allPackagesToPublish )
                 {
-                    if( _packagesToPublish == null )
+                    if( _packagesToPublish != null )
                     {
-                        var logger = InitializeAndGetLogger( ctx );
-                        _packagesToPublish = new List<SimplePackageId>();
-                        MetadataResource meta = await _sourceRepository.GetResourceAsync<MetadataResource>();
-                        foreach( var p in allPackagesToPublish )
+                        _packagesToPublish.Clear();
+                        PackagesAlreadyPublishedCount = 0;
+                    }
+                    else _packagesToPublish = new List<SimplePackageId>();
+                    var logger = InitializeAndGetLogger( ctx );
+                    MetadataResource meta = await _sourceRepository.GetResourceAsync<MetadataResource>();
+                    foreach( var p in allPackagesToPublish )
+                    {
+                        if( await meta.Exists( p.PackageIdentity, _sourceCache, logger, CancellationToken.None ) )
                         {
-                            if( await meta.Exists( p.PackageIdentity, _sourceCache, logger, CancellationToken.None ) )
-                            {
-                                ++PackagesAlreadyPublishedCount;
-                            }
-                            else
-                            {
-                                ctx.Debug( $"Package {p.PackageId} must be published to remote feed '{Name}'." );
-                                _packagesToPublish.Add( p );
-                            }
+                            ++PackagesAlreadyPublishedCount;
+                        }
+                        else
+                        {
+                            ctx.Debug( $"Package {p.PackageId} must be published to remote feed '{Name}'." );
+                            _packagesToPublish.Add( p );
                         }
                     }
                     ctx.Debug( $" ==> {_packagesToPublish.Count} package(s) must be published to remote feed '{Name}'." );
                 }
 
+                /// <summary>
+                /// Dumps information about <see cref="PackagesToPublish"/>.
+                /// </summary>
+                /// <param name="ctx">The Cake context.</param>
+                /// <param name="allPackagesToPublish">The set of all packages to publish.</param>
                 public void Information( ICakeContext ctx, IEnumerable<SimplePackageId> allPackagesToPublish )
                 {
                     if( PackagesToPublish.Count == 0 )

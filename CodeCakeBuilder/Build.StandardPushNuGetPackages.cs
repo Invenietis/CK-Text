@@ -19,10 +19,8 @@ namespace CodeCake
         /// <param name="releasesDir">The releasesDir (normally 'CodeCakeBuilder/Releases').</param>
         void StandardPushNuGetPackages( CheckRepositoryInfo globalInfo, string releasesDir )
         {
-            foreach( var feed in globalInfo.Feeds )
-            {
-                feed.PushPackages( Cake, releasesDir, feed.PackagesToPublish ).GetAwaiter().GetResult();
-            }
+            var all = globalInfo.Feeds.Select( feed => feed.PushPackagesAsync( Cake, releasesDir, feed.PackagesToPublish ) );
+            System.Threading.Tasks.Task.WaitAll( all.ToArray() );
         }
 
     }
