@@ -23,6 +23,9 @@ namespace CodeCake
 {
     public partial class Build
     {
+        /// <summary>
+        /// Package with both PackageIdentity from NuGet) and SVersion (from CSemVer).
+        /// </summary>
         struct SimplePackageId
         {
             /// <summary>
@@ -465,16 +468,16 @@ namespace CodeCake
 
             /// <summary>
             /// Initialize a new SignatureVSTSFeed.
-            /// Its <see cref="NuGetHelper.Feed.Name"/> is set to "<paramref name="organization"/>-<paramref name="feedId"/>"
+            /// Its <see cref="NuGetHelper.Feed.Name"/> is set to "<paramref name="organization"/>-<paramref name="feedName"/>"
             /// (and may be prefixed with "CCB-" if it doesn't correspond to a source defined in the NuGet.config settings.
             /// </summary>
             /// <param name="organization">Name of the organization.</param>
-            /// <param name="feedId">Identifier of the feed in Azure, inside the organization.</param>
-            public SignatureVSTSFeed( string organization = "Signature-OpenSource", string feedId = "Default" )
-                : base( organization+"-"+feedId, $"https://pkgs.dev.azure.com/{organization}/_packaging/{feedId}/nuget/v3/index.json" )
+            /// <param name="feedName">Identifier of the feed in Azure, inside the organization.</param>
+            public SignatureVSTSFeed( string organization = "Signature-OpenSource", string feedName = "Default" )
+                : base( organization+"-"+feedName, $"https://pkgs.dev.azure.com/{organization}/_packaging/{feedName}/nuget/v3/index.json" )
             {
                 Organization = organization;
-                FeedId = feedId;
+                FeedName = feedName;
             }
 
             /// <summary>
@@ -485,7 +488,7 @@ namespace CodeCake
             /// <summary>
             /// Gets the feed identifier.
             /// </summary>
-            public string FeedId { get; }
+            public string FeedName { get; }
 
             /// <summary>
             /// Gets the Azure Feed Personal Access Token obtained from the "AZURE_FEED_PAT" environment variable.
@@ -524,7 +527,7 @@ namespace CodeCake
                 {
                     foreach( var view in GetViewNames( p.Version ) )
                     {
-                        using( HttpRequestMessage req = new HttpRequestMessage( HttpMethod.Post, $"https://pkgs.dev.azure.com/{Organization}/_apis/packaging/feeds/{FeedId}/nuget/packagesBatch?api-version=5.0-preview.1" ) )
+                        using( HttpRequestMessage req = new HttpRequestMessage( HttpMethod.Post, $"https://pkgs.dev.azure.com/{Organization}/_apis/packaging/feeds/{FeedName}/nuget/packagesBatch?api-version=5.0-preview.1" ) )
                         {
 
                             var basicAuth = Convert.ToBase64String( ASCIIEncoding.ASCII.GetBytes( ":" + AzureFeedPersonalAccessToken ) );
