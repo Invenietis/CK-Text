@@ -110,7 +110,7 @@ namespace CodeCake
 
                 public event EventHandler PackageSourcesChanged;
 
-                IEnumerable<PackageSource> IPackageSourceProvider.LoadPackageSources()
+                public IEnumerable<PackageSource> LoadPackageSources()
                 {
                     return _sources.Value;
                 }
@@ -195,6 +195,7 @@ namespace CodeCake
             {
                 if( _logger == null )
                 {
+                    ctx.Information( $"Initializing with sources: {_sourceProvider.LoadPackageSources().Select( p => $"{p.Name} => {p.Source}" ).Concatenate()}." );
                     _logger = new Logger( ctx );
                     var credProviders = new AsyncLazy<IEnumerable<ICredentialProvider>>( async () => await GetCredentialProvidersAsync( _sourceProvider, _logger ) );
                     HttpHandlerResourceV3.CredentialService = new Lazy<ICredentialService>(
@@ -208,7 +209,6 @@ namespace CodeCake
             static async Task<IEnumerable<ICredentialProvider>> GetCredentialProvidersAsync( IPackageSourceProvider sourceProvider, ILogger logger )
             {
                 var providers = new List<ICredentialProvider>();
-
                 var securePluginProviders = await new SecurePluginCredentialProviderBuilder( pluginManager: PluginManager.Instance, canShowDialog: false, logger: logger ).BuildAllAsync();
                 providers.AddRange( securePluginProviders );
                 return providers;
@@ -310,11 +310,12 @@ namespace CodeCake
                 {
                     if( _packagesToPublish == null )
                     {
+                        var logger = InitializeAndGetLogger( ctx );
                         _packagesToPublish = new List<SimplePackageId>();
                         MetadataResource meta = await _sourceRepository.GetResourceAsync<MetadataResource>();
                         foreach( var p in allPackagesToPublish )
                         {
-                            if( await meta.Exists( p.PackageIdentity, _sourceCache, InitializeAndGetLogger( ctx ), CancellationToken.None ) )
+                            if( await meta.Exists( p.PackageIdentity, _sourceCache, logger, CancellationToken.None ) )
                             {
                                 ++PackagesAlreadyPublishedCount;
                             }
