@@ -51,11 +51,11 @@ namespace CodeCake
 
         static class NuGetHelper
         {
-            static SourceCacheContext _sourceCache;
-            static List<Lazy<INuGetResourceProvider>> _providers;
+            static readonly SourceCacheContext _sourceCache;
+            static readonly List<Lazy<INuGetResourceProvider>> _providers;
+            static readonly ISettings _settings;
+            static readonly PackageProviderProxy _sourceProvider;
             static ILogger _logger;
-            static ISettings _settings;
-            static IPackageSourceProvider _sourceProvider;
 
             /// <summary>
             /// Shared http client.
@@ -63,6 +63,75 @@ namespace CodeCake
             /// Do not add any default on it.
             /// </summary>
             public static readonly HttpClient SharedHttpClient;
+
+            class PackageProviderProxy : IPackageSourceProvider
+            {
+                readonly IPackageSourceProvider _fromSettings;
+                readonly Lazy<List<PackageSource>> _sources;
+                int _definedSourceCount;
+
+                public PackageProviderProxy( ISettings settings )
+                {
+                    _fromSettings = new PackageSourceProvider( settings );
+                    _sources = new Lazy<List<PackageSource>>( () => new List<PackageSource>( _fromSettings.LoadPackageSources() ) );
+                }
+
+                public PackageSource FindOrCreateFromUrl( string name, string urlV3 )
+                {
+                    if( String.IsNullOrEmpty( urlV3 ) || !urlV3.EndsWith( "/v3/index.json" ) )
+                    {
+                        throw new ArgumentException( "Feed requires a /v3/index.json url.", nameof( urlV3 ) );
+                    }
+                    if( String.IsNullOrWhiteSpace( name ) )
+                    {
+                        throw new ArgumentNullException( nameof( name ) );
+                    }
+                    var exists = _sources.Value.FirstOrDefault( s => !s.IsLocal && s.Source == urlV3 );
+                    if( exists != null ) return exists;
+                    exists = new PackageSource( urlV3, name );
+                    _sources.Value.Insert( _definedSourceCount++, exists );
+                    return exists;
+                }
+
+                public PackageSource FindOrCreateFromLocalPath( string localPath )
+                {
+                    if( String.IsNullOrWhiteSpace( localPath ) ) throw new ArgumentNullException( nameof( localPath ) );
+                    NormalizedPath path = System.IO.Path.GetFullPath( localPath );
+                    var exists = _sources.Value.FirstOrDefault( s => s.IsLocal && new NormalizedPath( s.Source ) == path );
+                    if( exists != null ) return exists;
+                    exists = new PackageSource( path, path.LastPart );
+                    _sources.Value.Insert( _definedSourceCount++, exists );
+                    return exists;
+                }
+
+                string IPackageSourceProvider.ActivePackageSourceName => _fromSettings.ActivePackageSourceName;
+
+                string IPackageSourceProvider.DefaultPushSource => _fromSettings.DefaultPushSource;
+
+                public event EventHandler PackageSourcesChanged;
+
+                IEnumerable<PackageSource> IPackageSourceProvider.LoadPackageSources()
+                {
+                    return _sources.Value;
+                }
+
+                bool IPackageSourceProvider.IsPackageSourceEnabled( PackageSource source ) => true;
+
+                void IPackageSourceProvider.DisablePackageSource( PackageSource source )
+                {
+                    throw new NotSupportedException( "Should not be called in this scenario." );
+                }
+
+                void IPackageSourceProvider.SaveActivePackageSource( PackageSource source )
+                {
+                    throw new NotSupportedException( "Should not be called in this scenario." );
+                }
+
+                void IPackageSourceProvider.SavePackageSources( IEnumerable<PackageSource> sources )
+                {
+                    throw new NotSupportedException( "Should not be called in this scenario." );
+                }
+            }
 
             static NuGetHelper()
             {
@@ -74,116 +143,15 @@ namespace CodeCake
                 // Issue: https://github.com/NuGet/Home/issues/7438
                 //
                 Environment.SetEnvironmentVariable( "DOTNET_HOST_PATH", "dotnet" );
+
+                _settings = Settings.LoadDefaultSettings( Environment.CurrentDirectory );
+                _sourceProvider = new PackageProviderProxy( _settings );
+
                 _sourceCache = new SourceCacheContext();
                 _providers = new List<Lazy<INuGetResourceProvider>>();
                 _providers.AddRange( Repository.Provider.GetCoreV3() );
                 SharedHttpClient = new HttpClient();
             }
-
-            public static void SetupCredentialService( IPackageSourceProvider sourceProvider, ILogger logger, bool nonInteractive )
-            {
-                var providers = new AsyncLazy<IEnumerable<ICredentialProvider>>( async () => await GetCredentialProvidersAsync( sourceProvider, logger ) );
-                HttpHandlerResourceV3.CredentialService = new Lazy<ICredentialService>(
-                    () => new CredentialService(
-                                providers: providers,
-                                nonInteractive: nonInteractive,
-                                handlesDefaultCredentials: true ) );
-
-            }
-
-            //#region Credential provider for Credential section of nuget.config.
-            //// Must be upgraded when a 4.9 or 5.0 is out.
-            //// This currently only support "basic" authentication type.
-            //public class SettingsCredentialProvider : ICredentialProvider
-            //{
-            //    private readonly IPackageSourceProvider _packageSourceProvider;
-
-            //    public SettingsCredentialProvider( IPackageSourceProvider packageSourceProvider )
-            //    {
-            //        if( packageSourceProvider == null )
-            //        {
-            //            throw new ArgumentNullException( nameof( packageSourceProvider ) );
-            //        }
-            //        _packageSourceProvider = packageSourceProvider;
-            //        Id = $"{typeof( SettingsCredentialProvider ).Name}_{Guid.NewGuid()}";
-            //    }
-
-            //    /// <summary>
-            //    /// Unique identifier of this credential provider
-            //    /// </summary>
-            //    public string Id { get; }
-
-
-            //    public Task<CredentialResponse> GetAsync(
-            //        Uri uri,
-            //        IWebProxy proxy,
-            //        CredentialRequestType type,
-            //        string message,
-            //        bool isRetry,
-            //        bool nonInteractive,
-            //        CancellationToken cancellationToken )
-            //    {
-            //        if( uri == null ) throw new ArgumentNullException( nameof( uri ) );
-
-            //        cancellationToken.ThrowIfCancellationRequested();
-
-            //        ICredentials cred = null;
-
-            //        // If we are retrying, the stored credentials must be invalid.
-            //        if( !isRetry && type != CredentialRequestType.Proxy )
-            //        {
-            //            cred = GetCredentials( uri );
-            //        }
-
-            //        var response = cred != null
-            //            ? new CredentialResponse( cred )
-            //            : new CredentialResponse( CredentialStatus.ProviderNotApplicable );
-
-            //        return System.Threading.Tasks.Task.FromResult( response );
-            //    }
-
-            //    private ICredentials GetCredentials( Uri uri )
-            //    {
-            //        var source = _packageSourceProvider.LoadPackageSources().FirstOrDefault( p =>
-            //        {
-            //            Uri sourceUri;
-            //            return p.Credentials != null
-            //                && p.Credentials.IsValid()
-            //                && Uri.TryCreate( p.Source, UriKind.Absolute, out sourceUri )
-            //                && UriEquals( sourceUri, uri );
-            //        } );
-            //        if( source == null )
-            //        {
-            //            // The source is not in the config file
-            //            return null;
-            //        }
-            //        // In 4.8.0 version, there is not yet the ValidAuthenticationTypes nor the ToICredentials() method.
-            //        // return source.Credentials.ToICredentials();
-            //        return new AuthTypeFilteredCredentials( new NetworkCredential( source.Credentials.Username, source.Credentials.Password ), new[] { "basic" } );
-            //    }
-
-            //    /// <summary>
-            //    /// Determines if the scheme, server and path of two Uris are identical.
-            //    /// </summary>
-            //    private static bool UriEquals( Uri uri1, Uri uri2 )
-            //    {
-            //        uri1 = CreateODataAgnosticUri( uri1.OriginalString.TrimEnd( '/' ) );
-            //        uri2 = CreateODataAgnosticUri( uri2.OriginalString.TrimEnd( '/' ) );
-
-            //        return Uri.Compare( uri1, uri2, UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.SafeUnescaped, StringComparison.OrdinalIgnoreCase ) == 0;
-            //    }
-
-            //    // Bug 2379: SettingsCredentialProvider does not work
-            //    private static Uri CreateODataAgnosticUri( string uri )
-            //    {
-            //        if( uri.EndsWith( "$metadata", StringComparison.OrdinalIgnoreCase ) )
-            //        {
-            //            uri = uri.Substring( 0, uri.Length - 9 ).TrimEnd( '/' );
-            //        }
-            //        return new Uri( uri );
-            //    }
-            //}
-            //#endregion
 
             class Logger : NuGet.Common.ILogger
             {
@@ -228,8 +196,6 @@ namespace CodeCake
                 if( _logger == null )
                 {
                     _logger = new Logger( ctx );
-                    _settings = Settings.LoadDefaultSettings( Environment.CurrentDirectory );
-                    _sourceProvider = new PackageSourceProvider( _settings );
                     var credProviders = new AsyncLazy<IEnumerable<ICredentialProvider>>( async () => await GetCredentialProvidersAsync( _sourceProvider, _logger ) );
                     HttpHandlerResourceV3.CredentialService = new Lazy<ICredentialService>(
                         () => new CredentialService(
@@ -245,7 +211,6 @@ namespace CodeCake
 
                 var securePluginProviders = await new SecurePluginCredentialProviderBuilder( pluginManager: PluginManager.Instance, canShowDialog: false, logger: logger ).BuildAllAsync();
                 providers.AddRange( securePluginProviders );
-                //providers.Add( new SettingsCredentialProvider( sourceProvider ) );
                 return providers;
             }
 
@@ -262,7 +227,7 @@ namespace CodeCake
                 /// <param name="name">Name of the feed.</param>
                 /// <param name="urlV3">Must be a v3/index.json url otherwise an argument exception is thrown.</param>
                 protected Feed( string name, string urlV3 )
-                    : this( FromUrl( name, urlV3 ) )
+                    : this( _sourceProvider.FindOrCreateFromUrl( name, urlV3 ) )
                 {
                 }
 
@@ -271,29 +236,8 @@ namespace CodeCake
                 /// </summary>
                 /// <param name="localPath">Local path.</param>
                 protected Feed( string localPath )
-                    : this( FromPath( localPath ) )
+                    : this( _sourceProvider.FindOrCreateFromLocalPath( localPath ) )
                 {
-                }
-
-                static PackageSource FromUrl( string name, string urlV3 )
-                {
-                    if( String.IsNullOrEmpty( urlV3 ) || !urlV3.EndsWith( "/v3/index.json" ) )
-                    {
-                        throw new ArgumentException( "Feed requires a /v3/index.json url.", nameof( urlV3 ) );
-                    }
-                    if( String.IsNullOrWhiteSpace( name ) )
-                    {
-                        throw new ArgumentNullException( nameof( name ) );
-                    }
-                    return new PackageSource( urlV3, name );
-                }
-
-                static PackageSource FromPath( string localPath )
-                {
-                    if( String.IsNullOrWhiteSpace( localPath ) ) throw new ArgumentNullException( nameof( localPath ) );
-                    localPath = System.IO.Path.GetFullPath( localPath );
-                    var name = System.IO.Path.GetFileName( localPath );
-                    return new PackageSource( localPath, name );
                 }
 
                 Feed( PackageSource s )
@@ -307,17 +251,6 @@ namespace CodeCake
                         // r.Settings = _settings;
                         return r;
                     } );
-
-                    // Test.
-                    var f = System.IO.Path.GetDirectoryName( Environment.CurrentDirectory );
-                    f = System.IO.Path.Combine( f, "NuGet.config" );
-                    System.IO.File.WriteAllText( f,
-$@"<configuration>
-  <packageSources>
-    <add key=""Signature-OpenSource-FIX-For-Push"" value=""https://pkgs.dev.azure.com/Signature-OpenSource/_packaging/Default/nuget/v3/index.json"" />
-  </packageSources>
-</configuration>" );
-
                 }
 
                 public string Url => _packageSource.Source;
