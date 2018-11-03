@@ -88,7 +88,7 @@ namespace CodeCake
                     }
                     var exists = _sources.Value.FirstOrDefault( s => !s.IsLocal && s.Source == urlV3 );
                     if( exists != null ) return exists;
-                    exists = new PackageSource( urlV3, name );
+                    exists = new PackageSource( urlV3, "CCB-" + name );
                     _sources.Value.Insert( _definedSourceCount++, exists );
                     return exists;
                 }
@@ -99,7 +99,7 @@ namespace CodeCake
                     NormalizedPath path = System.IO.Path.GetFullPath( localPath );
                     var exists = _sources.Value.FirstOrDefault( s => s.IsLocal && new NormalizedPath( s.Source ) == path );
                     if( exists != null ) return exists;
-                    exists = new PackageSource( path, path.LastPart );
+                    exists = new PackageSource( path, "CCB-" + path.LastPart );
                     _sources.Value.Insert( _definedSourceCount++, exists );
                     return exists;
                 }
@@ -490,6 +490,7 @@ namespace CodeCake
                     ctx.Warning( "No AZURE_FEED_PAT environment variable found." );
                     _azureFeedPAT = null;
                 }
+                return _azureFeedPAT;
                 // The API key for the Credential Provider must be "VSTS".
                 return _azureFeedPAT != null ? "VSTS" : null;
             }
