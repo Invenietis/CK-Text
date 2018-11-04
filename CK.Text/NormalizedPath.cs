@@ -37,16 +37,15 @@ namespace CK.Text
             _parts = path?.Split( _separators, StringSplitOptions.RemoveEmptyEntries );
             if( _parts != null && _parts.Length == 0 ) _parts = null;
             _path = _parts?.Concatenate( DirectorySeparatorString );
-            if( !System.IO.Path.IsPathRooted( path ) || !_separators.Contains( path[0] ) ) return;
-            // The path is rooted, and the the separator char indicate the root.
-            // // We must keep this char or the path will be invalid.
+            if( !System.IO.Path.IsPathRooted( path )) return;
+            // The path is rooted, we must keep this char or the path can be invalid on unix
             if( _parts == null )
             {
                 _parts = new string[0];
             }
-            _path = path[0] + _path;
+            _path = System.IO.Path.DirectorySeparatorChar + _path;
             string[] newParts = new string[_parts.Length + 1];
-            newParts[0] = path[0].ToString();
+            newParts[0] = System.IO.Path.DirectorySeparatorChar.ToString();
             Array.Copy( _parts, 0, newParts, 1, _parts.Length );
             _parts = newParts;
         }
