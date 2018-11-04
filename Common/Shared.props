@@ -23,9 +23,18 @@
       <Deterministic>true</Deterministic>
       <CKWorldPath>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), CK-World))</CKWorldPath>
       <PathMap Condition=" '$(CKWorldPath)' != '' ">$(CKWorldPath)=C:\CK-World</PathMap>
+      <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
 
-
+  <!-- SourceLink integration is enabled only for Cake build. -->
+  <PropertyGroup Condition=" '$(CakeBuild)' == 'true' ">
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+  </PropertyGroup>
+    <ItemGroup Condition=" '$(CakeBuild)' == 'true' ">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All"/>
+  </ItemGroup>
+  
     <!-- 
     When building from the CI (ie. from Cake, hence directly with the msbuild tool, SolutionDir is not defined),
     we unify the behavior here.
@@ -33,6 +42,7 @@
   <PropertyGroup Condition=" '$(CakeBuild)' == 'true' ">
     <SolutionDir>$([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))))\</SolutionDir>
   </PropertyGroup>
+  
   <!-- When not building from the CI, assemblies do not have any AssemblyInfo attributes. -->
   <PropertyGroup Condition=" '$(CakeBuild)' != 'true' ">
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -46,14 +56,14 @@
     <RepositoryType>git</RepositoryType>
     
     <!-- Invenietis standard properties. -->
-    <Company>Invenietis</Company>
-    <Authors>Invenietis</Authors>
+    <Company>Signature Code</Company>
+    <Authors>Signature Code</Authors>
     
     <!-- Properties that are solution depdendents. -->
-    <Copyright>Copyright Invenietis 2007-$([System.DateTime]::UtcNow.ToString("yyyy"))</Copyright>
+    <Copyright>Copyright Signature Code 2007-$([System.DateTime]::UtcNow.ToString("yyyy"))</Copyright>
     <ProductName>CK-Framework</ProductName>
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
-    <RepositoryUrl>https://github.com/Invenietis/CK-Text</RepositoryUrl>
+    <RepositoryUrl>https://github.com/invenietis/CK-Text</RepositoryUrl>
     <PackageReleaseNotes>https://github.com/Invenietis/CK-Text/releases</PackageReleaseNotes>
 
   </PropertyGroup>
