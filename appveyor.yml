@@ -7,7 +7,7 @@ branches:
     - develop
     - test-azure-feed
 environment:
-  AZURE_FEED_SIGNATURE_OPENSOURCE_FEED_PAT:
+  AZURE_FEED_SIGNATURE_OPENSOURCE_PAT:
      secure: MOjOpNMfab3UseEjZW3bGL6+7uXkbmExMOLMn2Mg+61uUO0qdrSZ28DsChFgR60/Huc+D2bcJ/GXP4CB8Cb8Vg==
 
 install:
