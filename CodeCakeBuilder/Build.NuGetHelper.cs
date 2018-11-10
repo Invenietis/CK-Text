@@ -234,7 +234,7 @@ namespace CodeCake
                     {
                         ++count;
                         b.Append( @"{""endpoint"":""" ).AppendJSONEscaped( f.Url ).Append( @"""," )
-                         .Append( @"""username"":""Unused"",""password"":" ).AppendJSONEscaped( azureFeedPAT ).Append( @"""" )
+                         .Append( @"""username"":""Unused"",""password"":""" ).AppendJSONEscaped( azureFeedPAT ).Append( @"""" )
                          .Append( "}" );
                     }
                 }
