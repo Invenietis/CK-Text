@@ -23,7 +23,6 @@
       <Deterministic>true</Deterministic>
       <CKWorldPath>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), CK-World))</CKWorldPath>
       <PathMap Condition=" '$(CKWorldPath)' != '' ">$(CKWorldPath)=C:\CK-World</PathMap>
-      <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
 
   <!-- SourceLink integration is enabled only for Cake build. -->
@@ -31,7 +30,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
-    <ItemGroup Condition=" '$(CakeBuild)' == 'true' ">
+  <ItemGroup Condition=" '$(CakeBuild)' == 'true' ">
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All"/>
   </ItemGroup>
   
