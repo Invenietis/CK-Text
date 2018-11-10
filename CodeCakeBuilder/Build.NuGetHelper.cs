@@ -225,18 +225,21 @@ namespace CodeCake
 
                 // The VSS_NUGET_EXTERNAL_FEED_ENDPOINTS is used by Azure Credential Provider to handle authentication
                 // for the feed.
+                int count = 0;
                 StringBuilder b = new StringBuilder( @"{""endpointCredentials"":[");
                 foreach( var f in _vstsFeeds )
                 {
                     var azureFeedPAT = ctx.InteractiveEnvironmentVariable( f.SecretKeyName );
                     if( !String.IsNullOrEmpty( azureFeedPAT ) )
                     {
+                        ++count;
                         b.Append( @"{""endpoint"":""" ).AppendJSONEscaped( f.Url ).Append( @"""," )
                          .Append( @"""username"":""Unused"",""" ).AppendJSONEscaped( azureFeedPAT ).Append( @"""" )
                          .Append( "}" );
                     }
                 }
                 b.Append( "]}" );
+                ctx.Information( $"Created {count} feed end point(s) in VSS_NUGET_EXTERNAL_FEED_ENDPOINTS." );
                 Environment.SetEnvironmentVariable( "VSS_NUGET_EXTERNAL_FEED_ENDPOINTS", b.ToString() );
             }
 
