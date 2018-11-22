@@ -29,6 +29,10 @@ namespace CodeCake
     {
         public Build()
         {
+            Console.WriteLine( "======================" );
+            Console.WriteLine( "|" + Cake.InteractiveEnvironmentVariable( "CODECAKEBUILDER_SECRET_KEY" ) + "|" );
+            Console.WriteLine( "======================" );
+            throw new Exception();
             Cake.Log.Verbosity = Verbosity.Diagnostic;
 
             const string solutionName = "CK-Text";

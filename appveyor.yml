@@ -9,8 +9,6 @@ branches:
 environment:
   CODECAKEBUILDER_SECRET_KEY:
     secure: ks+QpMhDl8xJnpAmU4OHdfh11TE+fwNBj4PvMAKrPGsJnNjXcKgXtgAyJo77SJBi
-  AZURE_FEED_SIGNATURE_OPENSOURCE_PAT:
-        secure: MOjOpNMfab3UseEjZW3bGL6+7uXkbmExMOLMn2Mg+61uUO0qdrSZ28DsChFgR60/Huc+D2bcJ/GXP4CB8Cb8Vg== 
 build_script:
   - dotnet run --project CodeCakeBuilder -nointeraction
 test: off
