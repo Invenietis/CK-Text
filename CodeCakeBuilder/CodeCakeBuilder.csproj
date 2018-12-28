@@ -15,9 +15,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../CK.Text/CK.Text.csproj" />
-    <PackageReference Include="Code.Cake" Version="0.28.1--0023-develop" />
+    <PackageReference Include="Code.Cake" Version="0.28.1--0026-develop" />
     <PackageReference Include="NUnit.ConsoleRunner" Version="3.8.0" />
     <PackageReference Include="NUnit.Runners.Net4" Version="2.6.4" />
-    <PackageReference Include="SimpleGitVersion.Cake" Version="0.36.1--0053-develop" />
+    <PackageReference Include="SimpleGitVersion.Cake" Version="0.36.1--0060-develop" />
   </ItemGroup>
 </Project>
