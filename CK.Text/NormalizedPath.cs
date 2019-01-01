@@ -17,11 +17,17 @@ namespace CK.Text
 
         readonly string[] _parts;
         readonly string _path;
+        readonly NormalizedPathOption _option;
 
         /// <summary>
         /// Gets the <see cref="System.IO.Path.DirectorySeparatorChar"/> as a string.
         /// </summary>
         public static readonly string DirectorySeparatorString = new String( System.IO.Path.DirectorySeparatorChar, 1 );
+
+        /// <summary>
+        /// Gets a double <see cref="System.IO.Path.DirectorySeparatorChar"/> string.
+        /// </summary>
+        public static readonly string DoubleDirectorySeparatorString = new String( System.IO.Path.DirectorySeparatorChar, 2 );
 
         /// <summary>
         /// Gets the <see cref="System.IO.Path.AltDirectorySeparatorChar"/> as a string.
@@ -35,8 +41,65 @@ namespace CK.Text
         public NormalizedPath( string path )
         {
             _parts = path?.Split( _separators, StringSplitOptions.RemoveEmptyEntries );
-            if( _parts != null && _parts.Length == 0 ) _parts = null;
-            _path = _parts?.Concatenate( DirectorySeparatorString );
+            if( _parts != null && _parts.Length == 0 )
+            {
+                _parts = null;
+                _path = String.Empty;
+                _option = NormalizedPathOption.None;
+            }
+            else
+            {
+                var c = path[0];
+                if( c == System.IO.Path.DirectorySeparatorChar || c == System.IO.Path.AltDirectorySeparatorChar )
+                {
+                    _path = System.IO.Path.DirectorySeparatorChar + _parts.Concatenate( DirectorySeparatorString );
+                    if( path.Length > 1 )
+                    {
+                        c = path[1];
+                        if( c == System.IO.Path.DirectorySeparatorChar || c == System.IO.Path.AltDirectorySeparatorChar )
+                        {
+                            _path = System.IO.Path.DirectorySeparatorChar + _path;
+                            _option = NormalizedPathOption.StartsWithDoubleSeparator;
+                        }
+                        else _option = NormalizedPathOption.StartsWithSeparator;
+                    }
+                    else _option = NormalizedPathOption.None;
+                }
+                else if( c == '~' )
+                {
+                    _option = NormalizedPathOption.StartsWithTilde;
+                    _path = '~' + _parts.Concatenate( DirectorySeparatorString );
+                }
+                else
+                {
+                    _option = NormalizedPathOption.None;
+                    _path = _parts.Concatenate( DirectorySeparatorString );
+                    var first = _parts[0];
+                    if( first.Length > 1 && first[first.Length-1] == ':' )
+                    {
+                        if( first.Length == 2 )
+                        {
+                            _option = NormalizedPathOption.StartsWithVolume;
+                        }
+                        else
+                        {
+                            _option = NormalizedPathOption.StartsWithScheme;
+                            _path = _parts.Concatenate( DirectorySeparatorString );
+                            _path = _path.Insert( first.Length, DoubleDirectorySeparatorString );
+                        }
+                    }
+                }
+            }
+        }
+
+        static string BuildPath( string[] parts, NormalizedPathOption o )
+        {
+            if( o == NormalizedPathOption.StartsWithScheme )
+            {
+                var path = parts.Concatenate( DirectorySeparatorString );
+                path = path.Insert( parts[parts.Length-1].Length, DoubleDirectorySeparatorString );
+                return path;
+            }
         }
 
         /// <summary>
@@ -51,11 +114,22 @@ namespace CK.Text
         /// <param name="path">The path as a string.</param>
         public static implicit operator NormalizedPath( string path ) => new NormalizedPath( path );
 
-        NormalizedPath( string[] parts, string path )
+        NormalizedPath( string[] parts, string path, NormalizedPathOption o )
         {
             _parts = parts;
             _path = path;
+            _option = o;
         }
+
+        /// <summary>
+        /// Gets whether this path is rooted.
+        /// </summary>
+        public bool IsRooted => _option != NormalizedPathOption.None;
+
+        /// <summary>
+        /// Gets this path's <see cref="NormalizedPathOption"/>.
+        /// </summary>
+        public NormalizedPathOption Option => _option;
 
         /// <summary>
         /// Gets the parent list from this up to the <see cref="FirstPart"/>.
@@ -144,6 +218,7 @@ namespace CK.Text
             Debug.Assert( !IsEmpty );
             string[] newParts = null;
             int current = 0;
+            NormalizedPathOption o = _option;
             for( int i = rootPartsCount; i < len; ++i )
             {
                 string curPart = _parts[i];
@@ -170,6 +245,7 @@ namespace CK.Text
                             if( throwOnAboveRoot ) ThrowAboveRootException( _parts, rootPartsCount, i );
                         }
                         else --current;
+                        if( current == 0 ) o = NormalizedPathOption.None;
                     }
                 }
                 else if( newParts != null )
@@ -180,7 +256,7 @@ namespace CK.Text
             if( newParts == null ) return this;
             if( current == 0 ) return new NormalizedPath();
             Array.Resize( ref newParts, current );
-            return new NormalizedPath( newParts, String.Join( DirectorySeparatorString, newParts ) );
+            return new NormalizedPath( newParts, String.Join( DirectorySeparatorString, newParts, o ) );
         }
 
         static void ThrowAboveRootException( string[] parts, int rootPartsCount, int iCulprit )
@@ -191,18 +267,19 @@ namespace CK.Text
 
         /// <summary>
         /// Appends the given path to this one and returns a new <see cref="NormalizedPath"/>.
-        /// Note that relative parts (. and ..) are not resolved by this method.
+        /// Note that relative parts (. and ..) are not resolved by this method and that if <paramref name="suffix"/> is rooted,
+        /// the suffix is returned.
         /// </summary>
         /// <param name="suffix">The path to append.</param>
         /// <returns>The resulting path.</returns>
         public NormalizedPath Combine( NormalizedPath suffix )
         {
-            if( IsEmpty ) return suffix;
+            if( IsEmpty || suffix.IsRooted ) return suffix;
             if( suffix.IsEmpty ) return this;
             var parts = new string[_parts.Length + suffix._parts.Length];
             Array.Copy( _parts, parts, _parts.Length );
             Array.Copy( suffix._parts, 0, parts, _parts.Length, suffix._parts.Length );
-            return new NormalizedPath( parts, _path + System.IO.Path.DirectorySeparatorChar + suffix._path );
+            return new NormalizedPath( parts, _path + System.IO.Path.DirectorySeparatorChar + suffix._path, _option );
         }
 
         /// <summary>
@@ -267,7 +344,7 @@ namespace CK.Text
         /// Can be safely called when <see cref="IsEmpty"/> is true.
         /// </summary>
         /// <returns>A new path.</returns>
-        public NormalizedPath RemoveFirstPart( int count = 1 )
+        public NormalizedPath RemoveFirstPart( int count = 1, bool clearRootOption = true )
         {
             if( count <= 0 )
             {
