@@ -10,6 +10,33 @@ namespace CK.Text.Tests
     [TestFixture]
     public class NormalizedPathTests
     {
+        [TestCase( "", NormalizedPathOption.None, "" )]
+        [TestCase( "a", NormalizedPathOption.None, "a" )]
+        [TestCase( "/a", NormalizedPathOption.StartsWithSeparator, "/a" )]
+        [TestCase( "/a/b", NormalizedPathOption.StartsWithSeparator, "/a/b" )]
+        [TestCase( "/", NormalizedPathOption.StartsWithSeparator, "/" )]
+        [TestCase( "//a", NormalizedPathOption.StartsWithDoubleSeparator, "//a" )]
+        [TestCase( "//a/b", NormalizedPathOption.StartsWithDoubleSeparator, "//a/b" )]
+        [TestCase( "//", NormalizedPathOption.StartsWithDoubleSeparator, "//" )]
+        [TestCase( "c:/", NormalizedPathOption.StartsWithVolume, "c:" )]
+        [TestCase( "X:", NormalizedPathOption.StartsWithVolume, "X:" )]
+        [TestCase( "git:", NormalizedPathOption.StartsWithScheme, "git://" )]
+        [TestCase( "git:/", NormalizedPathOption.StartsWithScheme, "git://" )]
+        [TestCase( "git://", NormalizedPathOption.StartsWithScheme, "git://" )]
+        [TestCase( "git://a", NormalizedPathOption.StartsWithScheme, "git://a" )]
+        [TestCase( "git:/a", NormalizedPathOption.StartsWithScheme, "git://a" )]
+        [TestCase( "~", NormalizedPathOption.StartsWithTilde, "~" )]
+        [TestCase( "~/", NormalizedPathOption.StartsWithTilde, "~" )]
+        [TestCase( "~/a", NormalizedPathOption.StartsWithTilde, "~/a" )]
+        public void all_kind_of_root( string p, NormalizedPathOption o, string path )
+        {
+            // Normalize expected path.
+            path = path.Replace( System.IO.Path.AltDirectorySeparatorChar, System.IO.Path.DirectorySeparatorChar );
+            var n = new NormalizedPath( p );
+            n.Option.Should().Be( o );
+            n.Path.Should().Be( path );
+        }
+
         [TestCase( "", '=', "" )]
         [TestCase( null, '=', null )]
         [TestCase( "", '<', "a" )]
@@ -21,6 +48,9 @@ namespace CK.Text.Tests
         [TestCase( "a/1/b", '<', "a/1/c" )]
         [TestCase( "z", '>', "a" )]
         [TestCase( "z", '<', "a/b" )]
+        [TestCase( "z:", '=', "z:/" )]
+        [TestCase( "git:", '=', "git://" )]
+        [TestCase( "/A", '<', "/B" )]
         public void equality_and_comparison_operators_at_work( string p1, char op, string p2 )
         {
             NormalizedPath n1 = p1;
@@ -107,7 +137,8 @@ namespace CK.Text.Tests
         [TestCase( "", "a\\b", "a/b" )]
         [TestCase( "r", "a\\b", "r/a/b" )]
         [TestCase( "r/x/", "a\\b", "r/x/a/b" )]
-        [TestCase( "/r/x/", "\\a\\b\\", "r/x/a/b" )]
+        [TestCase( "/r/x/", "\\a\\b\\", "/a/b" )]
+        [TestCase( "/r", "\\a\\b\\", "/a/b" )]
         public void Combine_at_work( string root, string suffix, string result )
         {
             new NormalizedPath( root ).Combine( suffix ).Should().Be( new NormalizedPath( result ) );
@@ -116,10 +147,10 @@ namespace CK.Text.Tests
         [TestCase( "", "", "ArgumentNullException" )]
         [TestCase( null, null, "ArgumentNullException" )]
         [TestCase( "", "a", "a" )]
-        [TestCase( "", "a\\b", "ArgumentException" )]
-        [TestCase( "", "a/b", "ArgumentException" )]
-        [TestCase( "", "/a", "ArgumentException" )]
-        [TestCase( "", "a/", "ArgumentException" )]
+        [TestCase( "first", "a\\b", "ArgumentException" )]
+        [TestCase( "", "a/b", "a/b" )]
+        [TestCase( "", "/a", "/a" )]
+        [TestCase( "", "a/", "a" )]
         [TestCase( "r", "a", "r/a" )]
         [TestCase( "r/x/", "a.t", "r/x/a.t" )]
         public void AppendPart_is_like_combine_but_with_part_not_a_path( string root, string suffix, string result )
@@ -243,7 +274,7 @@ namespace CK.Text.Tests
         [TestCase( "a", 0, "" )]
         [TestCase( "a/b", 0, "b" )]
         [TestCase( "a/b", 1, "a" )]
-        [TestCase( "/a/b/c/", 1, "a/c" )]
+        [TestCase( "/a/b/c/", 1, "/a/c" )]
         public void RemovePart_at_work( string path, int index, string result )
         {
             if( result == "IndexOutOfRangeException" )
@@ -265,8 +296,8 @@ namespace CK.Text.Tests
         [TestCase( "a/b", 1, 0, "a/b" )]
         [TestCase( "a/b", 2, 0, "IndexOutOfRangeException" )]
         [TestCase( "/a/b/c/d", 0, 2, "c/d" )]
-        [TestCase( "/a/b/c/d", 1, 2, "a/d" )]
-        [TestCase( "/a/b/c/d", 2, 2, "a/b" )]
+        [TestCase( "/a/b/c/d", 1, 2, "/a/d" )]
+        [TestCase( "/a/b/c/d", 2, 2, "/a/b" )]
         public void RemoveParts_at_work( string path, int startIndex, int count, string result )
         {
             if( result == "IndexOutOfRangeException" )
