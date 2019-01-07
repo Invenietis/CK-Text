@@ -38,7 +38,16 @@ namespace CK.Text.Tests
 
         [TestCase( "", '=', "" )]
         [TestCase( null, '=', null )]
+        [TestCase( "", '=', null )]
+        [TestCase( null, '=', "" )]
         [TestCase( "", '<', "a" )]
+        [TestCase( "", '<', "/" )]
+        [TestCase( "", '<', "//" )]
+        [TestCase( "/", '<', "//" )]
+        [TestCase( "/", '<', "/a" )]
+        [TestCase( "//", '<', "/a" )]
+        [TestCase( "/", '<', "a" )]
+        [TestCase( "//", '<', "a" )]
         [TestCase( "a", '=', "a" )]
         [TestCase( "a/b", '>', "a" )]
         [TestCase( "A/B", '=', "a/B" )]
@@ -86,7 +95,8 @@ namespace CK.Text.Tests
         [TestCase( "/a/b", "/a", true )]
         [TestCase( "a\\b", "a/b", false )]
         [TestCase( "a/b/c/", "a\\b", true )]
-        [TestCase( "//a/b/c/", "\\\\a\\b", true )]
+        [TestCase( "//a/b/c/", "\\\\A\\B", true )]
+        [TestCase( "/a/b/c/", "a/b", false )]
         [TestCase( "a/b/c/", "a\\bc", false )]
         public void StartsWith_at_work( string start, string with, bool result )
         {
@@ -142,6 +152,11 @@ namespace CK.Text.Tests
         [TestCase( "r/x/", "a\\b", "r/x/a/b" )]
         [TestCase( "/r/x/", "\\a\\b\\", "/a/b" )]
         [TestCase( "/r", "\\a\\b\\", "/a/b" )]
+        [TestCase( "/", "\\a\\b\\", "/a/b" )]
+        [TestCase( "//", "\\a\\b\\", "/a/b" )]
+        [TestCase( "//", "a/b/", "//a/b" )]
+        [TestCase( "/", "a", "/a" )]
+        [TestCase( "/", "", "/" )]
         public void Combine_at_work( string root, string suffix, string result )
         {
             new NormalizedPath( root ).Combine( suffix ).Should().Be( new NormalizedPath( result ) );
@@ -210,8 +225,12 @@ namespace CK.Text.Tests
         [TestCase( "", "", "part", "" )]
         [TestCase( "", "subPath", "part", "" )]
         [TestCase( "x/y", "subPath", "", "" )]
+        [TestCase( "/x/y", "subPath", "part", "/x/y/subPath/part,/x/subPath/part" )]
+        [TestCase( "/x/y", "", "part", "/x/y/part,/x/part" )]
         [TestCase( "x/y", "a/b", "part", "x/y/a/b/part,x/a/b/part" )]
+        [TestCase( "//x/y", "a/b", "part", "//x/y/a/b/part,//x/a/b/part" )]
         [TestCase( "x/y", "a/b,c/d", "p1,p2", "x/y/a/b/p1,x/y/a/b/p2,x/y/c/d/p1,x/y/c/d/p2,x/a/b/p1,x/a/b/p2,x/c/d/p1,x/c/d/p2" )]
+        [TestCase( "c:/p", "a/b", "part", "c:/p/a/b/part,c:/a/b/part" )]
         public void PathsToFirstPart_with_paths_and_parts_at_work( string root, string paths, string parts, string result )
         {
             var nPaths = paths.Split( ',' ).Where( x => x.Length > 0 ).Select( x => new NormalizedPath( x ) );
@@ -285,6 +304,7 @@ namespace CK.Text.Tests
         [TestCase( "a/b", 0, "b" )]
         [TestCase( "a/b", 1, "a" )]
         [TestCase( "/a/b/c/", 1, "/a/c" )]
+        [TestCase( "//a/b/c/", 0, "//b/c" )]
         public void RemovePart_at_work( string path, int index, string result )
         {
             if( result == "ArgumentOutOfRangeException" )
@@ -307,6 +327,7 @@ namespace CK.Text.Tests
         [TestCase( "a/b", 2, 0, "ArgumentOutOfRangeException" )]
         [TestCase( "//a/b/c/d", 0, 1, "//b/c/d" )]
         [TestCase( "/a/b/c/d", 0, 2, "/c/d" )]
+        [TestCase( "//a/b/c/d", 1, 2, "//a/d" )]
         [TestCase( "/a/b/c/d", 1, 2, "/a/d" )]
         [TestCase( "/a/b/c/d", 2, 2, "/a/b" )]
         public void RemoveParts_at_work( string path, int startIndex, int count, string result )

@@ -33,7 +33,7 @@ namespace CK.Text.Tests
         {
             NormalizedPath path = AppContext.BaseDirectory;
             var s = path.PathsToFirstPart( null, new[] { "CK-Text.sln" } ).FirstOrDefault( p => File.Exists( p ) );
-            if( s.IsEmpty ) throw new InvalidOperationException( $"Unable to find CK-Text.sln above '{AppContext.BaseDirectory}'." ); 
+            if( s.IsEmptyPath ) throw new InvalidOperationException( $"Unable to find CK-Text.sln above '{AppContext.BaseDirectory}'." ); 
             _solutionFolder = s.RemoveLastPart();
             Console.WriteLine($"SolutionFolder is: {_solutionFolder}.");
             Console.WriteLine($"Core path: {typeof(string).GetTypeInfo().Assembly.CodeBase}.");

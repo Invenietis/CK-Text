@@ -163,7 +163,7 @@ namespace CK.Text
             get
             {
                 var p = this;
-                while( !p.IsEmpty )
+                while( !p.IsEmptyPath )
                 {
                     yield return p;
                     p = p.RemoveLastPart();
@@ -192,7 +192,7 @@ namespace CK.Text
             var p = this;
             if( subPaths != null && subPaths.Any() )
             {
-                while( !p.IsEmpty )
+                while( p.HasParts )
                 {
                     foreach( var sub in subPaths )
                     {
@@ -207,7 +207,7 @@ namespace CK.Text
             }
             else
             {
-                while( !p.IsEmpty )
+                while( p.HasParts )
                 {
                     foreach( var last in lastParts )
                     {
@@ -239,7 +239,7 @@ namespace CK.Text
             int len = _parts != null ? _parts.Length : 0;
             if( rootPartsCount > len ) throw new ArgumentOutOfRangeException( nameof( rootPartsCount ) );
             if( rootPartsCount == len ) return this;
-            Debug.Assert( !IsEmpty );
+            Debug.Assert( !IsEmptyPath );
             string[] newParts = null;
             int current = 0;
             NormalizedPathOption o = _option;
@@ -298,8 +298,17 @@ namespace CK.Text
         /// <returns>The resulting path.</returns>
         public NormalizedPath Combine( NormalizedPath suffix )
         {
-            if( IsEmpty || suffix.IsRooted ) return suffix;
+            if( suffix.IsRooted ) return suffix;
             if( suffix._parts == null ) return this;
+            if( _parts == null )
+            {
+                Debug.Assert( _option != NormalizedPathOption.RootedByFirstPart );
+                if( _option == NormalizedPathOption.None ) return suffix;
+                var p = _option == NormalizedPathOption.RootedBySeparator
+                        ? System.IO.Path.DirectorySeparatorChar + suffix.Path
+                        : DoubleDirectorySeparatorString + suffix.Path;
+                return new NormalizedPath( suffix._parts, p, _option );
+            }
             var parts = new string[_parts.Length + suffix._parts.Length];
             Array.Copy( _parts, parts, _parts.Length );
             Array.Copy( suffix._parts, 0, parts, _parts.Length, suffix._parts.Length );
@@ -307,12 +316,12 @@ namespace CK.Text
         }
 
         /// <summary>
-        /// Gets the last part of this path or the empty string if <see cref="IsEmpty"/> is true.
+        /// Gets the last part of this path or the empty string if <see cref="IsEmptyPath"/> is true.
         /// </summary>
         public string LastPart => _parts?[_parts.Length - 1] ?? String.Empty;
 
         /// <summary>
-        /// Gets the first part of this path or the empty string if <see cref="IsEmpty"/> is true.
+        /// Gets the first part of this path or the empty string if <see cref="IsEmptyPath"/> is true.
         /// </summary>
         public string FirstPart => _parts?[0] ?? String.Empty;
 
@@ -345,31 +354,22 @@ namespace CK.Text
 
         /// <summary>
         /// Returns a new <see cref="NormalizedPath"/> with <see cref="LastPart"/> removed (or more).
-        /// Can be safely called when <see cref="IsEmpty"/> is true.
+        /// The <paramref name="count"/> must be between 0 and the number of <see cref="Parts"/>.
         /// </summary>
-        /// <param name="count">Number of parts to remove.</param>
+        /// <param name="count">Number of parts to remove. Must be between 0 and the number of parts.</param>
         /// <returns>A new path.</returns>
         public NormalizedPath RemoveLastPart( int count = 1 )
         {
             if( count <= 0 )
             {
                 if( count == 0 ) return this;
-                throw new ArgumentException();
+                throw new ArgumentOutOfRangeException();
             }
-            if( _parts == null )
-            {
-                if( count == 0 ) return this;
-                throw new ArgumentException();
-            }
+            if( _parts == null ) throw new ArgumentOutOfRangeException();
             if( count >= _parts.Length )
             {
-                if( count == _parts.Length )
-                {
-                    var o = _option;
-                    if( o == NormalizedPathOption.RootedByFirstPart ) o = NormalizedPathOption.None;
-                    return new NormalizedPath( o );
-                }
-                throw new ArgumentException();
+                if( count == _parts.Length ) return new NormalizedPath( _option );
+                throw new ArgumentOutOfRangeException();
             }
             var parts = new string[_parts.Length - count];
             Array.Copy( _parts, parts, parts.Length );
@@ -381,7 +381,7 @@ namespace CK.Text
         /// <summary>
         /// Returns a new <see cref="NormalizedPath"/> with <see cref="FirstPart"/> removed (or more)
         /// and <see cref="Option"/> sets to <see cref="NormalizedPathOption.None"/>.
-        /// Can be safely called when <see cref="IsEmpty"/> is true.
+        /// Can be safely called when <see cref="IsEmptyPath"/> is true.
         /// </summary>
         /// <param name="count">Number of parts to remove. Must be positive.</param>
         /// <returns>A new path.</returns>
@@ -478,9 +478,9 @@ namespace CK.Text
         /// False to allow the other path to be the same as this one.
         /// By default this path must be longer than the other one.</param>
         /// <returns>True if this path starts with the other one.</returns>
-        public bool StartsWith( NormalizedPath other, bool strict = true ) => (other.IsEmpty && !strict)
-                                                        || (!other.IsEmpty
-                                                            && !IsEmpty
+        public bool StartsWith( NormalizedPath other, bool strict = true ) => (other.IsEmptyPath && !strict)
+                                                        || (!other.IsEmptyPath
+                                                            && !IsEmptyPath
                                                             && other._parts.Length <= _parts.Length
                                                             && (!strict || other._parts.Length < _parts.Length)
                                                             && StringComparer.OrdinalIgnoreCase.Equals( other.LastPart, _parts[other._parts.Length - 1] )
@@ -494,9 +494,9 @@ namespace CK.Text
         /// False to allow the other path to be the same as this one.
         /// By default this path must be longer than the other one.</param>
         /// <returns>True if this path ends with the other one.</returns>
-        public bool EndsWith( NormalizedPath other, bool strict = true ) => (other.IsEmpty && !strict)
-                                                        || (!other.IsEmpty
-                                                            && !IsEmpty
+        public bool EndsWith( NormalizedPath other, bool strict = true ) => (other.IsEmptyPath && !strict)
+                                                        || (!other.IsEmptyPath
+                                                            && !IsEmptyPath
                                                             && other._parts.Length <= _parts.Length
                                                             && (!strict || other._parts.Length < _parts.Length)
                                                             && StringComparer.OrdinalIgnoreCase.Equals( other.FirstPart, _parts[_parts.Length - other._parts.Length] )
@@ -519,12 +519,18 @@ namespace CK.Text
         }
 
         /// <summary>
-        /// Gets whether this is an empty path. A new <see cref="NormalizedPath"/>() (default constructor),
-        /// or <c>default(NormalizedPath)</c> are empty. But "/" (<see cref="NormalizedPathOption.RootedBySeparator"/>)
-        /// or "//" (<see cref="NormalizedPathOption.RootedByDoubleSeparator"/>) ar not empty even if they
+        /// Gets whether this is the empty path. A new <see cref="NormalizedPath"/>() (default constructor),
+        /// <c>default(NormalizedPath)</c> or the empty string are empty.
+        /// But "/" (<see cref="NormalizedPathOption.RootedBySeparator"/>) or
+        /// "//" (<see cref="NormalizedPathOption.RootedByDoubleSeparator"/>) ar not empty even if they
         /// have no <see cref="Parts"/>.
         /// </summary>
-        public bool IsEmpty => _parts == null && _option == NormalizedPathOption.None;
+        public bool IsEmptyPath => _parts == null && _option == NormalizedPathOption.None;
+
+        /// <summary>
+        /// Gets whether this <see cref="NormalizedPath"/> has at least one <see cref="Parts"/>.
+        /// </summary>
+        public bool HasParts => _parts != null;
 
         /// <summary>
         /// Gets the parts that compose this <see cref="NormalizedPath"/>.
