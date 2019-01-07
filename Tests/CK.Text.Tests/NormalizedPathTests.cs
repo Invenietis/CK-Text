@@ -10,30 +10,64 @@ namespace CK.Text.Tests
     [TestFixture]
     public class NormalizedPathTests
     {
-        [TestCase( "", NormalizedPathOption.None, "" )]
-        [TestCase( "a", NormalizedPathOption.None, "a" )]
-        [TestCase( "/a", NormalizedPathOption.RootedBySeparator, "/a" )]
-        [TestCase( "/a/b", NormalizedPathOption.RootedBySeparator, "/a/b" )]
-        [TestCase( "/", NormalizedPathOption.RootedBySeparator, "/" )]
-        [TestCase( "//a", NormalizedPathOption.RootedByDoubleSeparator, "//a" )]
-        [TestCase( "//a/b", NormalizedPathOption.RootedByDoubleSeparator, "//a/b" )]
-        [TestCase( "//", NormalizedPathOption.RootedByDoubleSeparator, "//" )]
-        [TestCase( "c:/", NormalizedPathOption.RootedByFirstPart, "c:" )]
-        [TestCase( "X:", NormalizedPathOption.RootedByFirstPart, "X:" )]
-        [TestCase( ":", NormalizedPathOption.RootedByFirstPart, ":" )]
-        [TestCase( "plop:", NormalizedPathOption.RootedByFirstPart, "plop:" )]
-        [TestCase( "~", NormalizedPathOption.RootedByFirstPart, "~" )]
-        [TestCase( "~/", NormalizedPathOption.RootedByFirstPart, "~" )]
-        [TestCase( "~/a", NormalizedPathOption.RootedByFirstPart, "~/a" )]
-        [TestCase( "~root", NormalizedPathOption.RootedByFirstPart, "~root" )]
-        [TestCase( "~R/a", NormalizedPathOption.RootedByFirstPart, "~R/a" )]
-        public void all_kind_of_root( string p, NormalizedPathOption o, string path )
+        [TestCase( "", NormalizedPathRootKind.None, "" )]
+        [TestCase( "a", NormalizedPathRootKind.None, "a" )]
+        [TestCase( "/a", NormalizedPathRootKind.RootedBySeparator, "/a" )]
+        [TestCase( "/a/b", NormalizedPathRootKind.RootedBySeparator, "/a/b" )]
+        [TestCase( "/", NormalizedPathRootKind.RootedBySeparator, "/" )]
+        [TestCase( "//a", NormalizedPathRootKind.RootedByDoubleSeparator, "//a" )]
+        [TestCase( "//a/b", NormalizedPathRootKind.RootedByDoubleSeparator, "//a/b" )]
+        [TestCase( "//", NormalizedPathRootKind.RootedByDoubleSeparator, "//" )]
+        [TestCase( "c:/", NormalizedPathRootKind.RootedByFirstPart, "c:" )]
+        [TestCase( "X:", NormalizedPathRootKind.RootedByFirstPart, "X:" )]
+        [TestCase( ":", NormalizedPathRootKind.RootedByFirstPart, ":" )]
+        [TestCase( "plop:", NormalizedPathRootKind.RootedByFirstPart, "plop:" )]
+        [TestCase( "~", NormalizedPathRootKind.RootedByFirstPart, "~" )]
+        [TestCase( "~/", NormalizedPathRootKind.RootedByFirstPart, "~" )]
+        [TestCase( "~/a", NormalizedPathRootKind.RootedByFirstPart, "~/a" )]
+        [TestCase( "~root", NormalizedPathRootKind.RootedByFirstPart, "~root" )]
+        [TestCase( "~R/a", NormalizedPathRootKind.RootedByFirstPart, "~R/a" )]
+        public void all_kind_of_root( string p, NormalizedPathRootKind o, string path )
         {
             // Normalize expected path.
             path = path.Replace( System.IO.Path.AltDirectorySeparatorChar, System.IO.Path.DirectorySeparatorChar );
             var n = new NormalizedPath( p );
-            n.Option.Should().Be( o );
+            n.RootKind.Should().Be( o );
             n.Path.Should().Be( path );
+        }
+
+        [TestCase( "", NormalizedPathRootKind.RootedByFirstPart, "ArgumentException" )]
+        [TestCase( "/", NormalizedPathRootKind.RootedByFirstPart, "ArgumentException" )]
+        [TestCase( "//", NormalizedPathRootKind.RootedByFirstPart, "ArgumentException" )]
+        [TestCase( "", NormalizedPathRootKind.RootedBySeparator, "/" )]
+        [TestCase( "", NormalizedPathRootKind.RootedByDoubleSeparator, "//" )]
+        [TestCase( "c:", NormalizedPathRootKind.RootedByFirstPart, "c:" )]
+        [TestCase( "c:", NormalizedPathRootKind.None, "c:" )]
+        [TestCase( "c:", NormalizedPathRootKind.RootedBySeparator, "/c:" )]
+        [TestCase( "c:", NormalizedPathRootKind.RootedByDoubleSeparator, "//c:" )]
+        [TestCase( "a", NormalizedPathRootKind.RootedByFirstPart, "a" )]
+        [TestCase( "/a", NormalizedPathRootKind.RootedByFirstPart, "a" )]
+        [TestCase( "//a", NormalizedPathRootKind.RootedByFirstPart, "a" )]
+        [TestCase( "a", NormalizedPathRootKind.RootedBySeparator, "/a" )]
+        [TestCase( "a", NormalizedPathRootKind.RootedByDoubleSeparator, "//a" )]
+        [TestCase( "//a", NormalizedPathRootKind.RootedBySeparator, "/a" )]
+        [TestCase( "/a", NormalizedPathRootKind.RootedByDoubleSeparator, "//a" )]
+        [TestCase( "/~a", NormalizedPathRootKind.RootedByDoubleSeparator, "//~a" )]
+        [TestCase( "~a", NormalizedPathRootKind.RootedByDoubleSeparator, "//~a" )]
+        public void changing_RootKind( string p, NormalizedPathRootKind newKind, string result )
+        {
+            if( result == "ArgumentException" )
+            {
+                new NormalizedPath( p ).Invoking( sut => sut.With( newKind ) )
+                        .Should().Throw<ArgumentException>();
+
+            }
+            else
+            {
+                var r = new NormalizedPath( p ).With( newKind );
+                r.RootKind.Should().Be( newKind );
+                r.Should().Be( new NormalizedPath( result ) );
+            }
         }
 
         [TestCase( "", '=', "" )]
@@ -242,6 +276,11 @@ namespace CK.Text.Tests
         [TestCase( "", "" )]
         [TestCase( ".", "" )]
         [TestCase( "..", "InvalidOperationException" )]
+        [TestCase( "/..", "InvalidOperationException" )]
+        [TestCase( "//..", "InvalidOperationException" )]
+        [TestCase( "~/..", "InvalidOperationException" )]
+        [TestCase( "c:/..", "InvalidOperationException" )]
+        [TestCase( "plop:/..", "InvalidOperationException" )]
         [TestCase( "a/b/../x", "a/x" )]
         [TestCase( "./a/./b/./.././x/.", "a/x" )]
         [TestCase( "a/b/../x/../..", "" )]
@@ -262,6 +301,10 @@ namespace CK.Text.Tests
 
         [TestCase( "..", "" )]
         [TestCase( "a/b/../x/../../..", "" )]
+        [TestCase( "/a/b/../x/../../..", "/" )]
+        [TestCase( "//a/b/../x/../../..", "//" )]
+        [TestCase( "X:/x/../..", "X:" )]
+        [TestCase( "X:/x/../../../../A", "X:/A" )]
         public void ResolveDots_with_throwOnAboveRoot_false( string path, string result )
         {
             new NormalizedPath( path ).ResolveDots( throwOnAboveRoot: false )
