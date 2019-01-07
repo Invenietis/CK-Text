@@ -11,13 +11,16 @@ namespace CK.Text
     /// This struct is implicitely convertible to and from string.
     /// All comparisons uses <see cref="StringComparer.OrdinalIgnoreCase"/>.
     /// </summary>
-    public struct NormalizedPath : IEquatable<NormalizedPath>, IComparable<NormalizedPath>
+    public readonly struct NormalizedPath : IEquatable<NormalizedPath>, IComparable<NormalizedPath>
     {
         static readonly char[] _separators = new[] { System.IO.Path.AltDirectorySeparatorChar, System.IO.Path.DirectorySeparatorChar };
 
         readonly string[] _parts;
         readonly string _path;
-        readonly NormalizedPathOption _option;
+        // Currently, _option is a NormalizedPathRootKind.
+        // If other meta information must be handled, it should be
+        // stored inside this option field. 
+        readonly NormalizedPathRootKind _option;
 
         /// <summary>
         /// Gets the <see cref="System.IO.Path.DirectorySeparatorChar"/> as a string.
@@ -45,7 +48,7 @@ namespace CK.Text
             {
                 _parts = null;
                 _path = String.Empty;
-                _option = NormalizedPathOption.None;
+                _option = NormalizedPathRootKind.None;
                 if( path != null && path.Length > 0 )
                 {
                     if( path[0] == System.IO.Path.DirectorySeparatorChar || path[0] == System.IO.Path.AltDirectorySeparatorChar )
@@ -54,12 +57,12 @@ namespace CK.Text
                             && (path[1] == System.IO.Path.DirectorySeparatorChar || path[1] == System.IO.Path.AltDirectorySeparatorChar) )
                         {
                             _path = DoubleDirectorySeparatorString;
-                            _option = NormalizedPathOption.RootedByDoubleSeparator;
+                            _option = NormalizedPathRootKind.RootedByDoubleSeparator;
                         }
                         else
                         {
                             _path = DirectorySeparatorString;
-                            _option = NormalizedPathOption.RootedBySeparator;
+                            _option = NormalizedPathRootKind.RootedBySeparator;
                         }
                     }
                 }
@@ -76,58 +79,58 @@ namespace CK.Text
                         if( c == System.IO.Path.DirectorySeparatorChar || c == System.IO.Path.AltDirectorySeparatorChar )
                         {
                             _path = System.IO.Path.DirectorySeparatorChar + _path;
-                            _option = NormalizedPathOption.RootedByDoubleSeparator;
+                            _option = NormalizedPathRootKind.RootedByDoubleSeparator;
                         }
-                        else _option = NormalizedPathOption.RootedBySeparator;
+                        else _option = NormalizedPathRootKind.RootedBySeparator;
                     }
-                    else _option = NormalizedPathOption.None;
+                    else _option = NormalizedPathRootKind.None;
                 }
                 else if( c == '~' )
                 {
-                    _option = NormalizedPathOption.RootedByFirstPart;
+                    _option = NormalizedPathRootKind.RootedByFirstPart;
                     _path = _parts.Concatenate( DirectorySeparatorString );
                 }
                 else
                 {
-                    _option = NormalizedPathOption.None;
+                    _option = NormalizedPathRootKind.None;
                     _path = _parts.Concatenate( DirectorySeparatorString );
                     var first = _parts[0];
                     if( first.Length > 0 && first[first.Length-1] == ':' )
                     {
-                        _option = NormalizedPathOption.RootedByFirstPart;
+                        _option = NormalizedPathRootKind.RootedByFirstPart;
                     }
                 }
             }
-            Debug.Assert( _parts != null || _option != NormalizedPathOption.RootedByFirstPart, "parts == null ==> option != RootedByFirstPart" );
+            Debug.Assert( _parts != null || _option != NormalizedPathRootKind.RootedByFirstPart, "parts == null ==> option != RootedByFirstPart" );
         }
 
-        static string BuildNonEmptyPath( string[] parts, NormalizedPathOption o )
+        static string BuildNonEmptyPath( string[] parts, NormalizedPathRootKind o )
         {
             var path = parts.Concatenate( DirectorySeparatorString );
             switch( o )
             {
-                case NormalizedPathOption.RootedBySeparator: return System.IO.Path.DirectorySeparatorChar + path;
-                case NormalizedPathOption.RootedByDoubleSeparator: return DoubleDirectorySeparatorString + path;
+                case NormalizedPathRootKind.RootedBySeparator: return System.IO.Path.DirectorySeparatorChar + path;
+                case NormalizedPathRootKind.RootedByDoubleSeparator: return DoubleDirectorySeparatorString + path;
                 default: return path;
             }
         }
 
-        NormalizedPath( string[] parts, string path, NormalizedPathOption o )
+        NormalizedPath( string[] parts, string path, NormalizedPathRootKind o )
         {
             Debug.Assert( path != null );
-            Debug.Assert( parts != null || o != NormalizedPathOption.RootedByFirstPart, "parts == null ==> option != RootedByFirstPart" );
+            Debug.Assert( parts != null || o != NormalizedPathRootKind.RootedByFirstPart, "parts == null ==> option != RootedByFirstPart" );
             _parts = parts;
             _path = path;
             _option = o;
         }
 
-        NormalizedPath( NormalizedPathOption o )
+        NormalizedPath( NormalizedPathRootKind o )
         {
-            if( o == NormalizedPathOption.RootedByFirstPart ) o = NormalizedPathOption.None;
+            if( o == NormalizedPathRootKind.RootedByFirstPart ) o = NormalizedPathRootKind.None;
             _parts = null;
-            _path = o == NormalizedPathOption.RootedBySeparator
+            _path = o == NormalizedPathRootKind.RootedBySeparator
                     ? DirectorySeparatorString
-                    : (o == NormalizedPathOption.RootedByDoubleSeparator
+                    : (o == NormalizedPathRootKind.RootedByDoubleSeparator
                        ? DoubleDirectorySeparatorString
                        : String.Empty);
             _option = o;
@@ -148,12 +151,12 @@ namespace CK.Text
         /// <summary>
         /// Gets whether this path is rooted.
         /// </summary>
-        public bool IsRooted => _option != NormalizedPathOption.None;
+        public bool IsRooted => _option != NormalizedPathRootKind.None;
 
         /// <summary>
-        /// Gets this path's <see cref="NormalizedPathOption"/>.
+        /// Gets this path's <see cref="NormalizedPathRootKind"/>.
         /// </summary>
-        public NormalizedPathOption Option => _option;
+        public NormalizedPathRootKind RootKind => _option;
 
         /// <summary>
         /// Gets the parent list from this up to the <see cref="FirstPart"/>.
@@ -168,6 +171,62 @@ namespace CK.Text
                     yield return p;
                     p = p.RemoveLastPart();
                 }
+            }
+        }
+
+        /// <summary>
+        /// Sets the <see cref="RootKind"/> by returning this or a new <see cref="NormalizedPath"/>.
+        /// The only forbidden case is to set the <see cref="NormalizedPathRootKind.RootedByFirstPart"/>
+        /// when <see cref="HasParts"/> is false: this throws an <see cref="ArgumentException"/>.
+        /// </summary>
+        /// <param name="kind">The <see cref="NormalizedPathRootKind"/> to set.</param>
+        /// <returns>This or a new path.</returns>
+        public NormalizedPath With( NormalizedPathRootKind kind )
+        {
+            if( kind == _option ) return this;
+            if( _parts == null )
+            {
+                switch( kind )
+                {
+                    case NormalizedPathRootKind.None:
+                        {
+                            Debug.Assert( _option == NormalizedPathRootKind.RootedBySeparator || _option == NormalizedPathRootKind.RootedByDoubleSeparator );
+                            return new NormalizedPath();
+                        }
+                    case NormalizedPathRootKind.RootedByFirstPart:
+                        {
+                            throw new ArgumentException( "Invalid RootedByFirstPart on path without any parts." );
+                        }
+                    case NormalizedPathRootKind.RootedBySeparator:
+                        {
+                            return new NormalizedPath( kind );
+                        }
+                    case NormalizedPathRootKind.RootedByDoubleSeparator:
+                        {
+                            return new NormalizedPath( kind );
+                        }
+                    default: throw new NotSupportedException();
+                }
+            }
+            if( _option == NormalizedPathRootKind.None || _option == NormalizedPathRootKind.RootedByFirstPart )
+            {
+                switch( kind )
+                {
+                    case NormalizedPathRootKind.None:
+                    case NormalizedPathRootKind.RootedByFirstPart: return new NormalizedPath( _parts, _path, kind );
+                    case NormalizedPathRootKind.RootedBySeparator: return new NormalizedPath( _parts, System.IO.Path.DirectorySeparatorChar + _path, kind );
+                    case NormalizedPathRootKind.RootedByDoubleSeparator: return new NormalizedPath( _parts, DoubleDirectorySeparatorString + _path, kind );
+                    default: throw new NotSupportedException();
+                }
+            }
+            Debug.Assert( _option == NormalizedPathRootKind.RootedBySeparator || _option == NormalizedPathRootKind.RootedByDoubleSeparator );
+            switch( kind )
+            {
+                case NormalizedPathRootKind.None:
+                case NormalizedPathRootKind.RootedByFirstPart: return new NormalizedPath( _parts, _path.Substring( _option == NormalizedPathRootKind.RootedBySeparator ? 1 : 2 ), kind );
+                case NormalizedPathRootKind.RootedBySeparator: return new NormalizedPath( _parts, _path.Substring( 1 ), kind );
+                case NormalizedPathRootKind.RootedByDoubleSeparator: return new NormalizedPath( _parts, System.IO.Path.DirectorySeparatorChar + _path, kind );
+                default: throw new NotSupportedException();
             }
         }
 
@@ -238,11 +297,15 @@ namespace CK.Text
         {
             int len = _parts != null ? _parts.Length : 0;
             if( rootPartsCount > len ) throw new ArgumentOutOfRangeException( nameof( rootPartsCount ) );
+            if( rootPartsCount == 0 && _option == NormalizedPathRootKind.RootedByFirstPart )
+            {
+                rootPartsCount = 1;
+            }
             if( rootPartsCount == len ) return this;
             Debug.Assert( !IsEmptyPath );
             string[] newParts = null;
             int current = 0;
-            NormalizedPathOption o = _option;
+            NormalizedPathRootKind o = _option;
             for( int i = rootPartsCount; i < len; ++i )
             {
                 string curPart = _parts[i];
@@ -269,7 +332,6 @@ namespace CK.Text
                             if( throwOnAboveRoot ) ThrowAboveRootException( _parts, rootPartsCount, i );
                         }
                         else --current;
-                        if( current == 0 ) o = NormalizedPathOption.None;
                     }
                 }
                 else if( newParts != null )
@@ -278,7 +340,7 @@ namespace CK.Text
                 }
             }
             if( newParts == null ) return this;
-            if( current == 0 ) return new NormalizedPath();
+            if( current == 0 ) return new NormalizedPath( _option );
             Array.Resize( ref newParts, current );
             return new NormalizedPath( newParts, BuildNonEmptyPath( newParts, o ), o );
         }
@@ -302,9 +364,9 @@ namespace CK.Text
             if( suffix._parts == null ) return this;
             if( _parts == null )
             {
-                Debug.Assert( _option != NormalizedPathOption.RootedByFirstPart );
-                if( _option == NormalizedPathOption.None ) return suffix;
-                var p = _option == NormalizedPathOption.RootedBySeparator
+                Debug.Assert( _option != NormalizedPathRootKind.RootedByFirstPart );
+                if( _option == NormalizedPathRootKind.None ) return suffix;
+                var p = _option == NormalizedPathRootKind.RootedBySeparator
                         ? System.IO.Path.DirectorySeparatorChar + suffix.Path
                         : DoubleDirectorySeparatorString + suffix.Path;
                 return new NormalizedPath( suffix._parts, p, _option );
@@ -329,7 +391,7 @@ namespace CK.Text
         /// Appends a part that must not be null or empty nor contain <see cref="System.IO.Path.DirectorySeparatorChar"/>
         /// or <see cref="System.IO.Path.AltDirectorySeparatorChar"/> and returns a new <see cref="NormalizedPath"/>.
         /// When there is no <see cref="Parts"/> (this appends the first part), the part may contain separators so
-        /// that <see cref="Option"/> is computed.
+        /// that <see cref="RootKind"/> is computed.
         /// </summary>
         /// <param name="part">The part to append. Must not be null or empty.</param>
         /// <returns>A new <see cref="NormalizedPath"/>.</returns>
@@ -338,9 +400,9 @@ namespace CK.Text
             if( string.IsNullOrEmpty( part ) ) throw new ArgumentNullException( nameof( part ) );
             if( _parts == null )
             {
-                Debug.Assert( _option != NormalizedPathOption.RootedByFirstPart );
-                if( _option == NormalizedPathOption.None ) return new NormalizedPath( part );
-                var p = _option == NormalizedPathOption.RootedBySeparator
+                Debug.Assert( _option != NormalizedPathRootKind.RootedByFirstPart );
+                if( _option == NormalizedPathRootKind.None ) return new NormalizedPath( part );
+                var p = _option == NormalizedPathRootKind.RootedBySeparator
                                     ? System.IO.Path.DirectorySeparatorChar + part
                                     : DoubleDirectorySeparatorString + part;
                 return new NormalizedPath( p );
@@ -380,7 +442,7 @@ namespace CK.Text
 
         /// <summary>
         /// Returns a new <see cref="NormalizedPath"/> with <see cref="FirstPart"/> removed (or more)
-        /// and <see cref="Option"/> sets to <see cref="NormalizedPathOption.None"/>.
+        /// and <see cref="RootKind"/> sets to <see cref="NormalizedPathRootKind.None"/>.
         /// Can be safely called when <see cref="IsEmptyPath"/> is true.
         /// </summary>
         /// <param name="count">Number of parts to remove. Must be positive.</param>
@@ -410,18 +472,18 @@ namespace CK.Text
             string p;
             switch( o )
             {
-                case NormalizedPathOption.None:
+                case NormalizedPathRootKind.None:
                     p = _path.Substring( len );
                     break;
-                case NormalizedPathOption.RootedBySeparator:
+                case NormalizedPathRootKind.RootedBySeparator:
                     p = System.IO.Path.DirectorySeparatorChar + _path.Substring( len + 1 );
                     break;
-                case NormalizedPathOption.RootedByDoubleSeparator:
+                case NormalizedPathRootKind.RootedByDoubleSeparator:
                     p = DoubleDirectorySeparatorString + _path.Substring( len + 2 );
                     break;
-                case NormalizedPathOption.RootedByFirstPart:
+                case NormalizedPathRootKind.RootedByFirstPart:
                     p = _path.Substring( len );
-                    o = NormalizedPathOption.None;
+                    o = NormalizedPathRootKind.None;
                     break;
                 default: throw new Exception();
             }
@@ -443,10 +505,6 @@ namespace CK.Text
         /// </summary>
         /// <param name="startIndex">Starting index to remove.</param>
         /// <param name="count">Number of parts to remove (can be 0).</param>
-        /// <param name="keepOption">
-        /// True to keep the <see cref="Option"/> unchanged.
-        /// When false, the default, Option becomes <see cref="NormalizedPathOption.None"/>.
-        /// </param>
         /// <returns>A new path.</returns>
         public NormalizedPath RemoveParts( int startIndex, int count )
         {
@@ -465,8 +523,8 @@ namespace CK.Text
             int i = 0;
             for( ; i < startIndex; ++i ) sIdx += _parts[i].Length;
             for( ; i < to; ++i ) sLen += _parts[i].Length;
-            if( _option == NormalizedPathOption.RootedBySeparator ) ++sIdx;
-            else if( _option == NormalizedPathOption.RootedByDoubleSeparator ) sIdx += 2;
+            if( _option == NormalizedPathRootKind.RootedBySeparator ) ++sIdx;
+            else if( _option == NormalizedPathRootKind.RootedByDoubleSeparator ) sIdx += 2;
             return new NormalizedPath( parts, _path.Remove( sIdx, sLen ), _option );
         }
 
@@ -515,17 +573,17 @@ namespace CK.Text
             if( nb == 0 ) return new NormalizedPath();
             var parts = new string[nb];
             Array.Copy( _parts, prefix._parts.Length, parts, 0, nb );
-            return new NormalizedPath( parts, _path.Substring( prefix._path.Length + 1 ), NormalizedPathOption.None );
+            return new NormalizedPath( parts, _path.Substring( prefix._path.Length + 1 ), NormalizedPathRootKind.None );
         }
 
         /// <summary>
         /// Gets whether this is the empty path. A new <see cref="NormalizedPath"/>() (default constructor),
         /// <c>default(NormalizedPath)</c> or the empty string are empty.
-        /// But "/" (<see cref="NormalizedPathOption.RootedBySeparator"/>) or
-        /// "//" (<see cref="NormalizedPathOption.RootedByDoubleSeparator"/>) ar not empty even if they
+        /// But "/" (<see cref="NormalizedPathRootKind.RootedBySeparator"/>) or
+        /// "//" (<see cref="NormalizedPathRootKind.RootedByDoubleSeparator"/>) ar not empty even if they
         /// have no <see cref="Parts"/>.
         /// </summary>
-        public bool IsEmptyPath => _parts == null && _option == NormalizedPathOption.None;
+        public bool IsEmptyPath => _parts == null && _option == NormalizedPathRootKind.None;
 
         /// <summary>
         /// Gets whether this <see cref="NormalizedPath"/> has at least one <see cref="Parts"/>.

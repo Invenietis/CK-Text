@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 namespace CK.Text
 {
     /// <summary>
-    /// Characerizes a <see cref="NormalizedPathOption"/>.
+    /// Characerizes the root of a <see cref="NormalizedPath"/>.
     /// </summary>
-    public enum NormalizedPathOption : byte
+    public enum NormalizedPathRootKind : byte
     {
         /// <summary>
         /// Relative path.
@@ -17,23 +17,23 @@ namespace CK.Text
         None = 0,
 
         /// <summary>
-        /// Marks a path that is rooted. A path that starts with a tilde (~) is rooted
-        /// as well as a path whose first part ends with a colon (:).
+        /// Marks a path that is rooted because of its <see cref="NormalizedPath.FirstPart"/>.
+        /// A path that starts with a tilde (~) is rooted as well as a path whose first part ends with a colon (:).
         /// </summary>
         RootedByFirstPart = 1,
 
         /// <summary>
         /// When '/' or '\' starts the path, it is rooted.
-        /// The <see cref="NormalizedPath.FirstPart"/> does not contain the separator, but
-        /// the <see cref="NormalizedPath.Path"/> (and <see cref="NormalizedPath.ToString()"/>)
+        /// The <see cref="NormalizedPath.FirstPart"/> does not contain the separator (there can even be
+        /// no parts at all), but the <see cref="NormalizedPath.Path"/> (and <see cref="NormalizedPath.ToString()"/>)
         /// starts with it (normalized to <see cref="System.IO.Path.DirectorySeparatorChar"/>).
         /// </summary>
         RootedBySeparator = 2,
 
         /// <summary>
         /// When double separators ("//" or "\\") starts the path, it is rooted.
-        /// The <see cref="NormalizedPath.FirstPart"/> does not contain the separators, but
-        /// the <see cref="NormalizedPath.Path"/> (and <see cref="NormalizedPath.ToString()"/>)
+        /// The <see cref="NormalizedPath.FirstPart"/> does not contain the separators (there can even be
+        /// no parts at all), but the <see cref="NormalizedPath.Path"/> (and <see cref="NormalizedPath.ToString()"/>)
         /// starts with them (normalized to <see cref="System.IO.Path.DirectorySeparatorChar"/>).
         /// </summary>
         RootedByDoubleSeparator = 3
