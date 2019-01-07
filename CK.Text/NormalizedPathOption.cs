@@ -9,47 +9,33 @@ namespace CK.Text
     /// <summary>
     /// Characerizes a <see cref="NormalizedPathOption"/>.
     /// </summary>
-    public enum NormalizedPathOption
+    public enum NormalizedPathOption : byte
     {
         /// <summary>
-        /// No specific prefix. The path is considered relative.
+        /// Relative path.
         /// </summary>
         None = 0,
 
         /// <summary>
-        /// Any first part that starts with ~ is considered a root.
+        /// Marks a path that is rooted. A path that starts with a tilde (~) is rooted
+        /// as well as a path whose first part ends with a colon (:).
         /// </summary>
-        StartsWithTilde,
+        RootedByFirstPart = 1,
 
         /// <summary>
-        /// Any char followed by a colon like "X:" in the first part is considered as a volume.
-        /// Its normalization is "X:" without any separator.
-        /// </summary>
-        StartsWithVolume,
-
-        /// <summary>
-        /// '/' or '\' that starts a path makes the path rooted.
+        /// When '/' or '\' starts the path, it is rooted.
         /// The <see cref="NormalizedPath.FirstPart"/> does not contain the separator, but
         /// the <see cref="NormalizedPath.Path"/> (and <see cref="NormalizedPath.ToString()"/>)
         /// starts with it (normalized to <see cref="System.IO.Path.DirectorySeparatorChar"/>).
         /// </summary>
-        StartsWithSeparator,
+        RootedBySeparator = 2,
 
         /// <summary>
-        /// Double separators ("//" or "\\") that starts a path makes the path rooted.
+        /// When double separators ("//" or "\\") starts the path, it is rooted.
         /// The <see cref="NormalizedPath.FirstPart"/> does not contain the separators, but
         /// the <see cref="NormalizedPath.Path"/> (and <see cref="NormalizedPath.ToString()"/>)
         /// starts with them (normalized to <see cref="System.IO.Path.DirectorySeparatorChar"/>).
         /// </summary>
-        StartsWithDoubleSeparator,
-
-        /// <summary>
-        /// Any first part that ends with a colon ':' ans is longer that 2 characters
-        /// is considered a root.
-        /// The <see cref="NormalizedPath.FirstPart"/> does not contain the separators (only the "scheme:"),
-        /// but the <see cref="NormalizedPath.Path"/> (and <see cref="NormalizedPath.ToString()"/>)
-        /// contains them (normalized to <see cref="System.IO.Path.DirectorySeparatorChar"/>): "scheme://".
-        /// </summary>
-        StartsWithScheme
+        RootedByDoubleSeparator = 3
     }
 }
