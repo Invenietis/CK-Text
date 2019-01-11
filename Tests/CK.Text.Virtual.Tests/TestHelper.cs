@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace CK.Text.Virtual.Tests
@@ -24,9 +26,10 @@ namespace CK.Text.Virtual.Tests
 
         static void InitalizePaths()
         {
-            _solutionFolder = Path.GetDirectoryName( Path.GetDirectoryName( GetProjectPath() ) );
+            NormalizedPath path = AppContext.BaseDirectory;
+            var s = path.PathsToFirstPart( null, new[] { "CK-Text.sln" } ).FirstOrDefault( p => File.Exists( p ) );
+            if( s.IsEmptyPath ) throw new InvalidOperationException( $"Unable to find CK-Text.sln above '{AppContext.BaseDirectory}'." );
+            _solutionFolder = s.RemoveLastPart();
         }
-
-        static string GetProjectPath( [CallerFilePath]string path = null ) => Path.GetDirectoryName( path );
     }
 }

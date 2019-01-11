@@ -1,15 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\..\Common\Shared.props" />
   <PropertyGroup>
-    <TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
-    <OutputType Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">Exe</OutputType>
+    <TargetFrameworks>net461;netcoreapp2.1</TargetFrameworks>
+    <OutputType Condition=" '$(TargetFramework)' != 'net461' ">Exe</OutputType>
+    <LangVersion>7.2</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\CK.Text\CK.Text.csproj" />
     <PackageReference Include="FluentAssertions" Version="5.4.1" />
-    <PackageReference Include="CK.MicroBenchmark" Version="0.1.0" />
+    <PackageReference Include="CK.MicroBenchmark" Version="0.1.1" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net461' ">
     <PackageReference Include="NUnitLite" Version="3.10.1" />
     <PackageReference Include="NUnit" Version="3.10.1" />
   </ItemGroup>

@@ -31,12 +31,13 @@ namespace CK.Text.Tests
 
         static void InitalizePaths()
         {
-            _solutionFolder = Path.GetDirectoryName(Path.GetDirectoryName(GetTestProjectPath()));
+            NormalizedPath path = AppContext.BaseDirectory;
+            var s = path.PathsToFirstPart( null, new[] { "CK-Text.sln" } ).FirstOrDefault( p => File.Exists( p ) );
+            if( s.IsEmptyPath ) throw new InvalidOperationException( $"Unable to find CK-Text.sln above '{AppContext.BaseDirectory}'." ); 
+            _solutionFolder = s.RemoveLastPart();
             Console.WriteLine($"SolutionFolder is: {_solutionFolder}.");
             Console.WriteLine($"Core path: {typeof(string).GetTypeInfo().Assembly.CodeBase}.");
         }
-
-        static string GetTestProjectPath([CallerFilePath]string path = null) => Path.GetDirectoryName(path);
 
     }
 }
