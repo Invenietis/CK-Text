@@ -241,67 +241,67 @@ Second line.
         }
 
 
-        [Test]
-        public void our_appending_multi_lines_is_better_than_naive_implementation_in_release_but_not_in_debug()
-        {
-            string text = File.ReadAllText( Path.Combine( TestHelper.SolutionFolder, "Tests/CK.Text.Tests/StringAndStringBuilderExtensionTests.cs" ) );
-            text = text.NormalizeEOL();
-            TestPerf( text, 10 );
-            TestPerf( "Small text may behave differently", 100 );
-            TestPerf( "Small text may"+Environment.NewLine + "behave differently" +Environment.NewLine, 100 );
-        }
+//        [Test]
+//        public void our_appending_multi_lines_is_better_than_naive_implementation_in_release_but_not_in_debug()
+//        {
+//            string text = File.ReadAllText( Path.Combine( TestHelper.SolutionFolder, "Tests/CK.Text.Tests/StringAndStringBuilderExtensionTests.cs" ) );
+//            text = text.NormalizeEOL();
+//            TestPerf( text, 10 );
+//            TestPerf( "Small text may behave differently", 100 );
+//            TestPerf( "Small text may"+Environment.NewLine + "behave differently" +Environment.NewLine, 100 );
+//        }
 
-        void TestPerf( string text, int count )
-        {
-            GC.Collect();
-            Stopwatch w = new Stopwatch();
-            string[] results = new string[2000];
-            long naive = PrefixWithNaiveReplace( w, text, results );
-            string aNaive = results[0];
-            long better = PrefixWithOurExtension( w, text, results );
-            results[0].Should().Be( aNaive );
-            for( int i = 0; i < count; ++i )
-            {
-                naive += PrefixWithNaiveReplace( w, text, results );
-                better += PrefixWithOurExtension( w, text, results );
-            }
-            double factor = (double)better / naive;
-            Console.WriteLine( $"Naive:{naive}, Extension:{better}. Factor: {factor}" );
-#if DEBUG
-            factor.Should().BeGreaterThan( 1 );
-#else
-            factor.Should().BeLessThan( 1 );
-#endif
-        }
+//        void TestPerf( string text, int count )
+//        {
+//            GC.Collect();
+//            Stopwatch w = new Stopwatch();
+//            string[] results = new string[2000];
+//            long naive = PrefixWithNaiveReplace( w, text, results );
+//            string aNaive = results[0];
+//            long better = PrefixWithOurExtension( w, text, results );
+//            results[0].Should().Be( aNaive );
+//            for( int i = 0; i < count; ++i )
+//            {
+//                naive += PrefixWithNaiveReplace( w, text, results );
+//                better += PrefixWithOurExtension( w, text, results );
+//            }
+//            double factor = (double)better / naive;
+//            Console.WriteLine( $"Naive:{naive}, Extension:{better}. Factor: {factor}" );
+//#if DEBUG
+//            factor.Should().BeGreaterThan( 1 );
+//#else
+//            factor.Should().BeLessThan( 1 );
+//#endif
+//        }
 
-        static readonly string prefix = "-!-";
+//        static readonly string prefix = "-!-";
 
-        long PrefixWithNaiveReplace( Stopwatch w, string f, string[] results )
-        {
-            GC.Collect();
-            w.Restart();
-            for( int i = 0; i < results.Length; ++i )
-            {
-                results[i] = f.Replace( Environment.NewLine, Environment.NewLine + prefix );
-            }
-            w.Stop();
-            return w.ElapsedTicks;
-        }
+//        long PrefixWithNaiveReplace( Stopwatch w, string f, string[] results )
+//        {
+//            GC.Collect();
+//            w.Restart();
+//            for( int i = 0; i < results.Length; ++i )
+//            {
+//                results[i] = f.Replace( Environment.NewLine, Environment.NewLine + prefix );
+//            }
+//            w.Stop();
+//            return w.ElapsedTicks;
+//        }
 
-        long PrefixWithOurExtension( Stopwatch w, string f, string[] results )
-        {
-            GC.Collect();
-            w.Restart();
-            StringBuilder b = new StringBuilder();
-            for( int i = 0; i < results.Length; ++i )
-            {
-                // We must use the prefixLastEmptyLine to match the way the naive implementation works.
-                results[i] = b.AppendMultiLine( prefix, f, false, prefixLastEmptyLine: true ).ToString();
-                b.Clear();
-            }
-            w.Stop();
-            return w.ElapsedTicks;
-        }
+//        long PrefixWithOurExtension( Stopwatch w, string f, string[] results )
+//        {
+//            GC.Collect();
+//            w.Restart();
+//            StringBuilder b = new StringBuilder();
+//            for( int i = 0; i < results.Length; ++i )
+//            {
+//                // We must use the prefixLastEmptyLine to match the way the naive implementation works.
+//                results[i] = b.AppendMultiLine( prefix, f, false, prefixLastEmptyLine: true ).ToString();
+//                b.Clear();
+//            }
+//            w.Stop();
+//            return w.ElapsedTicks;
+//        }
 
         [TestCase( null, "" )]
         [TestCase( "", "" )]
