@@ -6,14 +6,14 @@ using System.Linq;
 namespace CK.Text
 {
     /// <summary>
-    /// Immmutable encapsulation of a path that normalizes <see cref="System.IO.Path.AltDirectorySeparatorChar"/>
-    /// to <see cref="System.IO.Path.DirectorySeparatorChar"/> and provides useful path manipulation methods.
+    /// Immmutable encapsulation of a path that normalizes <see cref="AltDirectorySeparatorChar"/>
+    /// to <see cref="DirectorySeparatorChar"/> and provides useful path manipulation methods.
     /// This struct is implicitely convertible to and from string.
     /// All comparisons uses <see cref="StringComparer.OrdinalIgnoreCase"/>.
     /// </summary>
     public readonly struct NormalizedPath : IEquatable<NormalizedPath>, IComparable<NormalizedPath>
     {
-        static readonly char[] _separators = new[] { System.IO.Path.AltDirectorySeparatorChar, System.IO.Path.DirectorySeparatorChar };
+        static readonly char[] _separators;
 
         readonly string[] _parts;
         readonly string _path;
@@ -23,19 +23,46 @@ namespace CK.Text
         readonly NormalizedPathRootKind _option;
 
         /// <summary>
-        /// Gets the <see cref="System.IO.Path.DirectorySeparatorChar"/> as a string.
+        /// Gets the same character as <see cref="System.IO.Path.DirectorySeparatorChar"/>.
+        /// It is '\' on Windows and '/' on unix based systems.
         /// </summary>
-        public static readonly string DirectorySeparatorString = new String( System.IO.Path.DirectorySeparatorChar, 1 );
+        static readonly char DirectorySeparatorChar;
 
         /// <summary>
-        /// Gets a double <see cref="System.IO.Path.DirectorySeparatorChar"/> string.
+        /// Gets the <see cref="System.IO.Path.AltDirectorySeparatorChar"/>.
+        /// If it is the same as <see cref="DirectorySeparatorChar"/> and is '/' then it is '\'.
+        /// It is '/' on Windows and '\' on unix based systems.
         /// </summary>
-        public static readonly string DoubleDirectorySeparatorString = new String( System.IO.Path.DirectorySeparatorChar, 2 );
+        static readonly char AltDirectorySeparatorChar;
 
         /// <summary>
-        /// Gets the <see cref="System.IO.Path.AltDirectorySeparatorChar"/> as a string.
+        /// Gets the <see cref="DirectorySeparatorChar"/> as a string.
         /// </summary>
-        public static readonly string AltDirectorySeparatorString = new String( System.IO.Path.AltDirectorySeparatorChar, 1 );
+        public static readonly string DirectorySeparatorString;
+
+        /// <summary>
+        /// Gets a double <see cref="DirectorySeparatorChar"/> string.
+        /// </summary>
+        public static readonly string DoubleDirectorySeparatorString;
+
+        /// <summary>
+        /// Gets the <see cref="AltDirectorySeparatorChar"/> as a string.
+        /// </summary>
+        public static readonly string AltDirectorySeparatorString;
+
+        static NormalizedPath()
+        {
+            DirectorySeparatorChar = System.IO.Path.DirectorySeparatorChar;
+            AltDirectorySeparatorChar = System.IO.Path.AltDirectorySeparatorChar;
+            if( AltDirectorySeparatorChar == DirectorySeparatorChar && AltDirectorySeparatorChar == '/' )
+            {
+                AltDirectorySeparatorChar = '\\';
+            }
+            DirectorySeparatorString = new String( DirectorySeparatorChar, 1 );
+            DoubleDirectorySeparatorString = new String( DirectorySeparatorChar, 2 );
+            AltDirectorySeparatorString = new String( AltDirectorySeparatorChar, 1 );
+            _separators = new[] { AltDirectorySeparatorChar, DirectorySeparatorChar };
+        }
 
         /// <summary>
         /// Explicitely builds a new <see cref="NormalizedPath"/> struct from a string (that can be null or empty).
@@ -51,10 +78,10 @@ namespace CK.Text
                 _option = NormalizedPathRootKind.None;
                 if( path != null && path.Length > 0 )
                 {
-                    if( path[0] == System.IO.Path.DirectorySeparatorChar || path[0] == System.IO.Path.AltDirectorySeparatorChar )
+                    if( path[0] == DirectorySeparatorChar || path[0] == AltDirectorySeparatorChar )
                     {
                         if( path.Length > 1
-                            && (path[1] == System.IO.Path.DirectorySeparatorChar || path[1] == System.IO.Path.AltDirectorySeparatorChar) )
+                            && (path[1] == DirectorySeparatorChar || path[1] == AltDirectorySeparatorChar) )
                         {
                             _path = DoubleDirectorySeparatorString;
                             _option = NormalizedPathRootKind.RootedByDoubleSeparator;
@@ -70,15 +97,15 @@ namespace CK.Text
             else
             {
                 var c = path[0];
-                if( c == System.IO.Path.DirectorySeparatorChar || c == System.IO.Path.AltDirectorySeparatorChar )
+                if( c == DirectorySeparatorChar || c == AltDirectorySeparatorChar )
                 {
-                    _path = System.IO.Path.DirectorySeparatorChar + _parts.Concatenate( DirectorySeparatorString );
+                    _path = DirectorySeparatorChar + _parts.Concatenate( DirectorySeparatorString );
                     if( path.Length > 1 )
                     {
                         c = path[1];
-                        if( c == System.IO.Path.DirectorySeparatorChar || c == System.IO.Path.AltDirectorySeparatorChar )
+                        if( c == DirectorySeparatorChar || c == AltDirectorySeparatorChar )
                         {
-                            _path = System.IO.Path.DirectorySeparatorChar + _path;
+                            _path = DirectorySeparatorChar + _path;
                             _option = NormalizedPathRootKind.RootedByDoubleSeparator;
                         }
                         else _option = NormalizedPathRootKind.RootedBySeparator;
@@ -109,7 +136,7 @@ namespace CK.Text
             var path = parts.Concatenate( DirectorySeparatorString );
             switch( o )
             {
-                case NormalizedPathRootKind.RootedBySeparator: return System.IO.Path.DirectorySeparatorChar + path;
+                case NormalizedPathRootKind.RootedBySeparator: return DirectorySeparatorChar + path;
                 case NormalizedPathRootKind.RootedByDoubleSeparator: return DoubleDirectorySeparatorString + path;
                 default: return path;
             }
@@ -214,7 +241,7 @@ namespace CK.Text
                 {
                     case NormalizedPathRootKind.None:
                     case NormalizedPathRootKind.RootedByFirstPart: return new NormalizedPath( _parts, _path, kind );
-                    case NormalizedPathRootKind.RootedBySeparator: return new NormalizedPath( _parts, System.IO.Path.DirectorySeparatorChar + _path, kind );
+                    case NormalizedPathRootKind.RootedBySeparator: return new NormalizedPath( _parts, DirectorySeparatorChar + _path, kind );
                     case NormalizedPathRootKind.RootedByDoubleSeparator: return new NormalizedPath( _parts, DoubleDirectorySeparatorString + _path, kind );
                     default: throw new NotSupportedException();
                 }
@@ -225,7 +252,7 @@ namespace CK.Text
                 case NormalizedPathRootKind.None:
                 case NormalizedPathRootKind.RootedByFirstPart: return new NormalizedPath( _parts, _path.Substring( _option == NormalizedPathRootKind.RootedBySeparator ? 1 : 2 ), kind );
                 case NormalizedPathRootKind.RootedBySeparator: return new NormalizedPath( _parts, _path.Substring( 1 ), kind );
-                case NormalizedPathRootKind.RootedByDoubleSeparator: return new NormalizedPath( _parts, System.IO.Path.DirectorySeparatorChar + _path, kind );
+                case NormalizedPathRootKind.RootedByDoubleSeparator: return new NormalizedPath( _parts, DirectorySeparatorChar + _path, kind );
                 default: throw new NotSupportedException();
             }
         }
@@ -367,14 +394,14 @@ namespace CK.Text
                 Debug.Assert( _option != NormalizedPathRootKind.RootedByFirstPart );
                 if( _option == NormalizedPathRootKind.None ) return suffix;
                 var p = _option == NormalizedPathRootKind.RootedBySeparator
-                        ? System.IO.Path.DirectorySeparatorChar + suffix.Path
+                        ? DirectorySeparatorChar + suffix.Path
                         : DoubleDirectorySeparatorString + suffix.Path;
                 return new NormalizedPath( suffix._parts, p, _option );
             }
             var parts = new string[_parts.Length + suffix._parts.Length];
             Array.Copy( _parts, parts, _parts.Length );
             Array.Copy( suffix._parts, 0, parts, _parts.Length, suffix._parts.Length );
-            return new NormalizedPath( parts, _path + System.IO.Path.DirectorySeparatorChar + suffix._path, _option );
+            return new NormalizedPath( parts, _path + DirectorySeparatorChar + suffix._path, _option );
         }
 
         /// <summary>
@@ -388,8 +415,8 @@ namespace CK.Text
         public string FirstPart => _parts?[0] ?? String.Empty;
 
         /// <summary>
-        /// Appends a part that must not be null or empty nor contain <see cref="System.IO.Path.DirectorySeparatorChar"/>
-        /// or <see cref="System.IO.Path.AltDirectorySeparatorChar"/> and returns a new <see cref="NormalizedPath"/>.
+        /// Appends a part that must not be null or empty nor contain <see cref="DirectorySeparatorChar"/>
+        /// or <see cref="AltDirectorySeparatorChar"/> and returns a new <see cref="NormalizedPath"/>.
         /// When there is no <see cref="Parts"/> (this appends the first part), the part may contain separators so
         /// that <see cref="RootKind"/> is computed.
         /// </summary>
@@ -403,7 +430,7 @@ namespace CK.Text
                 Debug.Assert( _option != NormalizedPathRootKind.RootedByFirstPart );
                 if( _option == NormalizedPathRootKind.None ) return new NormalizedPath( part );
                 var p = _option == NormalizedPathRootKind.RootedBySeparator
-                                    ? System.IO.Path.DirectorySeparatorChar + part
+                                    ? DirectorySeparatorChar + part
                                     : DoubleDirectorySeparatorString + part;
                 return new NormalizedPath( p );
             }
@@ -411,7 +438,7 @@ namespace CK.Text
             var parts = new string[_parts.Length + 1];
             Array.Copy( _parts, parts, _parts.Length );
             parts[_parts.Length] = part;
-            return new NormalizedPath( parts, _path + System.IO.Path.DirectorySeparatorChar + part, _option );
+            return new NormalizedPath( parts, _path + DirectorySeparatorChar + part, _option );
         }
 
         /// <summary>
@@ -476,7 +503,7 @@ namespace CK.Text
                     p = _path.Substring( len );
                     break;
                 case NormalizedPathRootKind.RootedBySeparator:
-                    p = System.IO.Path.DirectorySeparatorChar + _path.Substring( len + 1 );
+                    p = DirectorySeparatorChar + _path.Substring( len + 1 );
                     break;
                 case NormalizedPathRootKind.RootedByDoubleSeparator:
                     p = DoubleDirectorySeparatorString + _path.Substring( len + 2 );
@@ -699,18 +726,18 @@ namespace CK.Text
         public override string ToString() => _path ?? String.Empty;
 
         /// <summary>
-        /// Returns a path with a specific character as the path separator instead of <see cref="System.IO.Path.DirectorySeparatorChar"/>.
+        /// Returns a path with a specific character as the path separator instead of <see cref="DirectorySeparatorChar"/>.
         /// </summary>
         /// <param name="separator">The separator to use.</param>
         /// <returns>The path with the separator.</returns>
         public string ToString( char separator )
         {
             if( _path == null ) return String.Empty;
-            if( separator == System.IO.Path.DirectorySeparatorChar|| _parts.Length == 1 )
+            if( separator == DirectorySeparatorChar|| _parts.Length == 1 )
             {
                 return _path;
             }
-            return _path.Replace( System.IO.Path.DirectorySeparatorChar, separator );
+            return _path.Replace( DirectorySeparatorChar, separator );
         }
     }
 }

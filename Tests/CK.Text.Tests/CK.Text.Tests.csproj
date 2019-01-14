@@ -8,7 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\CK.Text\CK.Text.csproj" />
     <PackageReference Include="FluentAssertions" Version="5.4.1" />
-    <PackageReference Include="CK.MicroBenchmark" Version="0.0.0--023hk3h-local" />
+    <PackageReference Include="CK.MicroBenchmark" Version="0.0.0--023uqof-local" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net461' ">
     <PackageReference Include="NUnitLite" Version="3.10.1" />
