@@ -29,8 +29,6 @@ namespace CK.Text.Tests
         [TestCase( "~R/a", NormalizedPathRootKind.RootedByFirstPart, "~R/a" )]
         public void all_kind_of_root( string p, NormalizedPathRootKind o, string path )
         {
-            // Normalize expected path.
-            path = path.Replace( System.IO.Path.AltDirectorySeparatorChar, System.IO.Path.DirectorySeparatorChar );
             var n = new NormalizedPath( p );
             n.RootKind.Should().Be( o );
             n.Path.Should().Be( path );

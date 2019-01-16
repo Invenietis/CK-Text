@@ -52,12 +52,8 @@ namespace CK.Text
 
         static NormalizedPath()
         {
-            DirectorySeparatorChar = System.IO.Path.DirectorySeparatorChar;
-            AltDirectorySeparatorChar = System.IO.Path.AltDirectorySeparatorChar;
-            if( AltDirectorySeparatorChar == DirectorySeparatorChar && AltDirectorySeparatorChar == '/' )
-            {
-                AltDirectorySeparatorChar = '\\';
-            }
+            DirectorySeparatorChar = '/';
+            AltDirectorySeparatorChar = '\\';
             DirectorySeparatorString = new String( DirectorySeparatorChar, 1 );
             DoubleDirectorySeparatorString = new String( DirectorySeparatorChar, 2 );
             AltDirectorySeparatorString = new String( AltDirectorySeparatorChar, 1 );
