@@ -6,8 +6,8 @@ using System.Linq;
 namespace CK.Text
 {
     /// <summary>
-    /// Immmutable encapsulation of a path that normalizes <see cref="AltDirectorySeparatorChar"/>
-    /// to <see cref="DirectorySeparatorChar"/> and provides useful path manipulation methods.
+    /// Immmutable encapsulation of a path that normalizes <see cref="AltDirectorySeparatorChar"/> ('\')
+    /// to <see cref="DirectorySeparatorChar"/> ('/') and provides useful path manipulation methods.
     /// This struct is implicitely convertible to and from string.
     /// All comparisons uses <see cref="StringComparer.OrdinalIgnoreCase"/>.
     /// </summary>
@@ -23,17 +23,19 @@ namespace CK.Text
         readonly NormalizedPathRootKind _option;
 
         /// <summary>
-        /// Gets the same character as <see cref="System.IO.Path.DirectorySeparatorChar"/>.
-        /// It is '\' on Windows and '/' on unix based systems.
+        /// This is the always the '/' character. On Windows it is the "opposite" of
+        /// the <see cref="System.IO.Path.DirectorySeparatorChar"/> but Windows now accepts
+        /// the '/' and this is the sense of history, so we assume this choice by defining a
+        /// definitive public const for our directory separator character, regardless of the
+        /// platform.
         /// </summary>
-        static readonly char DirectorySeparatorChar;
+        public const char DirectorySeparatorChar = '/';
 
         /// <summary>
-        /// Gets the <see cref="System.IO.Path.AltDirectorySeparatorChar"/>.
-        /// If it is the same as <see cref="DirectorySeparatorChar"/> and is '/' then it is '\'.
-        /// It is '/' on Windows and '\' on unix based systems.
+        /// This is the '\' character, regardless of the
+        /// platform.
         /// </summary>
-        static readonly char AltDirectorySeparatorChar;
+        public const char AltDirectorySeparatorChar = '\\';
 
         /// <summary>
         /// Gets the <see cref="DirectorySeparatorChar"/> as a string.
@@ -52,8 +54,6 @@ namespace CK.Text
 
         static NormalizedPath()
         {
-            DirectorySeparatorChar = '/';
-            AltDirectorySeparatorChar = '\\';
             DirectorySeparatorString = new String( DirectorySeparatorChar, 1 );
             DoubleDirectorySeparatorString = new String( DirectorySeparatorChar, 2 );
             AltDirectorySeparatorString = new String( AltDirectorySeparatorChar, 1 );
