@@ -29,8 +29,6 @@ namespace CK.Text.Tests
         [TestCase( "~R/a", NormalizedPathRootKind.RootedByFirstPart, "~R/a" )]
         public void all_kind_of_root( string p, NormalizedPathRootKind o, string path )
         {
-            // Normalize expected path.
-            path = path.Replace( System.IO.Path.AltDirectorySeparatorChar, System.IO.Path.DirectorySeparatorChar );
             var n = new NormalizedPath( p );
             n.RootKind.Should().Be( o );
             n.Path.Should().Be( path );
@@ -75,6 +73,7 @@ namespace CK.Text.Tests
         [TestCase( "", '=', null )]
         [TestCase( null, '=', "" )]
         [TestCase( "", '<', "a" )]
+        [TestCase( "A", '<', "a" )]
         [TestCase( "", '<', "/" )]
         [TestCase( "", '<', "//" )]
         [TestCase( "/", '<', "//" )]
@@ -84,7 +83,7 @@ namespace CK.Text.Tests
         [TestCase( "//", '<', "a" )]
         [TestCase( "a", '=', "a" )]
         [TestCase( "a/b", '>', "a" )]
-        [TestCase( "A/B", '=', "a/B" )]
+        [TestCase( "A/B", '<', "a/B" )]
         [TestCase( "a/1", '=', "a/1" )]
         [TestCase( "a/1a", '>', "a/1" )]
         [TestCase( "a/1/b", '<', "a/1/c" )]
@@ -129,7 +128,7 @@ namespace CK.Text.Tests
         [TestCase( "/a/b", "/a", true )]
         [TestCase( "a\\b", "a/b", false )]
         [TestCase( "a/b/c/", "a\\b", true )]
-        [TestCase( "//a/b/c/", "\\\\A\\B", true )]
+        [TestCase( "//A/B/c/", "\\\\A\\B", true )]
         [TestCase( "/a/b/c/", "a/b", false )]
         [TestCase( "a/b/c/", "a\\bc", false )]
         public void StartsWith_at_work( string start, string with, bool result )
