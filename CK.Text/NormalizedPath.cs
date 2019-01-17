@@ -8,12 +8,16 @@ namespace CK.Text
     /// <summary>
     /// Immmutable encapsulation of a path that normalizes <see cref="AltDirectorySeparatorChar"/> ('\')
     /// to <see cref="DirectorySeparatorChar"/> ('/') and provides useful path manipulation methods.
+    /// This is the opposite of the Windows OS, but Windows handles the '/' transparently at more and more levels, 
+    /// and it's better to have a unified way to work with paths, regardless of the 
+    /// All comparisons uses <see cref="StringComparer.Ordinal"/>: this is fully compatible with case sensitive
+    /// file systems (typically the case of Unix-based OS). Windows' volumes are normally case insensitive but
+    /// using file names that differ only by case is not a good practice and this helper assumes this.
     /// This struct is implicitely convertible to and from string.
-    /// All comparisons uses <see cref="StringComparer.OrdinalIgnoreCase"/>.
     /// </summary>
     public readonly struct NormalizedPath : IEquatable<NormalizedPath>, IComparable<NormalizedPath>
     {
-        static readonly char[] _separators;
+        static readonly char[] _separators = new[] { AltDirectorySeparatorChar, DirectorySeparatorChar };
 
         readonly string[] _parts;
         readonly string _path;
@@ -40,25 +44,17 @@ namespace CK.Text
         /// <summary>
         /// Gets the <see cref="DirectorySeparatorChar"/> as a string.
         /// </summary>
-        public static readonly string DirectorySeparatorString;
+        public const string DirectorySeparatorString = "/";
 
         /// <summary>
         /// Gets a double <see cref="DirectorySeparatorChar"/> string.
         /// </summary>
-        public static readonly string DoubleDirectorySeparatorString;
+        public const string DoubleDirectorySeparatorString = "//";
 
         /// <summary>
         /// Gets the <see cref="AltDirectorySeparatorChar"/> as a string.
         /// </summary>
-        public static readonly string AltDirectorySeparatorString;
-
-        static NormalizedPath()
-        {
-            DirectorySeparatorString = new String( DirectorySeparatorChar, 1 );
-            DoubleDirectorySeparatorString = new String( DirectorySeparatorChar, 2 );
-            AltDirectorySeparatorString = new String( AltDirectorySeparatorChar, 1 );
-            _separators = new[] { AltDirectorySeparatorChar, DirectorySeparatorChar };
-        }
+        public const string AltDirectorySeparatorString = "\\";
 
         /// <summary>
         /// Explicitely builds a new <see cref="NormalizedPath"/> struct from a string (that can be null or empty).
@@ -564,8 +560,8 @@ namespace CK.Text
                                                             && !IsEmptyPath
                                                             && other._parts.Length <= _parts.Length
                                                             && (!strict || other._parts.Length < _parts.Length)
-                                                            && StringComparer.OrdinalIgnoreCase.Equals( other.LastPart, _parts[other._parts.Length - 1] )
-                                                            && _path.StartsWith( other._path, StringComparison.OrdinalIgnoreCase ));
+                                                            && StringComparer.Ordinal.Equals( other.LastPart, _parts[other._parts.Length - 1] )
+                                                            && _path.StartsWith( other._path, StringComparison.Ordinal ));
 
         /// <summary>
         /// Tests whether this <see cref="NormalizedPath"/> ends with another one.
@@ -580,8 +576,8 @@ namespace CK.Text
                                                             && !IsEmptyPath
                                                             && other._parts.Length <= _parts.Length
                                                             && (!strict || other._parts.Length < _parts.Length)
-                                                            && StringComparer.OrdinalIgnoreCase.Equals( other.FirstPart, _parts[_parts.Length - other._parts.Length] )
-                                                            && _path.EndsWith( other._path, StringComparison.OrdinalIgnoreCase ));
+                                                            && StringComparer.Ordinal.Equals( other.FirstPart, _parts[_parts.Length - other._parts.Length] )
+                                                            && _path.EndsWith( other._path, StringComparison.Ordinal ));
 
         /// <summary>
         /// Removes the prefix from this path. The prefix must starts with or be exaclty the same as this one
@@ -626,7 +622,7 @@ namespace CK.Text
         /// <summary>
         /// Compares this path to another one.
         /// The <see cref="Parts"/> length is considered first and if they are equal, the
-        /// two <see cref="Path"/> are compared using <see cref="StringComparer.OrdinalIgnoreCase"/>.
+        /// two <see cref="Path"/> are compared using <see cref="StringComparer.Ordinal"/>.
         /// </summary>
         /// <param name="other">The path to compare to.</param>
         /// <returns>A positive integer if this is greater than other, a negative integer if this is lower than the other one and 0 if they are equal.</returns>
@@ -635,7 +631,7 @@ namespace CK.Text
             if( _parts == null ) return other._parts == null ? _option.CompareTo( other._option ) : -1;
             if( other._parts == null ) return 1;
             int cmp = _parts.Length - other._parts.Length;
-            return cmp != 0 ? cmp : StringComparer.OrdinalIgnoreCase.Compare( _path, other._path );
+            return cmp != 0 ? cmp : StringComparer.Ordinal.Compare( _path, other._path );
         }
 
         /// <summary>
@@ -690,7 +686,7 @@ namespace CK.Text
         /// <summary>
         /// Gets whether the <paramref name="obj"/> is a <see cref="NormalizedPath"/> that is equal to
         /// this one.
-        /// Comparison is done by <see cref="StringComparer.OrdinalIgnoreCase"/>.
+        /// Comparison is done by <see cref="StringComparer.Ordinal"/>.
         /// </summary>
         /// <param name="obj">The object to challenge.</param>
         /// <returns>True if they are equal, false otherwise.</returns>
@@ -700,11 +696,11 @@ namespace CK.Text
         /// Gets the hash code.
         /// </summary>
         /// <returns>The hash code.</returns>
-        public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode( ToString() );
+        public override int GetHashCode() => StringComparer.Ordinal.GetHashCode( ToString() );
 
         /// <summary>
         /// Gets whether the other path is equal to this one.
-        /// Comparison is done by <see cref="StringComparer.OrdinalIgnoreCase"/>.
+        /// Comparison is done by <see cref="StringComparer.Ordinal"/>.
         /// </summary>
         /// <param name="other">The other path to challenge.</param>
         /// <returns>True if they are equal, false otherwise.</returns>
@@ -712,7 +708,7 @@ namespace CK.Text
         {
             if( _parts == null ) return other._parts == null && _option == other._option;
             if( other._parts == null || _parts.Length != other._parts.Length ) return false;
-            return StringComparer.OrdinalIgnoreCase.Equals( _path, other._path );
+            return StringComparer.Ordinal.Equals( _path, other._path );
         }
 
         /// <summary>
