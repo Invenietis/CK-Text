@@ -26,7 +26,7 @@ namespace CK.Text
         /// When '/' or '\' starts the path, it is rooted.
         /// The <see cref="NormalizedPath.FirstPart"/> does not contain the separator (there can even be
         /// no parts at all), but the <see cref="NormalizedPath.Path"/> (and <see cref="NormalizedPath.ToString()"/>)
-        /// starts with it (normalized to <see cref="System.IO.Path.DirectorySeparatorChar"/>).
+        /// starts with it (normalized to <see cref="NormalizedPath.DirectorySeparatorChar"/>).
         /// </summary>
         RootedBySeparator = 2,
 
@@ -34,7 +34,7 @@ namespace CK.Text
         /// When double separators ("//" or "\\") starts the path, it is rooted.
         /// The <see cref="NormalizedPath.FirstPart"/> does not contain the separators (there can even be
         /// no parts at all), but the <see cref="NormalizedPath.Path"/> (and <see cref="NormalizedPath.ToString()"/>)
-        /// starts with them (normalized to <see cref="System.IO.Path.DirectorySeparatorChar"/>).
+        /// starts with them (normalized to <see cref="NormalizedPath.DirectorySeparatorChar"/>).
         /// </summary>
         RootedByDoubleSeparator = 3
     }
