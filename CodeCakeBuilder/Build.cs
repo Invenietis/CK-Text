@@ -49,17 +49,17 @@ namespace CodeCake
             Task( "Check-Repository" )
                 .Does( () =>
                 {
-                    globalInfo = CreateStandardGlobalInfo( gitInfo ).AddNuGet( projectsToPublish );
-                    if( globalInfo.SetCIBuildTagAndStop() )
-                    {
-                        Cake.TerminateWithSuccess( "All packages from this commit are already available. Build skipped." );
-                    }
+                    globalInfo = CreateStandardGlobalInfo( gitInfo )
+                                    .AddNuGet( projectsToPublish )
+                                    .SetCIBuildTag()
+                                    .TerminateIfShouldStop();
                 } );
 
             Task( "Clean" )
                 .Does( () =>
                 {
                     Cake.CleanDirectories( projects.Select( p => p.Path.GetDirectory().Combine( "bin" ) ) );
+                    Cake.CleanDirectories( projects.Select( p => p.Path.GetDirectory().Combine( "obj" ) ) );
                     Cake.CleanDirectories( globalInfo.ReleasesFolder );
                     Cake.DeleteFiles( "Tests/**/TestResult*.xml" );
                 } );
@@ -69,7 +69,7 @@ namespace CodeCake
                 .IsDependentOn( "Clean" )
                 .Does( () =>
                 {
-                    StandardSolutionBuild( solutionFileName, globalInfo );
+                    StandardSolutionBuild( globalInfo, solutionFileName );
                 } );
 
             Task( "Unit-Testing" )
