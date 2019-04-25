@@ -31,8 +31,7 @@ namespace CodeCake
         {
             Cake.Log.Verbosity = Verbosity.Diagnostic;
 
-            const string solutionName = "CK-Text";
-            const string solutionFileName = solutionName + ".sln";
+            var solutionFileName = Cake.Environment.WorkingDirectory.GetDirectoryName() + ".sln";
 
             var projects = Cake.ParseSolution( solutionFileName )
                                        .Projects
