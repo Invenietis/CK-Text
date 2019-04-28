@@ -35,13 +35,12 @@ namespace CodeCake
 
             var projects = Cake.ParseSolution( solutionFileName )
                                        .Projects
-                                       .Where( p => !(p is SolutionFolder)
-                                                    && p.Name != "CodeCakeBuilder" );
+                                       .Where( p => !(p is SolutionFolder) && p.Name != "CodeCakeBuilder" );
 
-            // We do not publish .Tests projects for this solution.
-            var projectsToPublish = projects.Where( p => !p.Path.Segments.Contains( "Tests" ) );
+            // We do not generate NuGet packages for /Tests projects for this solution.
+            var projectsToPublish = projects
+                                        .Where( p => !p.Path.Segments.Contains( "Tests" ) );
 
-            // The SimpleRepositoryInfo should be computed once and only once.
             SimpleRepositoryInfo gitInfo = Cake.GetSimpleRepositoryInfo();
             StandardGlobalInfo globalInfo = null;
 

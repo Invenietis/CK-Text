@@ -12,6 +12,7 @@
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All" />
   </ItemGroup>
   <!--</SourceLink>-->
+
   <!--<BasicDefinitions>: It is useful to knwow whether we are in the Tests/ folder and/or if the current project is a Test.-->
   <PropertyGroup>
     <IsTestProject Condition="$(MSBuildProjectName.EndsWith('.Tests'))">true</IsTestProject>
