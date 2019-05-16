@@ -122,56 +122,149 @@ namespace CK.Text.Tests
         [TestCase( "", "", false )]
         [TestCase( null, null, false )]
         [TestCase( "", "a", false )]
+        [TestCase( "a", null, false )]
+        [TestCase( "a", "", false )]
         [TestCase( "a", "a", false )]
         [TestCase( "a/b", "a", true )]
+        [TestCase( "a/bab", "a/ba", false )]
         [TestCase( "/a/b", "a", false )]
         [TestCase( "/a/b", "/a", true )]
         [TestCase( "a\\b", "a/b", false )]
+        [TestCase( "a\\bi", "a/b", false )]
         [TestCase( "a/b/c/", "a\\b", true )]
         [TestCase( "//A/B/c/", "\\\\A\\B", true )]
         [TestCase( "/a/b/c/", "a/b", false )]
         [TestCase( "a/b/c/", "a\\bc", false )]
-        public void StartsWith_at_work( string start, string with, bool result )
+        public void StartsWith_Path_is_strict_by_default( string start, string with, bool resultPath )
         {
-            new NormalizedPath( start ).StartsWith( with ).Should().Be( result );
+            new NormalizedPath( start ).StartsWith( new NormalizedPath( with ) )
+                .Should().Be( resultPath, resultPath ? "Path should Start." : "Path should NOT Start." );
+
         }
 
         [TestCase( "", "", true )]
         [TestCase( null, null, true )]
         [TestCase( "", "a", false )]
+        [TestCase( "a", null, true )]
+        [TestCase( "a", "", true )]
+        [TestCase( "a", "a", true )]
+        [TestCase( "a/b", "a", true )]
+        [TestCase( "a/bab", "a/ba", true )]
+        [TestCase( "/a/b", "a", false )]
+        [TestCase( "/a/b", "/a", true )]
+        [TestCase( "/a/b", "/a/", true )]
+        [TestCase( "a\\b", "a/b", true )]
+        [TestCase( "a\\bi", "a/b", true )]
+        [TestCase( "a/b/c/", "a\\b", false )]
+        [TestCase( "//A/B/c/", "\\\\A\\B", false )]
+        [TestCase( "/a/b/c/", "a/b", false )]
+        [TestCase( "a/b/c/", "a\\bc", false )]
+        public void StartsWith_String_is_NOT_strict_by_default( string start, string with, bool resultString )
+        {
+            new NormalizedPath( start ).StartsWith( with )
+                .Should().Be( resultString, resultString ? "String should Start." : "String should NOT Start." );
+        }
+
+        [TestCase( "", "", true )]
+        [TestCase( null, null, true )]
+        [TestCase( "", "a", false )]
+        [TestCase( "a", "", true )]
+        [TestCase( "a", null, true )]
         [TestCase( "a", "a", true )]
         [TestCase( "a/b", "a", true )]
         [TestCase( "a\\b", "a/b", true )]
+        [TestCase( "a\\bi", "a/b", false )]
         [TestCase( "a/b/c/", "a\\b", true )]
         [TestCase( "a/b/c/", "a\\bc", false )]
-        public void StartsWith_NOT_strict_at_work( string start, string with, bool result )
+        public void StartsWith_Path_NOT_strict_at_work( string start, string with, bool resultPath )
         {
-            new NormalizedPath( start ).StartsWith( with, strict: false ).Should().Be( result );
+            new NormalizedPath( start ).StartsWith( new NormalizedPath( with ), strict: false )
+                .Should().Be( resultPath, resultPath ? "Path should Start." : "Path should NOT Start." );
+        }
+
+        [TestCase( "", "", false )]
+        [TestCase( null, null, false )]
+        [TestCase( "", "a", false )]
+        [TestCase( "a", "", false )]
+        [TestCase( "a", null, false )]
+        [TestCase( "a", "a", false )]
+        [TestCase( "a/b", "a", true )]
+        [TestCase( "a\\b", "a/b", false )]
+        [TestCase( "a\\bi", "a/b", true )]
+        [TestCase( "a/b/c/", "a\\b", false )]
+        [TestCase( "a/b/c/", "a\\bc", false )]
+        public void StartsWith_String_STRICT_at_work( string start, string with, bool resultString )
+        {
+            new NormalizedPath( start ).StartsWith( with, strict: true )
+                .Should().Be( resultString, resultString ? "String should Start." : "String should NOT Start." );
         }
 
         [TestCase( "", "", false )]
         [TestCase( null, null, false )]
         [TestCase( "", "a", false )]
         [TestCase( "a", "a", false )]
+        [TestCase( "a", "", false )]
+        [TestCase( "a", null, false )]
         [TestCase( "a/b", "b", true )]
         [TestCase( "a\\b", "aa/b", false )]
+        [TestCase( "aa\\b", "aa/b", false )]
+        [TestCase( "aaa\\b", "aa/b", false )]
         [TestCase( "a/b/c/", "b\\c", true )]
+        [TestCase( "a/b/c/", "b/c/", true )]
         [TestCase( "a/b/c/", "bb\\c", false )]
-        public void EndsWith_at_work( string root, string end, bool result )
+        public void EndsWith_Path_is_strict_by_default( string root, string end, bool resultPath )
         {
-            new NormalizedPath( root ).EndsWith( end ).Should().Be( result );
+            new NormalizedPath( root ).EndsWith( new NormalizedPath( end ) )
+                .Should().Be( resultPath, resultPath ? "Path should End." : "Path should NOT End." );
+        }
+
+        [TestCase( "", "", false )]
+        [TestCase( null, null, false )]
+        [TestCase( "", "a", false )]
+        [TestCase( "a", "a", false )]
+        [TestCase( "a", "", false )]
+        [TestCase( "a", null, false )]
+        [TestCase( "a/b", "b", true )]
+        [TestCase( "a\\b", "aa/b", false )]
+        [TestCase( "aa\\b", "aa/b", false )]
+        [TestCase( "aaa\\b", "aa/b", true )]
+        [TestCase( "a/b/c/", "b\\c", false )]
+        [TestCase( "a/b/c/", "b/c/", false )]
+        [TestCase( "a/b/c/", "bb\\c", false )]
+        public void EndsWith_String_STRICT_at_work( string root, string end, bool resultString )
+        {
+            new NormalizedPath( root ).EndsWith( end, strict: true )
+                .Should().Be( resultString, resultString ? "String should End." : "String should NOT End." );
         }
 
         [TestCase( "", "", true )]
         [TestCase( null, null, true )]
         [TestCase( "", "a", false )]
         [TestCase( "a", "a", true )]
+        [TestCase( "a", "", true )]
+        [TestCase( "a", null, true )]
         [TestCase( "a/b", "b", true )]
         [TestCase( "a\\b", "a/b", true )]
         [TestCase( "a/b/c/", "b\\c", true )]
-        public void EndsWith_NOT_strict_at_work( string root, string end, bool result )
+        public void EndsWith_Path_NOT_strict_at_work( string root, string end, bool resultPath )
         {
-            new NormalizedPath( root ).EndsWith( end, strict: false ).Should().Be( result );
+            new NormalizedPath( root ).EndsWith( new NormalizedPath( end ), strict: false )
+                .Should().Be( resultPath, resultPath ? "Path should End." : "Path should NOT End." );
+        }
+
+        [TestCase( "", "", true )]
+        [TestCase( null, null, true )]
+        [TestCase( "", "a", false )]
+        [TestCase( "a", "a", true )]
+        [TestCase( "a", "", true )]
+        [TestCase( "a", null, true )]
+        [TestCase( "a/b", "b", true )]
+        [TestCase( "a\\b", "a/b", true )]
+        [TestCase( "a/b/c/", "b\\c", false )]
+        public void EndsWith_String_is_NOT_strict_by_default( string root, string end, bool resultString )
+        {
+            new NormalizedPath( root ).EndsWith( end )
+                .Should().Be( resultString, resultString ? "String should End." : "String should NOT End." );
         }
 
         [TestCase( "", "", "" )]
