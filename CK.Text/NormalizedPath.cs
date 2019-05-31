@@ -552,9 +552,9 @@ namespace CK.Text
         /// </summary>
         /// <param name="other">The path that may be a prefix of this path.</param>
         /// <param name="strict">
-        /// False to allow the other path to be the same as this one.
+        /// False to allow the other path to be the same as this one and to consider an empty other path as valid prefix.
         /// By default this path must be longer than the other one.</param>
-        /// <returns>True if this path starts with the other one.</returns>
+        /// <returns>True if this path starts with the other one and the other one must not be empty.</returns>
         public bool StartsWith( NormalizedPath other, bool strict = true ) => (other.IsEmptyPath && !strict)
                                                         || (!other.IsEmptyPath
                                                             && !IsEmptyPath
@@ -564,12 +564,28 @@ namespace CK.Text
                                                             && _path.StartsWith( other._path, StringComparison.Ordinal ));
 
         /// <summary>
+        /// Reproduces <see cref="string.StartsWith(string)"/> on the <see cref="Path"/>.
+        /// </summary>
+        /// <param name="other">The path that may be a prefix of this <see cref="Path"/> string.</param>
+        /// <param name="strict">
+        /// True to force this path to be longer than the other one and the other one must not be empty.
+        /// By default, the behavior of this method (with strict false) matches the <see cref="String.StartsWith(string)"/> behavior.
+        /// </param>
+        /// <returns>True if this path starts with the other one.</returns>
+        public bool StartsWith( string other, bool strict = false ) => IsEmptyPath
+                                                                        ? (strict ? false : other == null || other.Length == 0)
+                                                                        : (other == null || other.Length == 0)
+                                                                            ? !strict
+                                                                            : (_path.Length > other.Length || (!strict && _path.Length == other.Length))
+                                                                              && _path.StartsWith( other, StringComparison.Ordinal );
+
+        /// <summary>
         /// Tests whether this <see cref="NormalizedPath"/> ends with another one.
         /// </summary>
         /// <param name="other">The path that may be a prefix of this path.</param>
         /// <param name="strict">
         /// False to allow the other path to be the same as this one.
-        /// By default this path must be longer than the other one.</param>
+        /// By default this path must be longer than the other one and the other one must not be empty.</param>
         /// <returns>True if this path ends with the other one.</returns>
         public bool EndsWith( NormalizedPath other, bool strict = true ) => (other.IsEmptyPath && !strict)
                                                         || (!other.IsEmptyPath
@@ -578,6 +594,22 @@ namespace CK.Text
                                                             && (!strict || other._parts.Length < _parts.Length)
                                                             && StringComparer.Ordinal.Equals( other.FirstPart, _parts[_parts.Length - other._parts.Length] )
                                                             && _path.EndsWith( other._path, StringComparison.Ordinal ));
+
+        /// <summary>
+        /// Reproduces <see cref="string.EndsWith(string)"/> on the <see cref="Path"/>.
+        /// </summary>
+        /// <param name="other">The path that may end this path.</param>
+        /// <param name="strict">
+        /// True to force this path to be longer than the other one and the other one must not be empty.
+        /// By default, the behavior of this method (with strict false) matches the <see cref="String.EndsWith(string)"/> behavior.
+        /// </param>
+        /// <returns>True if this path ends with the other one.</returns>
+        public bool EndsWith( string other, bool strict = false ) => IsEmptyPath
+                                                                        ? (strict ? false : other == null || other.Length == 0)
+                                                                        : (other == null || other.Length == 0)
+                                                                            ? !strict
+                                                                            : (_path.Length > other.Length || (!strict && _path.Length == other.Length))
+                                                                              && _path.EndsWith( other, StringComparison.Ordinal );
 
         /// <summary>
         /// Removes the prefix from this path. The prefix must starts with or be exaclty the same as this one
