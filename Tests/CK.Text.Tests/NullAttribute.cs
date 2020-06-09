@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #define INTERNAL_NULLABLE_ATTRIBUTES
-
 namespace System.Diagnostics.CodeAnalysis
 {
     /// <summary>Specifies that the method or property will ensure that the listed field and property members have not-null values.</summary>
