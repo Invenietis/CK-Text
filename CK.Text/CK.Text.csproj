@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <Import Project="..\Common\Shared.props" />
-  
+
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.3;net461</TargetFrameworks>
+    <TargetFrameworks>netstandard1.3</TargetFrameworks>
     <LangVersion>7.2</LangVersion>
     <Description>Offers simple text helpers like StringMatcher, JSONVisitor and StringBuilder extension methods.</Description>
   </PropertyGroup>

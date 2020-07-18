@@ -7,7 +7,7 @@ using System.Text;
 namespace CK.Text.Virtual.Tests
 {
     [TestFixture]
-    class VirtualStringStreamTester
+    partial class VirtualStringStreamTester
     {
         [Test]
         public void open_and_read_file()
@@ -88,5 +88,29 @@ namespace CK.Text.Virtual.Tests
                 mini.Should().Be( @"{""v"":9.87e2,""a"":[8.65,true,{},{""x"":null,""y"":0.0},874]}" );
             }
         }
+
+        [Test]
+        public void virtual_string_out_of_range_issue_7()
+        {
+            using( Stream stream = new StupidStream() )
+            {
+                var v = new VirtualString( stream, 0, 256 );
+                {
+                    // Reproduces: https://github.com/Invenietis/CK-Text/issues/7 
+                    v.GetText( 6810, 1 ).Should().Be( StupidStream.CharAt( 6810 ).ToString() );
+                    v.Invoking( _ => _.GetText( 7042, 24 ) ).Should().NotThrow();
+                }
+                // Since we are here, a little systematic stress test:
+                for( int start = 0; start < 300; ++start )
+                {
+                    for( int width = 2; width < 300; ++width )
+                    {
+                        v.Invoking( _ => _.GetText( start, width ) ).Should().NotThrow();
+                    }
+                }
+            }
+        }
+
+
     }
 }

@@ -3,7 +3,7 @@
   <Import Project="..\Common\Shared.props" />
   
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.3;net461</TargetFrameworks>
+    <TargetFrameworks>netstandard1.3</TargetFrameworks>
     <Description>Offers simple text helpers like VirtualStringMatcher, JSONVirtualVisitor and StringBuilder extension methods.</Description>
     <LangVersion>7.2</LangVersion>
   </PropertyGroup>

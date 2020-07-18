@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -306,5 +307,6 @@ namespace CK.Text.Virtual.Tests
                 m.StartIndex.Should().Be( 0 );
             }
         }
+
     }
 }
