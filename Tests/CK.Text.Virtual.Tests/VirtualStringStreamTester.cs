@@ -110,7 +110,54 @@ namespace CK.Text.Virtual.Tests
                 }
             }
         }
+        
+        [Test]
+        public void virtual_string_does_not_support_multibyte_characters_at_buffer_edge()
+        {
+            Assume.That( false, "VirtualString does not support multi-byte characters." );
+            var encoding = new UTF8Encoding( false );
+    
+            // i = 0 to 25: Single-byte
+            // i = 26 and 27: Multi-byte
+            // i = 28 to 53: Single-byte
+            string testStr = @"ABCDEFGHIJKLMNOPQRSTUVWXYZüABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            byte[] utf8bytes = encoding.GetBytes( testStr );
 
+            using( MemoryStream ms = new MemoryStream() )
+            {
+                ms.Write( utf8bytes );
+                ms.Position = 0;
 
+                var v = new VirtualString( ms, 0, 27, encoding );
+                {
+                    // Bug (?): Reading 57 bytes does not read 57 characters, depending on encoding and content
+                    v.GetText( 0, 27 ).Should().Be( "ABCDEFGHIJKLMNOPQRSTUVWXYZü" ); // But is ABCDEFGHIJKLMNOPQRSTUVWXYZ?
+                }
+            }
+        }
+
+        [Test]
+        public void virtual_string_does_not_support_multibyte_characters()
+        {
+            Assume.That( false, "VirtualString does not support multi-byte characters." );
+            var encoding = new UTF8Encoding( false );
+
+            // i = 0 to 25: Single-byte
+            // i = 26 and 27: Multi-byte
+            // i = 28 to 53: Single-byte
+            string testStr = @"ABCDEFGHIJKLMNOPQRSTUVWXYZüABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            byte[] utf8bytes = encoding.GetBytes( testStr );
+
+            using( MemoryStream ms = new MemoryStream() )
+            {
+                ms.Write( utf8bytes );
+                ms.Position = 0;
+
+                var v = new VirtualString( ms, 0, 256, encoding );
+                {
+                    v.Invoking( _ => _.GetText( 0, utf8bytes.Length  ) ).Should().NotThrow(); // ArgumentOutOfRangeException
+                }
+            }
+        }
     }
 }

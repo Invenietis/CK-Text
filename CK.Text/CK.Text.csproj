@@ -4,12 +4,8 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard1.3</TargetFrameworks>
-    <LangVersion>7.2</LangVersion>
+    <LangVersion>preview</LangVersion>
     <Description>Offers simple text helpers like StringMatcher, JSONVisitor and StringBuilder extension methods.</Description>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
-  
 </Project>
