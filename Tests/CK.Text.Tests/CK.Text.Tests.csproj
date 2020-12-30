@@ -3,14 +3,18 @@
   <PropertyGroup>
     <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
     <OutputType>Exe</OutputType>
-    <LangVersion>7.2</LangVersion>
     <IsPackable>False</IsPackable>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\CK.Text\CK.Text.csproj" />
-    <PackageReference Include="FluentAssertions" Version="5.10.2" />
-    <PackageReference Include="CK.MicroBenchmark" Version="0.2.0" />
-    <PackageReference Include="NUnitLite" Version="3.12.0" />
+    <PackageReference Include="CK.MicroBenchmark" Version="0.2.1" />
+    <PackageReference Include="FluentAssertions" Version="5.10.3" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
     <PackageReference Include="NUnit" Version="3.12.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.17.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 </Project>

@@ -7,7 +7,7 @@ using System.Text;
 namespace CK.Text.Virtual.Tests
 {
     [TestFixture]
-    class VirtualStringStreamTester
+    partial class VirtualStringStreamTester
     {
         [Test]
         public void open_and_read_file()
@@ -86,6 +86,77 @@ namespace CK.Text.Virtual.Tests
             {
                 string mini = JSONMinifier.Minify( new VirtualStringMatcher( new VirtualString( fileStream ) ) );
                 mini.Should().Be( @"{""v"":9.87e2,""a"":[8.65,true,{},{""x"":null,""y"":0.0},874]}" );
+            }
+        }
+
+        [Test]
+        public void virtual_string_out_of_range_issue_7()
+        {
+            using( Stream stream = new StupidStream() )
+            {
+                var v = new VirtualString( stream, 0, 256 );
+                {
+                    // Reproduces: https://github.com/Invenietis/CK-Text/issues/7 
+                    v.GetText( 6810, 1 ).Should().Be( StupidStream.CharAt( 6810 ).ToString() );
+                    v.Invoking( _ => _.GetText( 7042, 24 ) ).Should().NotThrow();
+                }
+                // Since we are here, a little systematic stress test:
+                for( int start = 0; start < 300; ++start )
+                {
+                    for( int width = 2; width < 300; ++width )
+                    {
+                        v.Invoking( _ => _.GetText( start, width ) ).Should().NotThrow();
+                    }
+                }
+            }
+        }
+        
+        [Test]
+        public void virtual_string_does_not_support_multibyte_characters_at_buffer_edge()
+        {
+            Assume.That( false, "VirtualString does not support multi-byte characters." );
+            var encoding = new UTF8Encoding( false );
+    
+            // i = 0 to 25: Single-byte
+            // i = 26 and 27: Multi-byte
+            // i = 28 to 53: Single-byte
+            string testStr = @"ABCDEFGHIJKLMNOPQRSTUVWXYZüABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            byte[] utf8bytes = encoding.GetBytes( testStr );
+
+            using( MemoryStream ms = new MemoryStream() )
+            {
+                ms.Write( utf8bytes );
+                ms.Position = 0;
+
+                var v = new VirtualString( ms, 0, 27, encoding );
+                {
+                    // Bug (?): Reading 57 bytes does not read 57 characters, depending on encoding and content
+                    v.GetText( 0, 27 ).Should().Be( "ABCDEFGHIJKLMNOPQRSTUVWXYZü" ); // But is ABCDEFGHIJKLMNOPQRSTUVWXYZ?
+                }
+            }
+        }
+
+        [Test]
+        public void virtual_string_does_not_support_multibyte_characters()
+        {
+            Assume.That( false, "VirtualString does not support multi-byte characters." );
+            var encoding = new UTF8Encoding( false );
+
+            // i = 0 to 25: Single-byte
+            // i = 26 and 27: Multi-byte
+            // i = 28 to 53: Single-byte
+            string testStr = @"ABCDEFGHIJKLMNOPQRSTUVWXYZüABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            byte[] utf8bytes = encoding.GetBytes( testStr );
+
+            using( MemoryStream ms = new MemoryStream() )
+            {
+                ms.Write( utf8bytes );
+                ms.Position = 0;
+
+                var v = new VirtualString( ms, 0, 256, encoding );
+                {
+                    v.Invoking( _ => _.GetText( 0, utf8bytes.Length  ) ).Should().NotThrow(); // ArgumentOutOfRangeException
+                }
             }
         }
     }
