@@ -9,7 +9,6 @@ branches:
 environment:
   CODECAKEBUILDER_SECRET_KEY:
     secure: 8VAzdXgUQaJyFoU3WLf2iPFV/8zPDm9qV4TfOpx8/rg=
-install: []
 build_script:
   - dotnet run --project CodeCakeBuilder -nointeraction
 test: off
