@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace CK.Text
 {
     /// <summary>
-    /// Characerizes the root of a <see cref="NormalizedPath"/>.
+    /// Characterizes the root of a <see cref="NormalizedPath"/>.
     /// </summary>
     public enum NormalizedPathRootKind : byte
     {

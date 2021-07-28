@@ -6,14 +6,14 @@ using System.Linq;
 namespace CK.Text
 {
     /// <summary>
-    /// Immmutable encapsulation of a path that normalizes <see cref="AltDirectorySeparatorChar"/> ('\')
+    /// Immutable encapsulation of a path that normalizes <see cref="AltDirectorySeparatorChar"/> ('\')
     /// to <see cref="DirectorySeparatorChar"/> ('/') and provides useful path manipulation methods.
     /// This is the opposite of the Windows OS, but Windows handles the '/' transparently at more and more levels, 
     /// and it's better to have a unified way to work with paths, regardless of the 
     /// All comparisons uses <see cref="StringComparer.Ordinal"/>: this is fully compatible with case sensitive
     /// file systems (typically the case of Unix-based OS). Windows' volumes are normally case insensitive but
     /// using file names that differ only by case is not a good practice and this helper assumes this.
-    /// This struct is implicitely convertible to and from string.
+    /// This struct is implicitly convertible to and from string.
     /// </summary>
     public readonly struct NormalizedPath : IEquatable<NormalizedPath>, IComparable<NormalizedPath>
     {
@@ -57,7 +57,7 @@ namespace CK.Text
         public const string AltDirectorySeparatorString = "\\";
 
         /// <summary>
-        /// Explicitely builds a new <see cref="NormalizedPath"/> struct from a string (that can be null or empty).
+        /// Explicitly builds a new <see cref="NormalizedPath"/> struct from a string (that can be null or empty).
         /// </summary>
         /// <param name="path">The path as a string (can be null or empty).</param>
         public NormalizedPath( string path )
@@ -156,13 +156,13 @@ namespace CK.Text
         }
 
         /// <summary>
-        /// Implicitely converts a path to a normalized string path.
+        /// Implicitly converts a path to a normalized string path.
         /// </summary>
         /// <param name="path">The normalized path.</param>
         public static implicit operator string( NormalizedPath path ) => path._path;
 
         /// <summary>
-        /// Implicitely converts a string to a <see cref="NormalizedPath"/>.
+        /// Implicitly converts a string to a <see cref="NormalizedPath"/>.
         /// </summary>
         /// <param name="path">The path as a string.</param>
         public static implicit operator NormalizedPath( string path ) => new NormalizedPath( path );
@@ -407,16 +407,16 @@ namespace CK.Text
         public string FirstPart => _parts?[0] ?? String.Empty;
 
         /// <summary>
-        /// Appends a part that must not be null or empty nor contain <see cref="DirectorySeparatorChar"/>
+        /// Appends a part that must not contain <see cref="DirectorySeparatorChar"/>
         /// or <see cref="AltDirectorySeparatorChar"/> and returns a new <see cref="NormalizedPath"/>.
         /// When there is no <see cref="Parts"/> (this appends the first part), the part may contain separators so
         /// that <see cref="RootKind"/> is computed.
         /// </summary>
-        /// <param name="part">The part to append. Must not be null or empty.</param>
+        /// <param name="part">The part to append. When null or empty, it is ignored.</param>
         /// <returns>A new <see cref="NormalizedPath"/>.</returns>
-        public NormalizedPath AppendPart( string part )
+        public NormalizedPath AppendPart( string? part )
         {
-            if( string.IsNullOrEmpty( part ) ) throw new ArgumentNullException( nameof( part ) );
+            if( string.IsNullOrEmpty( part ) ) return this;
             if( _parts == null )
             {
                 Debug.Assert( _option != NormalizedPathRootKind.RootedByFirstPart );
@@ -612,7 +612,7 @@ namespace CK.Text
                                                                               && _path.EndsWith( other, StringComparison.Ordinal );
 
         /// <summary>
-        /// Removes the prefix from this path. The prefix must starts with or be exaclty the same as this one
+        /// Removes the prefix from this path. The prefix must starts with or be exactly the same as this one
         /// otherwise an <see cref="ArgumentException"/> is thrown.
         /// </summary>
         /// <param name="prefix">The prefix to remove.</param>
@@ -631,7 +631,7 @@ namespace CK.Text
         /// Gets whether this is the empty path. A new <see cref="NormalizedPath"/>() (default constructor),
         /// <c>default(NormalizedPath)</c> or the empty string are empty.
         /// But "/" (<see cref="NormalizedPathRootKind.RootedBySeparator"/>) or
-        /// "//" (<see cref="NormalizedPathRootKind.RootedByDoubleSeparator"/>) ar not empty even if they
+        /// "//" (<see cref="NormalizedPathRootKind.RootedByDoubleSeparator"/>) are not empty even if they
         /// have no <see cref="Parts"/>.
         /// </summary>
         public bool IsEmptyPath => _parts == null && _option == NormalizedPathRootKind.None;
