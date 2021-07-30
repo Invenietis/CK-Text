@@ -288,8 +288,8 @@ namespace CK.Text.Tests
             new NormalizedPath( root ).Combine( suffix ).Should().Be( new NormalizedPath( result ) );
         }
 
-        [TestCase( "", "", "ArgumentNullException" )]
-        [TestCase( null, null, "ArgumentNullException" )]
+        [TestCase( "", "", "" )]
+        [TestCase( null, null, "" )]
         [TestCase( "", "a", "a" )]
         [TestCase( "first", "a\\b", "ArgumentException" )]
         [TestCase( "", "a/b", "a/b" )]
