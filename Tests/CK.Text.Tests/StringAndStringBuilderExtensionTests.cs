@@ -6,7 +6,6 @@ using System.Diagnostics;
 using FluentAssertions;
 using System.Collections.Generic;
 using System.Linq;
-using CK.Core;
 
 namespace CK.Text.Tests
 {
@@ -215,35 +214,35 @@ Second line.
         // the String.Join is LESS efficient than the home made new StringBuilder().AppendStrings solution (this occurs in Release as well as in Debug).
         // This is hard to believe. So I don't believe :).
         // This test is temporarily disabled and this should be investigated.
-        [Test]
-        public void our_Concatenate_to_string_must_use_String_Join_since_it_is_faster()
-        {
-            Assume.That( false, "This test should be investigated. We uspect an impact of VSTest adpater on the result." );
+        //[Test]
+        //public void our_Concatenate_to_string_must_use_String_Join_since_it_is_faster()
+        //{
+        //    Assume.That( false, "This test should be investigated. We suspect an impact of VSTest adpater on the result." );
 
-            static string ConcatenateCandidate( IEnumerable<string> @this, string separator = ", " )
-            {
-                return new StringBuilder().AppendStrings( @this, separator ).ToString();
-            }
+        //    static string ConcatenateCandidate( IEnumerable<string> @this, string separator = ", " )
+        //    {
+        //        return new StringBuilder().AppendStrings( @this, separator ).ToString();
+        //    }
 
-            string text = File.ReadAllText( Path.Combine( TestHelper.SolutionFolder, "Tests/CK.Text.Tests/StringAndStringBuilderExtensionTests.cs" ) )
-                            .NormalizeEOLToLF();
-            var lines = text.Split( '\n' );
-            var words = text.Split( ' ', '\n' );
+        //    string text = File.ReadAllText( Path.Combine( TestHelper.SolutionFolder, "Tests/CK.Text.Tests/StringAndStringBuilderExtensionTests.cs" ) )
+        //                    .NormalizeEOLToLF();
+        //    var lines = text.Split( '\n' );
+        //    var words = text.Split( ' ', '\n' );
 
-            var rJoinLines = MicroBenchmark.MeasureTime( () => String.Join( ", ", lines ) );
-            var rJoinWords = MicroBenchmark.MeasureTime( () => String.Join( ", ", words ) );
-            var rConcatLines = MicroBenchmark.MeasureTime( () => ConcatenateCandidate( lines ) );
-            var rConcatWords = MicroBenchmark.MeasureTime( () => ConcatenateCandidate( words ) );
+        //    var rJoinLines = MicroBenchmark.MeasureTime( () => String.Join( ", ", lines ) );
+        //    var rJoinWords = MicroBenchmark.MeasureTime( () => String.Join( ", ", words ) );
+        //    var rConcatLines = MicroBenchmark.MeasureTime( () => ConcatenateCandidate( lines ) );
+        //    var rConcatWords = MicroBenchmark.MeasureTime( () => ConcatenateCandidate( words ) );
 
-            rJoinLines.IsSignificantlyBetterThan( rConcatLines ).Should().BeTrue();
-            rJoinWords.IsSignificantlyBetterThan( rConcatWords ).Should().BeTrue();
+        //    rJoinLines.IsSignificantlyBetterThan( rConcatLines ).Should().BeTrue();
+        //    rJoinWords.IsSignificantlyBetterThan( rConcatWords ).Should().BeTrue();
 
-            var smallSet = lines.Take( 20 ).ToArray();
-            var rConcatSmall = MicroBenchmark.MeasureTime( () => ConcatenateCandidate( smallSet ) );
-            var rJoinSmall = MicroBenchmark.MeasureTime( () => String.Join( ", ", smallSet ) );
+        //    var smallSet = lines.Take( 20 ).ToArray();
+        //    var rConcatSmall = MicroBenchmark.MeasureTime( () => ConcatenateCandidate( smallSet ) );
+        //    var rJoinSmall = MicroBenchmark.MeasureTime( () => String.Join( ", ", smallSet ) );
 
-            rJoinSmall.IsSignificantlyBetterThan( rConcatSmall ).Should().BeTrue();
-        }
+        //    rJoinSmall.IsSignificantlyBetterThan( rConcatSmall ).Should().BeTrue();
+        //}
 
 
 //        [Test]

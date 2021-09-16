@@ -19,8 +19,8 @@ namespace CK.Text
     {
         static readonly char[] _separators = new[] { AltDirectorySeparatorChar, DirectorySeparatorChar };
 
-        readonly string[] _parts;
-        readonly string _path;
+        readonly string[]? _parts;
+        readonly string? _path;
         // Currently, _option is a NormalizedPathRootKind.
         // If other meta information must be handled, it should be
         // stored inside this option field. 
@@ -88,6 +88,7 @@ namespace CK.Text
             }
             else
             {
+                Debug.Assert( path != null );
                 var c = path[0];
                 if( c == DirectorySeparatorChar || c == AltDirectorySeparatorChar )
                 {
@@ -134,7 +135,7 @@ namespace CK.Text
             }
         }
 
-        NormalizedPath( string[] parts, string path, NormalizedPathRootKind o )
+        NormalizedPath( string[]? parts, string path, NormalizedPathRootKind o )
         {
             Debug.Assert( path != null );
             Debug.Assert( parts != null || o != NormalizedPathRootKind.RootedByFirstPart, "parts == null ==> option != RootedByFirstPart" );
@@ -159,7 +160,7 @@ namespace CK.Text
         /// Implicitly converts a path to a normalized string path.
         /// </summary>
         /// <param name="path">The normalized path.</param>
-        public static implicit operator string( NormalizedPath path ) => path._path;
+        public static implicit operator string( NormalizedPath path ) => path._path ?? String.Empty;
 
         /// <summary>
         /// Implicitly converts a string to a <see cref="NormalizedPath"/>.
@@ -487,6 +488,7 @@ namespace CK.Text
             Array.Copy( _parts, count, parts, 0, parts.Length );
             int len = _parts[0].Length + count;
             while( count > 1 ) len += _parts[--count].Length;
+            Debug.Assert( _path != null );
             var o = _option;
             string p;
             switch( o )

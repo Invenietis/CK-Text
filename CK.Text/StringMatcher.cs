@@ -19,7 +19,7 @@ namespace CK.Text
         readonly string _text;
         int _length;
         int _startIndex;
-        string _errorDescription;
+        string? _errorDescription;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StringMatcher"/> class on a non null string.
@@ -139,7 +139,7 @@ namespace CK.Text
         /// </param>
         /// <param name="callerName">Name of the caller (automatically injected by the compiler).</param>
         /// <returns>Always false to use it as the return statement in a match method.</returns>
-        public bool SetError( object expectedMessage = null, [CallerMemberName]string callerName = null )
+        public bool SetError( object? expectedMessage = null, [CallerMemberName]string? callerName = null )
         {
             _errorDescription = FormatMessage( expectedMessage, callerName );
             return false;
@@ -156,7 +156,7 @@ namespace CK.Text
         /// false to append it (as a cause: [previous] &lt;-- [added])</param>
         /// <param name="callerName">Name of the caller (automatically injected by the compiler).</param>
         /// <returns>Always false to use it as the return statement in a match method.</returns>
-        public bool AddError( object expectedMessage = null, bool beforeExisting = false, [CallerMemberName]string callerName = null )
+        public bool AddError( object? expectedMessage = null, bool beforeExisting = false, [CallerMemberName]string? callerName = null )
         {
             if( _errorDescription != null )
             {
@@ -173,10 +173,10 @@ namespace CK.Text
             return false;
         }
 
-        static string FormatMessage( object expectedMessage, string callerName )
+        static string FormatMessage( object? expectedMessage, string callerName )
         {
             string d = callerName;
-            string tail = expectedMessage != null ? expectedMessage.ToString() : null;
+            string? tail = expectedMessage != null ? expectedMessage.ToString() : null;
             if( !string.IsNullOrEmpty( tail ) )
             {
                 d += ": expected '" + tail + "'.";
@@ -204,7 +204,7 @@ namespace CK.Text
         /// </param>
         /// <param name="callerName">Name of the caller (automatically injected by the compiler).</param>
         /// <returns>Always false to use it as the return statement in a match method.</returns>
-        public bool BackwardAddError( int savedStartIndex, object expectedMessage = null, [CallerMemberName]string callerName = null )
+        public bool BackwardAddError( int savedStartIndex, object? expectedMessage = null, [CallerMemberName]string? callerName = null )
         {
             int delta = _startIndex - savedStartIndex;
             if( savedStartIndex < 0 || delta < 0 ) throw new ArgumentException( nameof( savedStartIndex ) );
