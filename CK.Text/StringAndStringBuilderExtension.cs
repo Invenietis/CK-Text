@@ -145,7 +145,7 @@ namespace CK.Text
         }
 
         /// <summary>
-        /// Gets wether the <see cref="Environment.NewLine"/> is \r\n.
+        /// Gets whether the <see cref="Environment.NewLine"/> is \r\n.
         /// Otherwise it is \n.
         /// </summary>
         public static bool IsCRLF => EOLNormalizer.IsCRLF;
@@ -255,7 +255,7 @@ namespace CK.Text
         /// <param name="s">The string. Can not be null.</param>
         /// <param name="startIndex">Start index in the string.</param>
         /// <param name="count">Number of characters to consider.</param>
-        /// <param name="useEscapedUnicode">True to use unicode hexadecimal code for non-ascii characters.</param>
+        /// <param name="useEscapedUnicode">True to use Unicode hexadecimal code for non-ASCII characters.</param>
         /// <returns>This string builder to enable fluent syntax.</returns>
         public static StringBuilder AppendJSONEscaped( this StringBuilder @this, string s, int startIndex, int count, bool useEscapedUnicode = false )
         {

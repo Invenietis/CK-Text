@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -10,6 +10,7 @@ namespace CK.Text
     /// <summary>
     /// Small JSON visitor.
     /// </summary>
+    [Obsolete("Please use System.Text.Json now!")]
     public class JSONVisitor
     {
         readonly StringMatcher _m;
