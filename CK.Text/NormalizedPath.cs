@@ -112,13 +112,48 @@ namespace CK.Text
                 }
                 else
                 {
-                    _option = NormalizedPathRootKind.None;
-                    _path = _parts.Concatenate( DirectorySeparatorString );
                     var first = _parts[0];
-                    if( first.Length > 0 && first[first.Length-1] == ':' )
+                    Debug.Assert( first.Length > 0 );
+                    if( first[first.Length - 1] == ':' )
                     {
-                        _option = NormalizedPathRootKind.RootedByFirstPart;
+                        // To avoid errors and to not be too lax:
+                        //  - Length = 1 or 2: "://" or "C://" are invalid (but ":/" or "C:/" are fine).
+                        //  - Length > 2: "ni:/" is invalid (but "ni://" is fine).
+                        if( first.Length <= 2 )
+                        {
+                            _option = NormalizedPathRootKind.RootedByFirstPart;
+                        }
+                        else
+                        {
+                            _option = NormalizedPathRootKind.RootedByURIScheme;
+                            _parts[0] = first + DirectorySeparatorChar;
+                        }
+                        if( path.Length > first.Length )
+                        {
+                            bool hasDoubleSlash = false;
+                            int doubleSlashPosLast = first.Length + 1;
+                            if( path.Length > doubleSlashPosLast )
+                            {
+                                Debug.Assert( path[doubleSlashPosLast - 1] == DirectorySeparatorChar || path[doubleSlashPosLast - 1] == AltDirectorySeparatorChar );
+                                var cS = path[doubleSlashPosLast];
+                                hasDoubleSlash = cS == DirectorySeparatorChar || cS == AltDirectorySeparatorChar;
+                            }
+                            if( hasDoubleSlash && _option == NormalizedPathRootKind.RootedByFirstPart )
+                            {
+                                throw new ArgumentException( $"Invalid root path: '{first}' may be followed by one {DirectorySeparatorChar} but not two." );
+                            }
+                            if( !hasDoubleSlash && _option == NormalizedPathRootKind.RootedByURIScheme )
+                            {
+                                throw new ArgumentException( $"Invalid root path: '{first}', as a URI scheme, may be followed by two {DirectorySeparatorChar} but not by only one." );
+                            }
+                        }
                     }
+                    else
+                    {
+                        _option = NormalizedPathRootKind.None;
+                    }
+                    _path = _parts.Concatenate( DirectorySeparatorString );
+                    if( _option == NormalizedPathRootKind.RootedByURIScheme && _parts.Length == 1 ) _path += DirectorySeparatorChar;
                 }
             }
             Debug.Assert( _parts != null || _option != NormalizedPathRootKind.RootedByFirstPart, "parts == null ==> option != RootedByFirstPart" );
@@ -146,7 +181,10 @@ namespace CK.Text
 
         NormalizedPath( NormalizedPathRootKind o )
         {
-            if( o == NormalizedPathRootKind.RootedByFirstPart ) o = NormalizedPathRootKind.None;
+            if( o == NormalizedPathRootKind.RootedByFirstPart || o == NormalizedPathRootKind.RootedByURIScheme )
+            {
+                o = NormalizedPathRootKind.None;
+            }
             _parts = null;
             _path = o == NormalizedPathRootKind.RootedBySeparator
                     ? DirectorySeparatorString
@@ -196,14 +234,19 @@ namespace CK.Text
 
         /// <summary>
         /// Sets the <see cref="RootKind"/> by returning this or a new <see cref="NormalizedPath"/>.
-        /// The only forbidden case is to set the <see cref="NormalizedPathRootKind.RootedByFirstPart"/>
-        /// when <see cref="HasParts"/> is false: this throws an <see cref="ArgumentException"/>.
+        /// There are 2 forbidden cases: the target kind is <see cref="NormalizedPathRootKind.RootedByURIScheme"/>
+        /// (this always results in an <see cref="ArgumentException"/>) or the target kind is
+        /// <see cref="NormalizedPathRootKind.RootedByFirstPart"/> but <see cref="HasParts"/> is false (this throws an <see cref="ArgumentException"/>).
         /// </summary>
         /// <param name="kind">The <see cref="NormalizedPathRootKind"/> to set.</param>
         /// <returns>This or a new path.</returns>
         public NormalizedPath With( NormalizedPathRootKind kind )
         {
             if( kind == _option ) return this;
+            if( kind == NormalizedPathRootKind.RootedByURIScheme )
+            {
+                throw new ArgumentException( $"Cannot change any existing path to be RootedByURIScheme.", nameof( kind ) );
+            }
             if( _parts == null )
             {
                 switch( kind )
@@ -239,15 +282,19 @@ namespace CK.Text
                     default: throw new NotSupportedException();
                 }
             }
-            Debug.Assert( _option == NormalizedPathRootKind.RootedBySeparator || _option == NormalizedPathRootKind.RootedByDoubleSeparator );
-            switch( kind )
+            if( _option == NormalizedPathRootKind.RootedBySeparator || _option == NormalizedPathRootKind.RootedByDoubleSeparator ) 
             {
-                case NormalizedPathRootKind.None:
-                case NormalizedPathRootKind.RootedByFirstPart: return new NormalizedPath( _parts, _path.Substring( _option == NormalizedPathRootKind.RootedBySeparator ? 1 : 2 ), kind );
-                case NormalizedPathRootKind.RootedBySeparator: return new NormalizedPath( _parts, _path.Substring( 1 ), kind );
-                case NormalizedPathRootKind.RootedByDoubleSeparator: return new NormalizedPath( _parts, DirectorySeparatorChar + _path, kind );
-                default: throw new NotSupportedException();
+                switch( kind )
+                {
+                    case NormalizedPathRootKind.None:
+                    case NormalizedPathRootKind.RootedByFirstPart: return new NormalizedPath( _parts, _path.Substring( _option == NormalizedPathRootKind.RootedBySeparator ? 1 : 2 ), kind );
+                    case NormalizedPathRootKind.RootedBySeparator: return new NormalizedPath( _parts, _path.Substring( 1 ), kind );
+                    case NormalizedPathRootKind.RootedByDoubleSeparator: return new NormalizedPath( _parts, DirectorySeparatorChar + _path, kind );
+                    default: throw new NotSupportedException();
+                }
             }
+            Debug.Assert( _option == NormalizedPathRootKind.RootedByURIScheme );
+            return RemoveFirstPart().With( kind );
         }
 
         /// <summary>
@@ -317,13 +364,13 @@ namespace CK.Text
         {
             int len = _parts != null ? _parts.Length : 0;
             if( rootPartsCount > len ) throw new ArgumentOutOfRangeException( nameof( rootPartsCount ) );
-            if( rootPartsCount == 0 && _option == NormalizedPathRootKind.RootedByFirstPart )
+            if( rootPartsCount == 0 && (_option == NormalizedPathRootKind.RootedByFirstPart || _option == NormalizedPathRootKind.RootedByURIScheme) )
             {
                 rootPartsCount = 1;
             }
             if( rootPartsCount == len ) return this;
             Debug.Assert( !IsEmptyPath );
-            string[] newParts = null;
+            string[]? newParts = null;
             int current = 0;
             NormalizedPathRootKind o = _option;
             for( int i = rootPartsCount; i < len; ++i )
@@ -502,11 +549,12 @@ namespace CK.Text
                 case NormalizedPathRootKind.RootedByDoubleSeparator:
                     p = DoubleDirectorySeparatorString + _path.Substring( len + 2 );
                     break;
+                case NormalizedPathRootKind.RootedByURIScheme:
                 case NormalizedPathRootKind.RootedByFirstPart:
                     p = _path.Substring( len );
                     o = NormalizedPathRootKind.None;
                     break;
-                default: throw new Exception();
+                default: throw new NotSupportedException();
             }
             return new NormalizedPath( parts, p, o );
         }
